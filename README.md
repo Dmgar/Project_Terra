@@ -1,2 +1,1 @@
-# Project_Terra
-Análisis exploratorio y clustering no supervisado (K-Means, jerárquico, PCA) sobre datos edafoclimáticos para identificar ecorregiones funcionales y recomendar cultivos óptimos por perfil de suelo y clima.
+Project Terra explora si es posible descubrir "ecorregiones funcionales" agrícolas a partir de variables de suelo y clima (N, P, K, pH, temperatura, humedad y precipitación), sin depender de fronteras políticas ni reglas empíricas. Usando técnicas de aprendizaje no supervisado (K-Means, Clustering Jerárquico, PCA), el proyecto agrupa zonas de muestreo en perfiles ambientales homogéneos y valida su coherencia agronómica contrastando los clústeres contra el cultivo real reportado en cada registro.

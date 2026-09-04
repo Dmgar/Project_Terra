@@ -1,5 +1,10 @@
 # Project Terra
 
+![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python)
+![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-Machine_Learning-orange?logo=scikit-learn)
+![License](https://img.shields.io/badge/License-MIT-green)
+![Status](https://img.shields.io/badge/Status-In_Progress-yellow)
+
 > Análisis exploratorio y clustering de zonas agrícolas para la recomendación inteligente de cultivos.
 
 **Project Terra** explora si es posible descubrir "ecorregiones funcionales" agrícolas a partir de variables de suelo y clima (N, P, K, pH, temperatura, humedad y precipitación), sin depender de fronteras políticas ni reglas empíricas. Usando técnicas de aprendizaje no supervisado (K-Means, Clustering Jerárquico, PCA), el proyecto agrupa zonas de muestreo en perfiles ambientales homogéneos y valida su coherencia agronómica contrastando los clústeres contra el cultivo real reportado en cada registro.
@@ -28,6 +33,17 @@ Proyecto del curso **Analítica y Minería de Datos** — Escuela de Transformac
 
 Dataset tipo *Crop Recommendation* con variables predictoras N, P, K, temperatura, humedad, pH y precipitación, más `label` (cultivo) como variable de validación post-hoc.
 
+| Variable | Descripción | Unidad Típica |
+| :--- | :--- | :--- |
+| **N** | Ratio de contenido de Nitrógeno en el suelo | ppm / razón |
+| **P** | Ratio de contenido de Fósforo en el suelo | ppm / razón |
+| **K** | Ratio de contenido de Potasio en el suelo | ppm / razón |
+| **Temperature** | Temperatura ambiente | °C |
+| **Humidity** | Humedad relativa | % |
+| **pH** | Valor de pH del suelo | 0-14 |
+| **Rainfall** | Precipitación acumulada | mm |
+| **Label** | Tipo de cultivo recomendado (Validación) | Categórica |
+
 Fuente: [Crop Recommendation Dataset — Kaggle](https://www.kaggle.com/datasets/atharvaingle/crop-recommendation-dataset)
 
 > El CSV original no se versiona en este repo (ver `.gitignore`). Descárgalo y colócalo en `data/raw/`.
@@ -50,7 +66,7 @@ project-terra/
 ## Cómo empezar
 
 ```bash
-git clone <url-del-repo>
+git clone https://github.com/Dmgar/Project_Terra.git
 cd project-terra
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
@@ -60,6 +76,15 @@ pip install -r requirements.txt
 Descarga el dataset desde Kaggle y colócalo en `data/raw/Crop_recommendation.csv`.
 
 ## Metodología (fases)
+
+```mermaid
+flowchart TD
+    A[Data Ingestion<br>Kaggle CSV] --> B[EDA & Preprocessing<br>Standard/Robust Scaler]
+    B --> C[Reducción Dimensional<br>PCA]
+    C --> D[Modelado No Supervisado<br>K-Means / Jerárquico]
+    D --> E[Validación Agronómica<br>vs. Label]
+    E --> F[Exportación de Resultados]
+```
 
 1. **Ingeniería de datos y EDA avanzado** — limpieza, correlaciones, pairplots, PCA preliminar.
 2. **Determinación del número de clústeres (K)** — codo, silueta, Davies-Bouldin.

@@ -67,7 +67,7 @@ project-terra/
 
 ```bash
 git clone https://github.com/Dmgar/Project_Terra.git
-cd project-terra
+cd project_terra
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt

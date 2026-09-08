@@ -54,8 +54,8 @@ Fuente: [Crop Recommendation Dataset — Kaggle](https://www.kaggle.com/datasets
 project-terra/
 ├── data/
 │   ├── raw/            # Dataset original sin modificar (no versionado)
-│   └── processed/      # Datos limpios / con clúster asignado
-├── notebooks/          # EDA, clustering, validación
+│   └── processed/      # Datos limpios (ej. sensor_Crop_Dataset_scaled.csv)
+├── notebooks/          # EDA (01_eda), Preprocesamiento y PCA (02_pca)
 ├── src/                # Funciones y pipeline reutilizable
 ├── reports/            # Informe técnico, figuras, dashboards
 ├── requirements.txt
@@ -73,7 +73,7 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-Descarga el dataset desde Kaggle y colócalo en `data/raw/Crop_recommendation.csv`.
+Descarga el dataset desde Kaggle y colócalo en `data/raw/sensor_Crop_Dataset.csv`.
 
 ## Metodología (fases)
 
@@ -86,11 +86,11 @@ flowchart TD
     E --> F[Exportación de Resultados]
 ```
 
-1. **Ingeniería de datos y EDA avanzado** — limpieza, correlaciones, pairplots, PCA preliminar.
-2. **Determinación del número de clústeres (K)** — codo, silueta, Davies-Bouldin.
-3. **Ejecución del clustering** — asignación de etiqueta de clúster al dataframe.
-4. **Análisis diferencial** — perfil/firma ambiental de cada clúster.
-5. **Tablero interpretativo** — reporte visual como sistema de recomendación preliminar.
+- [x] 1. **Ingeniería de datos y EDA avanzado** — limpieza, correlaciones, pairplots, PCA preliminar. *(Completado)*
+- [ ] 2. **Determinación del número de clústeres (K)** — codo, silueta, Davies-Bouldin.
+- [ ] 3. **Ejecución del clustering** — asignación de etiqueta de clúster al dataframe.
+- [ ] 4. **Análisis diferencial** — perfil/firma ambiental de cada clúster.
+- [ ] 5. **Tablero interpretativo** — reporte visual como sistema de recomendación preliminar.
 
 ## Entregables esperados
 

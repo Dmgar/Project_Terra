@@ -97,11 +97,13 @@ flowchart TD
     E --> F[Tablero & Simulador Streamlit<br>Recomendación en Vivo]
 ```
 
-- [x] 1. **Ingeniería de datos y EDA avanzado** — limpieza, correlaciones, pairplots, PCA preliminar.
-- [x] 2. **Determinación del número de clústeres (K)** — codo (inercia), silueta y Davies-Bouldin.
-- [x] 3. **Ejecución del clustering multivariado** — K-Means y Jerárquico sobre features escalados (PCA solo para visualización).
-- [x] 4. **Análisis diferencial y validación** — perfil/firma ambiental (radar charts), análisis de `Soil_Type`, pureza y Kruskal-Wallis.
-- [x] 5. **Tablero interpretativo y simulador interactivo** — aplicación Streamlit multiplataforma lista para feria.
+- [x] 1. **Ingeniería de datos y EDA avanzado** — limpieza, correlaciones, pairplots, PCA preliminar. *(Completado)*
+- [x] 2. **Determinación del número de clústeres (K)** — codo (inercia), silueta y Davies-Bouldin. *(Completado, [`03_clustering.ipynb`](notebooks/03_clustering.ipynb): ninguna métrica marca un K claramente óptimo — silueta baja en todo el rango (0.09–0.11) y Davies-Bouldin decrece de forma monótona; se fijó K=4 por interpretabilidad)*
+- [x] 3. **Ejecución del clustering multivariado** — K-Means y Jerárquico sobre features escalados (PCA solo para visualización). *(Completado, [`03_clustering.ipynb`](notebooks/03_clustering.ipynb): K-Means y Jerárquico Aglomerativo ejecutados con K=4; acuerdo entre ambos casi nulo — ARI = 0.004)*
+- [x] 4. **Análisis diferencial y validación** — perfil/firma ambiental (radar charts), análisis de `Soil_Type`, pureza y Kruskal-Wallis. *(Completado, [`04_cluster_profiling.ipynb`](notebooks/04_cluster_profiling.ipynb): los clústeres se explican casi enteramente por Nitrógeno, Fósforo y pH; el cultivo dominante por clúster apenas supera la proporción base del dataset (~17-19%), es decir, coherencia agronómica débil)*
+- [x] 5. **Tablero interpretativo y simulador interactivo** — aplicación Streamlit multiplataforma lista para feria. *(Completado, [`05_dashboard.ipynb`](notebooks/05_dashboard.ipynb): dashboard interactivo con Plotly y función `recomendar_cultivo()` por centroide más cercano)*
+
+> **Hallazgo clave**: con las variables disponibles (N, P, K, temperatura, humedad, pH, precipitación), el dataset no muestra una estructura de clústeres fuerte ni agronómicamente coherente — ver conclusiones de cada notebook para el detalle y las alternativas propuestas (usar solo N/P/pH, incorporar `Soil_Type`/`Variety`, etc.).
 
 ## Entregables esperados
 

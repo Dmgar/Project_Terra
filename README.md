@@ -52,12 +52,17 @@ Fuente: [Crop Recommendation Dataset — Kaggle](https://www.kaggle.com/datasets
 
 ```
 project-terra/
+├── app/                # Aplicación interactiva de Streamlit (Demo para Feria)
+│   ├── main.py         # Punto de entrada y métricas globales
+│   ├── pages/          # 01 Overview, 02 Explorer, 03 Recommender (Simulador)
+│   └── utils.py        # Carga de datos cacheados y modelos
 ├── data/
-│   ├── raw/            # Dataset original sin modificar (no versionado)
-│   └── processed/      # Datos limpios (ej. sensor_Crop_Dataset_scaled.csv)
-├── notebooks/          # EDA (01_eda), Preprocesamiento y PCA (02_pca)
-├── src/                # Funciones y pipeline reutilizable
-├── reports/            # Informe técnico, figuras, dashboards
+│   ├── raw/            # Dataset original (sensor_Crop_Dataset.csv)
+│   ├── processed/      # Dataset escalado y enriquecido con clústeres
+│   └── models/         # Modelos serializados (KMeans, StandardScaler)
+├── notebooks/          # 01 EDA, 02 Preprocesamiento/PCA, 03 Clustering, 04 Profiling
+├── src/                # Módulos reutilizables (clustering.py, profiling.py)
+├── reports/            # Informe técnico, figuras y dashboards
 ├── requirements.txt
 ├── LICENSE
 └── README.md
@@ -73,6 +78,12 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+### Ejecutar la Aplicación Interactiva (Feria)
+
+```bash
+python -m streamlit run app/main.py
+```
+
 Descarga el dataset desde Kaggle y colócalo en `data/raw/sensor_Crop_Dataset.csv`.
 
 ## Metodología (fases)
@@ -80,17 +91,17 @@ Descarga el dataset desde Kaggle y colócalo en `data/raw/sensor_Crop_Dataset.cs
 ```mermaid
 flowchart TD
     A[Data Ingestion<br>Kaggle CSV] --> B[EDA & Preprocessing<br>Standard/Robust Scaler]
-    B --> C[Reducción Dimensional<br>PCA]
-    C --> D[Modelado No Supervisado<br>K-Means / Jerárquico]
-    D --> E[Validación Agronómica<br>vs. Label]
-    E --> F[Exportación de Resultados]
+    B --> C[Modelado No Supervisado<br>K-Means / Jerárquico]
+    C --> D[Visualización Proyectada<br>PCA 2D Interactivo]
+    D --> E[Análisis Diferencial & Validación<br>Radar Charts / Kruskal-Wallis]
+    E --> F[Tablero & Simulador Streamlit<br>Recomendación en Vivo]
 ```
 
-- [x] 1. **Ingeniería de datos y EDA avanzado** — limpieza, correlaciones, pairplots, PCA preliminar. *(Completado)*
-- [ ] 2. **Determinación del número de clústeres (K)** — codo, silueta, Davies-Bouldin.
-- [ ] 3. **Ejecución del clustering** — asignación de etiqueta de clúster al dataframe.
-- [ ] 4. **Análisis diferencial** — perfil/firma ambiental de cada clúster.
-- [ ] 5. **Tablero interpretativo** — reporte visual como sistema de recomendación preliminar.
+- [x] 1. **Ingeniería de datos y EDA avanzado** — limpieza, correlaciones, pairplots, PCA preliminar.
+- [x] 2. **Determinación del número de clústeres (K)** — codo (inercia), silueta y Davies-Bouldin.
+- [x] 3. **Ejecución del clustering multivariado** — K-Means y Jerárquico sobre features escalados (PCA solo para visualización).
+- [x] 4. **Análisis diferencial y validación** — perfil/firma ambiental (radar charts), análisis de `Soil_Type`, pureza y Kruskal-Wallis.
+- [x] 5. **Tablero interpretativo y simulador interactivo** — aplicación Streamlit multiplataforma lista para feria.
 
 ## Entregables esperados
 

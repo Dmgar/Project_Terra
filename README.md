@@ -104,8 +104,23 @@ flowchart TD
 - [x] 3. **Ejecución del clustering multivariado** — K-Means y Jerárquico sobre features escalados (PCA solo para visualización). *(Completado, [`03_clustering_model.ipynb`](notebooks/03_clustering_model.ipynb) + [`src/run_pipeline.py`](src/run_pipeline.py): K-Means (K=5) y Jerárquico Aglomerativo entrenados; modelo y scaler serializados en `data/models/`)*
 - [x] 4. **Análisis diferencial y validación** — perfil/firma ambiental (radar charts), análisis de `Soil_Type`, pureza y Kruskal-Wallis. *(Completado, [`04_cluster_profiling.ipynb`](notebooks/04_cluster_profiling.ipynb): con K=5 los clústeres se explican sobre todo por Humedad, pH, Precipitación y Potasio (Kruskal-Wallis H > 8,000), no por Nitrógeno/Fósforo; pureza global respecto al cultivo real = 17.50% y `Soil_Type` tampoco correlaciona — coherencia agronómica débil)*
 - [x] 5. **Producto de inteligencia agronómica** — interfaz React responsive conectada a una API FastAPI, con análisis de ecorregiones y recomendación interactiva basada en el modelo real. La interfaz Streamlit original se conserva en `app/` como referencia histórica.
+- [x] 6. **Planeación económica de la parcela** — optimizador de distribución por hectáreas con restricciones de área, presupuesto y agua; escenarios conservador, esperado y favorable; comparación manual y referencias editables de DANE SIPSA, UPRA/EVA y FAO CROPWAT.
 
 > **Hallazgo clave**: con las variables disponibles (N, P, K, temperatura, humedad, pH, precipitación), el dataset no muestra una estructura de clústeres fuerte ni agronómicamente coherente para ningún K probado — ver conclusiones de `03_clustering_model.ipynb`, `04_cluster_profiling.ipynb` y `05_dashboard.ipynb` para el detalle y las alternativas propuestas (usar solo las variables con mayor poder discriminante, incorporar `Soil_Type`/`Variety`, etc.).
+
+## Metodología económica
+
+El **Plan rentable** usa programación lineal para maximizar la utilidad neta
+esperada (`precio × rendimiento × área − costo × área`). Respeta el área,
+presupuesto, agua disponible y los límites mínimos/máximos configurados para
+cada cultivo. La afinidad ambiental aplica únicamente una penalización de
+ordenamiento de hasta 20 %; nunca se convierte en precio, costo o rendimiento.
+
+El catálogo incluido es una referencia versionada y disponible sin conexión.
+Todos sus valores son visibles y editables. DANE SIPSA aporta contexto de
+precios mayoristas, UPRA/EVA aporta contexto de producción y rendimiento, las
+fichas UPRA aportan contexto de costos, y FAO-56/CROPWAT aporta la metodología
+hídrica. Las cifras no son cotizaciones en tiempo real ni garantías de utilidad.
 
 ## Entregables esperados
 

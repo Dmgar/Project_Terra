@@ -13,6 +13,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from sklearn.decomposition import PCA
 
+from .economics_routes import router as economics_router
+
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 DATA_PATH = ROOT_DIR / "data" / "processed" / "sensor_Crop_Dataset_clustered.csv"
@@ -53,6 +55,7 @@ class RecommendationInput(BaseModel):
 
 
 app = FastAPI(title="Project Terra API", version="1.0.0")
+app.include_router(economics_router)
 
 
 def distribution(series: pd.Series) -> list[dict]:

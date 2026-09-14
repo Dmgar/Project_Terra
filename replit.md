@@ -33,4 +33,13 @@ Then restart the main workflow.
 - `src/`: clustering and profiling modules
 - `notebooks/`: analysis notebooks
 - `data/models/`: trained model and scaler artifacts
+- `data/economics/`: versioned Colombia planning references and provenance
 - `data/raw/` and `data/processed/`: local datasets excluded from Git
+
+## Economic optimizer
+
+`GET /api/economics/catalog` exposes editable Colombia/COP assumptions and
+their provenance. `POST /api/optimize` returns the constrained allocation,
+three scenarios, financial totals, active constraints, and an optional manual
+comparison. The bundled catalog is cached locally and remains available if an
+external source is temporarily unavailable.

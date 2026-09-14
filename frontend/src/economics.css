@@ -1,0 +1,105 @@
+.assumption-source {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+  color: var(--muted);
+  font: 9px var(--mono);
+}
+
+.assumption-source b {
+  color: var(--moss-dark);
+}
+
+.allocation-row.unallocated {
+  opacity: 0.72;
+}
+
+.assumption-audit {
+  border-top: 1px dashed var(--line);
+  margin-top: 12px;
+  padding-top: 10px;
+}
+
+.assumption-audit summary {
+  color: var(--moss-dark);
+  cursor: pointer;
+  font-size: 10px;
+}
+
+.assumption-audit div {
+  display: grid;
+  gap: 3px;
+  grid-template-columns: 72px 1fr;
+  margin-top: 9px;
+}
+
+.assumption-audit div b,
+.assumption-audit div span,
+.assumption-audit div small {
+  font-size: 9px;
+}
+
+.assumption-audit div span,
+.assumption-audit div small {
+  color: var(--muted);
+}
+
+.assumption-audit div small {
+  grid-column: 2;
+  line-height: 1.4;
+}
+
+.result-warnings {
+  background: #edf3e9;
+  border: 1px solid #cddcc7;
+  color: var(--ink-soft);
+  font-size: 11px;
+  line-height: 1.55;
+  margin: 22px 0;
+  padding: 15px 18px;
+}
+
+.result-warnings ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+.policy-panel {
+  align-items: end;
+  background: #edf3e9;
+  border: 1px solid #cddcc7;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  margin-bottom: 16px;
+  padding: 14px;
+}
+
+.policy-panel div > b,
+.policy-panel div > span {
+  display: block;
+  font-size: 10px;
+}
+
+.policy-panel div > span {
+  color: var(--muted);
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+.policy-panel summary,
+.policy-panel p {
+  font-size: 9px;
+}
+
+@media (max-width: 600px) {
+  .assumption-source {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .policy-panel {
+    grid-template-columns: 1fr;
+  }
+}

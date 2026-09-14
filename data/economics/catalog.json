@@ -1,0 +1,167 @@
+{
+  "snapshot_id": "colombia-economic-reference-2025.2",
+  "version": "2025.2",
+  "snapshot_created_at": "2026-09-14",
+  "country": "Colombia",
+  "currency": "COP",
+  "reference_period": "Referencia de planeación 2024-2025; no es una cotización en vivo",
+  "catalog_scope": "Los seis cultivos de Project Terra: arroz, maíz, papa, tomate, caña de azúcar y trigo.",
+  "provenance": {
+    "sources": [
+      {
+        "id": "DANE-SIPSA-MAIN",
+        "publisher": "Departamento Administrativo Nacional de Estadística (DANE)",
+        "dataset": "Sistema de Información de Precios y Abastecimiento del Sector Agropecuario (SIPSA)",
+        "url": "https://www.dane.gov.co/index.php/estadisticas-por-tema/agropecuario/sistema-de-informacion-de-precios-sipsa",
+        "role": "official SIPSA landing page and methodology"
+      },
+      {
+        "id": "DANE-SIPSA-MONTHLY",
+        "publisher": "DANE",
+        "dataset": "SIPSA monthly price and supply series",
+        "url": "https://www.dane.gov.co/files/operaciones/SIPSA/anex-SIPSAMensual-ago2026.xlsx",
+        "role": "Archivo oficial mensual descargable; contexto de precio y mercado, actualizado el 8 de septiembre de 2026",
+        "retrieved_at": "2026-09-14"
+      },
+      {
+        "id": "UPRA-EVA",
+        "publisher": "Unidad de Planificación Rural Agropecuaria (UPRA)",
+        "dataset": "Evaluaciones Agropecuarias Municipales (EVA)",
+        "url": "https://upra.gov.co/es-co/eva",
+        "role": "official production and area coverage context"
+      },
+      {
+        "id": "UPRA-PRODUCTION-COST",
+        "publisher": "UPRA",
+        "dataset": "Agricultural production systems and cost studies",
+        "url": "https://upra.gov.co/es-co/planificacion-del-ordenamiento-agropecuario/sistemas-de-informacion",
+        "role": "production-system and cost-study context"
+      },
+      {
+        "id": "FAO56-CROPWAT",
+        "publisher": "Food and Agriculture Organization of the United Nations (FAO)",
+        "dataset": "FAO Irrigation and drainage paper 56 and CROPWAT crop information",
+        "url": "https://www.fao.org/4/X0490E/X0490E00.htm",
+        "role": "crop evapotranspiration and irrigation-method context"
+      },
+      {
+        "id": "FAO-CROPWAT",
+        "publisher": "FAO",
+        "dataset": "Crop information and CROPWAT software resources",
+        "url": "https://www.fao.org/land-water/resources/tools/software/cropwat/en",
+        "role": "water planning context"
+      }
+    ],
+    "method": "Cada valor numérico del catálogo es una referencia de planeación editable. No se presenta como observación oficial exacta salvo que se identifiquen expresamente la fuente y la serie.",
+    "coverage": "Referencia nacional para Colombia; el mercado de precio es mayorista de Bogotá y no una cotización departamental. Los valores de rendimiento, costo y agua no representan todas las variedades, sistemas, temporadas, calidades, compradores o prácticas de riego.",
+    "assumptions": [
+      "Todos los valores económicos y de afinidad son referencias de planeación editables.",
+      "Antes de un uso comercial, reemplázalos con una serie local fechada de SIPSA, una observación EVA, un estudio de costos UPRA o una estimación hídrica del terreno.",
+      "La precipitación de Terra usa la escala del dataset en milímetros (20-350), no el total anual requerido por un cultivo."
+    ]
+  },
+  "crops": [
+    {
+      "id": "arroz",
+      "name": "Arroz",
+      "assumptions": {
+        "price_cop_per_kg": {"value": 1850, "source_id": "DANE-SIPSA-MONTHLY", "period": "2024-2025 baseline", "geography": "Colombia", "market": "Bogotá mayorista", "basis": "editable planning midpoint; not an exact official observation", "status": "reference_adjustable"},
+        "yield_t_per_ha": {"value": 5.5, "source_id": "UPRA-EVA", "period": "2023-2024 reference", "geography": "Colombia", "market": "irrigated commercial system", "basis": "editable planning midpoint informed by production context", "status": "reference_adjustable"},
+        "cost_cop_per_ha": {"value": 7600000, "source_id": "UPRA-PRODUCTION-COST", "period": "2024-2025 baseline", "geography": "Colombia", "market": "irrigated commercial system", "basis": "editable planning estimate; not an exact official observation", "status": "reference_adjustable"},
+        "water_m3_per_ha": {"value": 11000, "source_id": "FAO56-CROPWAT", "period": "FAO56 planning reference", "geography": "crop-system dependent", "market": "irrigated system", "basis": "editable seasonal irrigation planning estimate", "status": "reference_adjustable"},
+        "min_ha": {"value": 0, "source_id": "UPRA-PRODUCTION-COST", "period": "2025 planning baseline", "geography": "Colombia", "market": "planning constraint", "basis": "user-editable lower bound; not an observed requirement", "status": "reference_adjustable"},
+        "max_ha": {"value": 100000, "source_id": "UPRA-EVA", "period": "2025 planning baseline", "geography": "Colombia", "market": "planning constraint", "basis": "technical upper placeholder bound; replace with local land limit", "status": "reference_adjustable"}
+      },
+      "suitability": {
+        "rainfall_mm": {"min": {"value": 140, "source_id": "Terra-dataset-scale", "period": "dataset reference", "geography": "Colombia input scale", "market": "environmental score", "basis": "scaled-input suitability range, not annual rainfall", "status": "reference_adjustable"}, "max": {"value": 330, "source_id": "Terra-dataset-scale", "period": "dataset reference", "geography": "Colombia input scale", "market": "environmental score", "basis": "scaled-input suitability range, not annual rainfall", "status": "reference_adjustable"}},
+        "temperature_c": {"min": {"value": 20, "source_id": "FAO56-CROPWAT", "period": "crop planning reference", "geography": "crop-system dependent", "market": "environmental score", "basis": "editable suitability range", "status": "reference_adjustable"}, "max": {"value": 32, "source_id": "FAO56-CROPWAT", "period": "crop planning reference", "geography": "crop-system dependent", "market": "environmental score", "basis": "editable suitability range", "status": "reference_adjustable"}},
+        "ph": {"min": {"value": 5, "source_id": "FAO56-CROPWAT", "period": "crop planning reference", "geography": "crop-system dependent", "market": "environmental score", "basis": "editable suitability range", "status": "reference_adjustable"}, "max": {"value": 7.5, "source_id": "FAO56-CROPWAT", "period": "crop planning reference", "geography": "crop-system dependent", "market": "environmental score", "basis": "editable suitability range", "status": "reference_adjustable"}}
+      }
+    },
+    {
+      "id": "maiz",
+      "name": "Maíz",
+      "assumptions": {
+        "price_cop_per_kg": {"value": 1450, "source_id": "DANE-SIPSA-MONTHLY", "period": "2024-2025 baseline", "geography": "Colombia", "market": "Bogotá mayorista", "basis": "editable planning midpoint; not an exact official observation", "status": "reference_adjustable"},
+        "yield_t_per_ha": {"value": 5, "source_id": "UPRA-EVA", "period": "2023-2024 reference", "geography": "Colombia", "market": "commercial system", "basis": "editable planning midpoint informed by production context", "status": "reference_adjustable"},
+        "cost_cop_per_ha": {"value": 5200000, "source_id": "UPRA-PRODUCTION-COST", "period": "2024-2025 baseline", "geography": "Colombia", "market": "commercial system", "basis": "editable planning estimate; not an exact official observation", "status": "reference_adjustable"},
+        "water_m3_per_ha": {"value": 5000, "source_id": "FAO56-CROPWAT", "period": "FAO56 planning reference", "geography": "crop-system dependent", "market": "supplemental irrigation system", "basis": "editable seasonal irrigation planning estimate", "status": "reference_adjustable"},
+        "min_ha": {"value": 0, "source_id": "UPRA-PRODUCTION-COST", "period": "2025 planning baseline", "geography": "Colombia", "market": "planning constraint", "basis": "user-editable lower bound; not an observed requirement", "status": "reference_adjustable"},
+        "max_ha": {"value": 100000, "source_id": "UPRA-EVA", "period": "2025 planning baseline", "geography": "Colombia", "market": "planning constraint", "basis": "technical upper placeholder bound; replace with local land limit", "status": "reference_adjustable"}
+      },
+      "suitability": {
+        "rainfall_mm": {"min": {"value": 100, "source_id": "Terra-dataset-scale", "period": "dataset reference", "geography": "Colombia input scale", "market": "environmental score", "basis": "scaled-input suitability range, not annual rainfall", "status": "reference_adjustable"}, "max": {"value": 300, "source_id": "Terra-dataset-scale", "period": "dataset reference", "geography": "Colombia input scale", "market": "environmental score", "basis": "scaled-input suitability range, not annual rainfall", "status": "reference_adjustable"}},
+        "temperature_c": {"min": {"value": 18, "source_id": "FAO56-CROPWAT", "period": "crop planning reference", "geography": "crop-system dependent", "market": "environmental score", "basis": "editable suitability range", "status": "reference_adjustable"}, "max": {"value": 30, "source_id": "FAO56-CROPWAT", "period": "crop planning reference", "geography": "crop-system dependent", "market": "environmental score", "basis": "editable suitability range", "status": "reference_adjustable"}},
+        "ph": {"min": {"value": 5.5, "source_id": "FAO56-CROPWAT", "period": "crop planning reference", "geography": "crop-system dependent", "market": "environmental score", "basis": "editable suitability range", "status": "reference_adjustable"}, "max": {"value": 7.5, "source_id": "FAO56-CROPWAT", "period": "crop planning reference", "geography": "crop-system dependent", "market": "environmental score", "basis": "editable suitability range", "status": "reference_adjustable"}}
+      }
+    },
+    {
+      "id": "papa",
+      "name": "Papa",
+      "assumptions": {
+        "price_cop_per_kg": {"value": 1400, "source_id": "DANE-SIPSA-MONTHLY", "period": "2024-2025 baseline", "geography": "Colombia", "market": "Bogotá mayorista", "basis": "editable farm-realization planning value below wholesale quotation; not an exact official observation", "status": "reference_adjustable"},
+        "yield_t_per_ha": {"value": 18, "source_id": "UPRA-EVA", "period": "2023-2024 reference", "geography": "Colombia", "market": "commercial system", "basis": "editable planning midpoint informed by production context", "status": "reference_adjustable"},
+        "cost_cop_per_ha": {"value": 18000000, "source_id": "UPRA-PRODUCTION-COST", "period": "2024-2025 baseline", "geography": "Colombia", "market": "commercial system", "basis": "editable planning estimate; not an exact official observation", "status": "reference_adjustable"},
+        "water_m3_per_ha": {"value": 4500, "source_id": "FAO56-CROPWAT", "period": "FAO56 planning reference", "geography": "crop-system dependent", "market": "supplemental irrigation system", "basis": "editable seasonal irrigation planning estimate", "status": "reference_adjustable"},
+        "min_ha": {"value": 0, "source_id": "UPRA-PRODUCTION-COST", "period": "2025 planning baseline", "geography": "Colombia", "market": "planning constraint", "basis": "user-editable lower bound; not an observed requirement", "status": "reference_adjustable"},
+        "max_ha": {"value": 100000, "source_id": "UPRA-EVA", "period": "2025 planning baseline", "geography": "Colombia", "market": "planning constraint", "basis": "technical upper placeholder bound; replace with local land limit", "status": "reference_adjustable"}
+      },
+      "suitability": {
+        "rainfall_mm": {"min": {"value": 70, "source_id": "Terra-dataset-scale", "period": "dataset reference", "geography": "Colombia input scale", "market": "environmental score", "basis": "scaled-input suitability range, not annual rainfall", "status": "reference_adjustable"}, "max": {"value": 250, "source_id": "Terra-dataset-scale", "period": "dataset reference", "geography": "Colombia input scale", "market": "environmental score", "basis": "scaled-input suitability range, not annual rainfall", "status": "reference_adjustable"}},
+        "temperature_c": {"min": {"value": 10, "source_id": "FAO56-CROPWAT", "period": "crop planning reference", "geography": "crop-system dependent", "market": "environmental score", "basis": "editable suitability range", "status": "reference_adjustable"}, "max": {"value": 22, "source_id": "FAO56-CROPWAT", "period": "crop planning reference", "geography": "crop-system dependent", "market": "environmental score", "basis": "editable suitability range", "status": "reference_adjustable"}},
+        "ph": {"min": {"value": 5, "source_id": "FAO56-CROPWAT", "period": "crop planning reference", "geography": "crop-system dependent", "market": "environmental score", "basis": "editable suitability range", "status": "reference_adjustable"}, "max": {"value": 6.8, "source_id": "FAO56-CROPWAT", "period": "crop planning reference", "geography": "crop-system dependent", "market": "environmental score", "basis": "editable suitability range", "status": "reference_adjustable"}}
+      }
+    },
+    {
+      "id": "tomate",
+      "name": "Tomate",
+      "assumptions": {
+        "price_cop_per_kg": {"value": 1800, "source_id": "DANE-SIPSA-MONTHLY", "period": "2024-2025 baseline", "geography": "Colombia", "market": "Bogotá mayorista", "basis": "editable farm-realization planning value below wholesale quotation; not an exact official observation", "status": "reference_adjustable"},
+        "yield_t_per_ha": {"value": 35, "source_id": "UPRA-EVA", "period": "2023-2024 reference", "geography": "Colombia", "market": "protected/commercial system", "basis": "editable planning midpoint informed by production context", "status": "reference_adjustable"},
+        "cost_cop_per_ha": {"value": 38000000, "source_id": "UPRA-PRODUCTION-COST", "period": "2024-2025 baseline", "geography": "Colombia", "market": "protected/commercial system", "basis": "editable planning estimate; not an exact official observation", "status": "reference_adjustable"},
+        "water_m3_per_ha": {"value": 4500, "source_id": "FAO56-CROPWAT", "period": "FAO56 planning reference", "geography": "crop-system dependent", "market": "irrigated system", "basis": "editable seasonal irrigation planning estimate", "status": "reference_adjustable"},
+        "min_ha": {"value": 0, "source_id": "UPRA-PRODUCTION-COST", "period": "2025 planning baseline", "geography": "Colombia", "market": "planning constraint", "basis": "user-editable lower bound; not an observed requirement", "status": "reference_adjustable"},
+        "max_ha": {"value": 100000, "source_id": "UPRA-EVA", "period": "2025 planning baseline", "geography": "Colombia", "market": "planning constraint", "basis": "technical upper placeholder bound; replace with local land limit", "status": "reference_adjustable"}
+      },
+      "suitability": {
+        "rainfall_mm": {"min": {"value": 80, "source_id": "Terra-dataset-scale", "period": "dataset reference", "geography": "Colombia input scale", "market": "environmental score", "basis": "scaled-input suitability range, not annual rainfall", "status": "reference_adjustable"}, "max": {"value": 260, "source_id": "Terra-dataset-scale", "period": "dataset reference", "geography": "Colombia input scale", "market": "environmental score", "basis": "scaled-input suitability range, not annual rainfall", "status": "reference_adjustable"}},
+        "temperature_c": {"min": {"value": 18, "source_id": "FAO56-CROPWAT", "period": "crop planning reference", "geography": "crop-system dependent", "market": "environmental score", "basis": "editable suitability range", "status": "reference_adjustable"}, "max": {"value": 30, "source_id": "FAO56-CROPWAT", "period": "crop planning reference", "geography": "crop-system dependent", "market": "environmental score", "basis": "editable suitability range", "status": "reference_adjustable"}},
+        "ph": {"min": {"value": 5.5, "source_id": "FAO56-CROPWAT", "period": "crop planning reference", "geography": "crop-system dependent", "market": "environmental score", "basis": "editable suitability range", "status": "reference_adjustable"}, "max": {"value": 7, "source_id": "FAO56-CROPWAT", "period": "crop planning reference", "geography": "crop-system dependent", "market": "environmental score", "basis": "editable suitability range", "status": "reference_adjustable"}}
+      }
+    },
+    {
+      "id": "cana_de_azucar",
+      "name": "Caña de azúcar",
+      "assumptions": {
+        "price_cop_per_kg": {"value": 180, "source_id": "UPRA-PRODUCTION-COST", "period": "2024-2025 baseline", "geography": "Colombia", "market": "regional agroindustrial buyer", "basis": "editable raw-cane planning value; never substitute sugar or panela wholesale price", "status": "reference_adjustable"},
+        "yield_t_per_ha": {"value": 90, "source_id": "UPRA-EVA", "period": "2023-2024 reference", "geography": "Colombia", "market": "agroindustrial system", "basis": "editable planning midpoint informed by production context", "status": "reference_adjustable"},
+        "cost_cop_per_ha": {"value": 12500000, "source_id": "UPRA-PRODUCTION-COST", "period": "2024-2025 baseline", "geography": "Colombia", "market": "agroindustrial system", "basis": "editable planning estimate; not an exact official observation", "status": "reference_adjustable"},
+        "water_m3_per_ha": {"value": 9000, "source_id": "FAO56-CROPWAT", "period": "FAO56 planning reference", "geography": "crop-system dependent", "market": "irrigated system", "basis": "editable seasonal irrigation planning estimate", "status": "reference_adjustable"},
+        "min_ha": {"value": 0, "source_id": "UPRA-PRODUCTION-COST", "period": "2025 planning baseline", "geography": "Colombia", "market": "planning constraint", "basis": "user-editable lower bound; not an observed requirement", "status": "reference_adjustable"},
+        "max_ha": {"value": 100000, "source_id": "UPRA-EVA", "period": "2025 planning baseline", "geography": "Colombia", "market": "planning constraint", "basis": "technical upper placeholder bound; replace with local land limit", "status": "reference_adjustable"}
+      },
+      "suitability": {
+        "rainfall_mm": {"min": {"value": 160, "source_id": "Terra-dataset-scale", "period": "dataset reference", "geography": "Colombia input scale", "market": "environmental score", "basis": "scaled-input suitability range, not annual rainfall", "status": "reference_adjustable"}, "max": {"value": 350, "source_id": "Terra-dataset-scale", "period": "dataset reference", "geography": "Colombia input scale", "market": "environmental score", "basis": "scaled-input suitability range, not annual rainfall", "status": "reference_adjustable"}},
+        "temperature_c": {"min": {"value": 20, "source_id": "FAO56-CROPWAT", "period": "crop planning reference", "geography": "crop-system dependent", "market": "environmental score", "basis": "editable suitability range", "status": "reference_adjustable"}, "max": {"value": 32, "source_id": "FAO56-CROPWAT", "period": "crop planning reference", "geography": "crop-system dependent", "market": "environmental score", "basis": "editable suitability range", "status": "reference_adjustable"}},
+        "ph": {"min": {"value": 5, "source_id": "FAO56-CROPWAT", "period": "crop planning reference", "geography": "crop-system dependent", "market": "environmental score", "basis": "editable suitability range", "status": "reference_adjustable"}, "max": {"value": 7.5, "source_id": "FAO56-CROPWAT", "period": "crop planning reference", "geography": "crop-system dependent", "market": "environmental score", "basis": "editable suitability range", "status": "reference_adjustable"}}
+      }
+    },
+    {
+      "id": "trigo",
+      "name": "Trigo",
+      "assumptions": {
+        "price_cop_per_kg": {"value": 1900, "source_id": "DANE-SIPSA-MONTHLY", "period": "2024-2025 baseline", "geography": "Colombia", "market": "Bogotá mayorista", "basis": "editable planning midpoint; not an exact official observation", "status": "reference_adjustable"},
+        "yield_t_per_ha": {"value": 3.5, "source_id": "UPRA-EVA", "period": "2023-2024 reference", "geography": "Colombia", "market": "commercial system", "basis": "editable planning midpoint informed by production context", "status": "reference_adjustable"},
+        "cost_cop_per_ha": {"value": 6500000, "source_id": "UPRA-PRODUCTION-COST", "period": "2024-2025 baseline", "geography": "Colombia", "market": "commercial system", "basis": "editable planning estimate; not an exact official observation", "status": "reference_adjustable"},
+        "water_m3_per_ha": {"value": 3500, "source_id": "FAO56-CROPWAT", "period": "FAO56 planning reference", "geography": "crop-system dependent", "market": "supplemental irrigation system", "basis": "editable seasonal irrigation planning estimate", "status": "reference_adjustable"},
+        "min_ha": {"value": 0, "source_id": "UPRA-PRODUCTION-COST", "period": "2025 planning baseline", "geography": "Colombia", "market": "planning constraint", "basis": "user-editable lower bound; not an observed requirement", "status": "reference_adjustable"},
+        "max_ha": {"value": 100000, "source_id": "UPRA-EVA", "period": "2025 planning baseline", "geography": "Colombia", "market": "planning constraint", "basis": "technical upper placeholder bound; replace with local land limit", "status": "reference_adjustable"}
+      },
+      "suitability": {
+        "rainfall_mm": {"min": {"value": 40, "source_id": "Terra-dataset-scale", "period": "dataset reference", "geography": "Colombia input scale", "market": "environmental score", "basis": "scaled-input suitability range, not annual rainfall", "status": "reference_adjustable"}, "max": {"value": 180, "source_id": "Terra-dataset-scale", "period": "dataset reference", "geography": "Colombia input scale", "market": "environmental score", "basis": "scaled-input suitability range, not annual rainfall", "status": "reference_adjustable"}},
+        "temperature_c": {"min": {"value": 10, "source_id": "FAO56-CROPWAT", "period": "crop planning reference", "geography": "crop-system dependent", "market": "environmental score", "basis": "editable suitability range", "status": "reference_adjustable"}, "max": {"value": 24, "source_id": "FAO56-CROPWAT", "period": "crop planning reference", "geography": "crop-system dependent", "market": "environmental score", "basis": "editable suitability range", "status": "reference_adjustable"}},
+        "ph": {"min": {"value": 5.5, "source_id": "FAO56-CROPWAT", "period": "crop planning reference", "geography": "crop-system dependent", "market": "environmental score", "basis": "editable suitability range", "status": "reference_adjustable"}, "max": {"value": 7.5, "source_id": "FAO56-CROPWAT", "period": "crop planning reference", "geography": "crop-system dependent", "market": "environmental score", "basis": "editable suitability range", "status": "reference_adjustable"}}
+      }
+    }
+  ]
+}

@@ -1,17 +1,16 @@
 # Project Terra on Replit
 
-## Run the app
+## Run the product
 
-The main Replit workflow runs the Streamlit application with:
+The main Replit workflow builds the React frontend and starts the FastAPI server:
 
 ```bash
-python -m streamlit run app/main.py --server.address 0.0.0.0 --server.port 5000 --server.headless true
+cd frontend && npm run build && cd .. && python -m uvicorn api.server:app --host 0.0.0.0 --port 5000
 ```
 
-## Data required for the complete demo
+## Data required for the complete product
 
-The landing page opens without the dataset, but the Overview, Explorer, and
-Recommender pages require the original CSV at:
+The API requires the original CSV or the processed clustered CSV:
 
 ```text
 data/raw/sensor_Crop_Dataset.csv
@@ -28,7 +27,9 @@ Then restart the main workflow.
 
 ## Project structure
 
-- `app/`: Streamlit application and pages
+- `frontend/`: React product interface
+- `api/`: FastAPI endpoints and static frontend serving
+- `app/`: legacy Streamlit interface
 - `src/`: clustering and profiling modules
 - `notebooks/`: analysis notebooks
 - `data/models/`: trained model and scaler artifacts

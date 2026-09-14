@@ -54,10 +54,9 @@ Fuente: [Crops NPK Data Set — Kaggle](https://www.kaggle.com/datasets/javakhan
 
 ```
 project-terra/
-├── app/                # Aplicación interactiva de Streamlit (Demo para Feria)
-│   ├── main.py         # Punto de entrada y métricas globales
-│   ├── pages/          # 01 Overview, 02 Explorer, 03 Recommender (Simulador)
-│   └── utils.py        # Carga de datos cacheados y modelos
+├── api/                # API FastAPI para datos, regiones y predicciones
+├── frontend/           # Producto web React + Vite
+├── app/                # Interfaz Streamlit heredada
 ├── data/
 │   ├── raw/            # Dataset original (sensor_Crop_Dataset.csv)
 │   ├── processed/      # Dataset escalado y enriquecido con clústeres
@@ -80,10 +79,11 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### Ejecutar la Aplicación Interactiva (Feria)
+### Ejecutar el producto web
 
 ```bash
-python -m streamlit run app/main.py
+cd frontend && npm install && npm run build
+cd .. && python -m uvicorn api.server:app --host 0.0.0.0 --port 5000
 ```
 
 Descarga el dataset desde Kaggle y colócalo en `data/raw/sensor_Crop_Dataset.csv`.
@@ -96,14 +96,14 @@ flowchart TD
     B --> C[Modelado No Supervisado<br>K-Means / Jerárquico]
     C --> D[Visualización Proyectada<br>PCA 2D Interactivo]
     D --> E[Análisis Diferencial & Validación<br>Radar Charts / Kruskal-Wallis]
-    E --> F[Tablero & Simulador Streamlit<br>Recomendación en Vivo]
+    E --> F[Producto web React + FastAPI<br>Recomendación interactiva]
 ```
 
 - [x] 1. **Ingeniería de datos y EDA avanzado** — limpieza, correlaciones, pairplots, PCA preliminar. *(Completado, [`01_eda_crops_npk.ipynb`](notebooks/01_eda_crops_npk.ipynb))*
 - [x] 2. **Determinación del número de clústeres (K)** — codo (inercia), silueta y Davies-Bouldin. *(Completado, [`03_clustering_model.ipynb`](notebooks/03_clustering_model.ipynb): ninguna métrica marca un K claramente óptimo — silueta baja en todo el rango (0.09–0.11) y Davies-Bouldin decrece de forma monótona; se fijó K=5 por interpretabilidad, tan arbitrario como cualquier otro K en ese rango)*
 - [x] 3. **Ejecución del clustering multivariado** — K-Means y Jerárquico sobre features escalados (PCA solo para visualización). *(Completado, [`03_clustering_model.ipynb`](notebooks/03_clustering_model.ipynb) + [`src/run_pipeline.py`](src/run_pipeline.py): K-Means (K=5) y Jerárquico Aglomerativo entrenados; modelo y scaler serializados en `data/models/`)*
 - [x] 4. **Análisis diferencial y validación** — perfil/firma ambiental (radar charts), análisis de `Soil_Type`, pureza y Kruskal-Wallis. *(Completado, [`04_cluster_profiling.ipynb`](notebooks/04_cluster_profiling.ipynb): con K=5 los clústeres se explican sobre todo por Humedad, pH, Precipitación y Potasio (Kruskal-Wallis H > 8,000), no por Nitrógeno/Fósforo; pureza global respecto al cultivo real = 17.50% y `Soil_Type` tampoco correlaciona — coherencia agronómica débil)*
-- [x] 5. **Tablero interpretativo y simulador interactivo** — aplicación Streamlit multiplataforma lista para feria (`app/`), complementada por [`05_dashboard.ipynb`](notebooks/05_dashboard.ipynb) como informe estático reproducible con el mismo modelo/esquema. *(Completado)*
+- [x] 5. **Producto de inteligencia agronómica** — interfaz React responsive conectada a una API FastAPI, con análisis de ecorregiones y recomendación interactiva basada en el modelo real. La interfaz Streamlit original se conserva en `app/` como referencia histórica.
 
 > **Hallazgo clave**: con las variables disponibles (N, P, K, temperatura, humedad, pH, precipitación), el dataset no muestra una estructura de clústeres fuerte ni agronómicamente coherente para ningún K probado — ver conclusiones de `03_clustering_model.ipynb`, `04_cluster_profiling.ipynb` y `05_dashboard.ipynb` para el detalle y las alternativas propuestas (usar solo las variables con mayor poder discriminante, incorporar `Soil_Type`/`Variety`, etc.).
 

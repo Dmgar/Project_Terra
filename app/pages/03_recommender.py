@@ -14,7 +14,7 @@ from app.utils import load_dataset, get_model_and_scaler, FEATURE_COLS, FEATURE_
 
 st.set_page_config(page_title="Simulador & Recomendador — Project Terra", page_icon="🧪", layout="wide")
 
-st.title("🧪 Simulador Agronómico en Vivo (Feria)")
+st.title("🧪 Recomendador Agronómico")
 st.write("""
 **Prueba el sistema en tiempo real:** Ajusta las características de suelo y clima con los deslizadores o elige un escenario predeterminado.
 El modelo asignará tu terreno a una **Ecorregión Funcional** y te presentará los cultivos con mayor idoneidad agronómica.
@@ -27,7 +27,7 @@ except Exception as e:
     st.error(f"Error cargando el modelo: {e}")
     st.stop()
 
-# Presets para acelerar la demostración en la feria
+# Perfiles de referencia para iniciar un análisis
 presets = {
     "Personalizado": None,
     "Zona Húmeda y Lluviosa (Tropical)": {
@@ -50,7 +50,7 @@ presets = {
 
 col_preset, _ = st.columns([1, 1])
 with col_preset:
-    selected_preset = st.selectbox("⚡ Cargar escenario típico de demostración:", options=list(presets.keys()))
+    selected_preset = st.selectbox("⚡ Cargar perfil de referencia:", options=list(presets.keys()))
 
 active_values = presets[selected_preset] if presets[selected_preset] is not None else {}
 

@@ -4,6 +4,7 @@ venv/
 __pycache__/
 *.py[cod]
 *$py.class
+.pytest_cache/
 
 # Jupyter
 .ipynb_checkpoints/
@@ -13,3 +14,7 @@ data/raw/*
 !data/raw/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
+
+# Frontend
+frontend/node_modules/
+frontend/dist/

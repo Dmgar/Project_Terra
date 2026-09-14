@@ -17,7 +17,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Estilos CSS personalizados para presentación en feria
+# Estilos CSS de la interfaz Streamlit heredada
 st.markdown("""
 <style>
     .main-title {
@@ -100,7 +100,7 @@ with c_left:
 
 with c_right:
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown("### 🧭 Guía para la Feria / Demostración")
+    st.markdown("### 🧭 Explora Project Terra")
     st.write("""
     Usa el menú lateral para explorar los diferentes módulos de la aplicación:
     
@@ -115,4 +115,4 @@ with c_right:
         sample_cols = [c for c in ["Crop", "Soil_Type", "Nitrogen", "pH_Value", "Rainfall"] if c in df.columns]
         st.dataframe(df[sample_cols].head(5), width="stretch")
 
-st.info("💡 **Consejo para la presentación:** Dirígete a la pestaña **03 Recommender** para interactuar directamente con el simulador ante los evaluadores.")
+st.info("Dirígete a **03 Recommender** para analizar las condiciones de una parcela.")

@@ -44,9 +44,11 @@ Dataset tipo *Crop Recommendation* con variables predictoras N, P, K, temperatur
 | **Rainfall** | Precipitación acumulada | mm |
 | **Label** | Tipo de cultivo recomendado (Validación) | Categórica |
 
-Fuente: [Crop Recommendation Dataset — Kaggle](https://www.kaggle.com/datasets/atharvaingle/crop-recommendation-dataset)
+Fuente: [Crops NPK Data Set — Kaggle](https://www.kaggle.com/datasets/javakhan/crops-npk-data-set)
 
-> El CSV original no se versiona en este repo (ver `.gitignore`). Descárgalo y colócalo en `data/raw/`.
+> El CSV original no se versiona en este repo (ver `.gitignore`). Descarga
+> `sensor_Crop_Dataset (1).csv`, renómbralo como `sensor_Crop_Dataset.csv` y
+> colócalo en `data/raw/`.
 
 ## Estructura del repositorio
 

@@ -59,13 +59,12 @@ def get_model_and_scaler(k_clusters: int = 5):
     kmeans_path = models_dir / f"kmeans_k{k_clusters}.joblib"
     scaler_path = models_dir / "scaler.joblib"
 
-    raw_path = ROOT_DIR / "data" / "raw" / "sensor_Crop_Dataset.csv"
-    df_raw = pd.read_csv(raw_path)
-
     if kmeans_path.exists() and scaler_path.exists():
         scaler = joblib.load(scaler_path)
         kmeans = joblib.load(kmeans_path)
     else:
+        raw_path = ROOT_DIR / "data" / "raw" / "sensor_Crop_Dataset.csv"
+        df_raw = pd.read_csv(raw_path)
         scaler = StandardScaler()
         X_scaled = scaler.fit_transform(df_raw[FEATURE_COLS])
         

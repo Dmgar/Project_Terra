@@ -77,7 +77,7 @@ with c4:
                          value=float(active_values.get("Rainfall", 130.0)), step=5.0)
     st.write("")
     st.write("")
-    run_btn = st.button("🚀 Analizar Terreno", type="primary", use_container_width=True)
+    run_btn = st.button("🚀 Analizar Terreno", type="primary", width="stretch")
 
 user_input = {
     "Nitrogen": val_n,
@@ -175,4 +175,4 @@ if run_btn or selected_preset != "Personalizado":
             template="plotly_white",
             margin=dict(l=30, r=30, t=50, b=30)
         )
-        st.plotly_chart(fig_sim_radar, use_container_width=True)
+        st.plotly_chart(fig_sim_radar, width="stretch")

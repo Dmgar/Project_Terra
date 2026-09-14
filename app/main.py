@@ -113,6 +113,6 @@ with c_right:
     if df is not None:
         st.markdown("#### Vista Previa de Muestra Agronómica")
         sample_cols = [c for c in ["Crop", "Soil_Type", "Nitrogen", "pH_Value", "Rainfall"] if c in df.columns]
-        st.dataframe(df[sample_cols].head(5), use_container_width=True)
+        st.dataframe(df[sample_cols].head(5), width="stretch")
 
 st.info("💡 **Consejo para la presentación:** Dirígete a la pestaña **03 Recommender** para interactuar directamente con el simulador ante los evaluadores.")

@@ -51,7 +51,7 @@ with tab1:
                 text="Frecuencia"
             )
             fig_crop.update_layout(yaxis={'categoryorder': 'total ascending'}, template="plotly_white")
-            st.plotly_chart(fig_crop, use_container_width=True)
+            st.plotly_chart(fig_crop, width="stretch")
 
     with col_b:
         st.subheader("Distribución por Tipo de Suelo")
@@ -66,7 +66,7 @@ with tab1:
                 hole=0.4
             )
             fig_soil.update_layout(template="plotly_white")
-            st.plotly_chart(fig_soil, use_container_width=True)
+            st.plotly_chart(fig_soil, width="stretch")
 
     if "Crop" in df.columns and "Soil_Type" in df.columns:
         st.subheader("Intersección Cultivo vs. Tipo de Suelo")
@@ -78,7 +78,7 @@ with tab1:
             color_continuous_scale="Greens",
             labels=dict(x="Tipo de Suelo", y="Cultivo", color="Muestras")
         )
-        st.plotly_chart(fig_heat, use_container_width=True)
+        st.plotly_chart(fig_heat, width="stretch")
 
 with tab2:
     st.subheader("Inspección de Variables Ambientales")
@@ -99,14 +99,14 @@ with tab2:
             template="plotly_white",
             title=f"Histograma y Boxplot: {FEATURE_INFO[selected_feature]['name']}"
         )
-        st.plotly_chart(fig_hist, use_container_width=True)
+        st.plotly_chart(fig_hist, width="stretch")
 
     with f_col2:
         st.write("#### Estadísticos Descriptivos")
         stats_df = df[FEATURE_COLS].describe().T[["mean", "std", "min", "50%", "max"]]
         stats_df.columns = ["Media", "Desv. Estándar", "Mínimo", "Mediana", "Máximo"]
-        st.dataframe(stats_df.style.format("{:.2f}"), use_container_width=True)
+        st.dataframe(stats_df.style.format("{:.2f}"), width="stretch")
 
 with tab3:
     st.subheader("Explorador de Registros")
-    st.dataframe(df.head(100), use_container_width=True)
+    st.dataframe(df.head(100), width="stretch")

@@ -43,11 +43,11 @@ with tab_radar:
     st.write("Cada polígono representa el perfil agronómico medio de la ecorregión en escala normalizada (0 a 1). Pasa el cursor sobre cada vértice para ver el valor real en sus unidades físicas.")
     
     fig_radar = create_radar_chart(df, cluster_col=cluster_col, feature_cols=FEATURE_COLS)
-    st.plotly_chart(fig_radar, use_container_width=True)
+    st.plotly_chart(fig_radar, width="stretch")
 
     st.write("#### Medias Agronómicas Reales por Clúster")
     cluster_means = df.groupby(cluster_col)[FEATURE_COLS].mean().round(2)
-    st.dataframe(cluster_means, use_container_width=True)
+    st.dataframe(cluster_means, width="stretch")
 
 with tab_pca:
     st.subheader("Visualización Espacial (PCA 2D)")
@@ -64,7 +64,7 @@ with tab_pca:
         sample_size=2500,
         title="Distribución de Clústeres en el Espacio de Componentes Principales"
     )
-    st.plotly_chart(fig_pca, use_container_width=True)
+    st.plotly_chart(fig_pca, width="stretch")
 
 with tab_detail:
     clusters = sorted(df[cluster_col].unique())
@@ -98,7 +98,7 @@ with tab_detail:
                 color_continuous_scale="Teal"
             )
             fig_crop_dist.update_layout(yaxis={'categoryorder': 'total ascending'}, template="plotly_white")
-            st.plotly_chart(fig_crop_dist, use_container_width=True)
+            st.plotly_chart(fig_crop_dist, width="stretch")
 
     with d_col2:
         st.write("#### Tipos de suelo en esta ecorregión")
@@ -112,4 +112,4 @@ with tab_detail:
                 color_discrete_sequence=px.colors.qualitative.Pastel
             )
             fig_soil_dist.update_layout(template="plotly_white")
-            st.plotly_chart(fig_soil_dist, use_container_width=True)
+            st.plotly_chart(fig_soil_dist, width="stretch")

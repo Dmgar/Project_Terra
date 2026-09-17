@@ -10,24 +10,46 @@ ROOT_DIR = Path(__file__).resolve().parent.parent.parent
 if str(ROOT_DIR) not in sys.path:
     sys.path.append(str(ROOT_DIR))
 
-from app.utils import load_dataset, get_model_and_scaler, FEATURE_COLS, FEATURE_INFO
+from app.utils import load_dataset, get_model_and_scaler, get_gmm_model, FEATURE_COLS, FEATURE_INFO
 
 st.set_page_config(page_title="Simulador & Recomendador — Project Terra", page_icon="🧪", layout="wide")
 
-st.title("🧪 Recomendador Agronómico")
+st.title("🧪 Simulador Agronómico en Vivo (Feria)")
 st.write("""
 **Prueba el sistema en tiempo real:** Ajusta las características de suelo y clima con los deslizadores o elige un escenario predeterminado.
 El modelo asignará tu terreno a una **Ecorregión Funcional** y te presentará los cultivos con mayor idoneidad agronómica.
 """)
 
+# ---------------------------------------------------------------------------
+# Selector de modelo
+# ---------------------------------------------------------------------------
+with st.sidebar:
+    st.markdown("### ⚙️ Configuración del Modelo")
+    model_choice = st.radio(
+        "Algoritmo de Clustering:",
+        options=["K-Means", "GMM (Gaussian Mixture)"],
+        index=0,
+        help=(
+            "**K-Means**: Asignación determinista. Más rápido e interpretable.\n\n"
+            "**GMM**: Asignación probabilística. Muestra la probabilidad de pertenencia "
+            "a cada ecorregión (útil para zonas de transición)."
+        ),
+    )
+    use_gmm = model_choice == "GMM (Gaussian Mixture)"
+    st.caption(
+        "🟢 Activo: **GMM**" if use_gmm else "🔵 Activo: **K-Means**"
+    )
+
 try:
     df = load_dataset()
     kmeans_model, scaler = get_model_and_scaler(k_clusters=5)
+    if use_gmm:
+        gmm_model, _ = get_gmm_model(k_clusters=5, covariance_type="full")
 except Exception as e:
     st.error(f"Error cargando el modelo: {e}")
     st.stop()
 
-# Perfiles de referencia para iniciar un análisis
+# Presets para acelerar la demostración en la feria
 presets = {
     "Personalizado": None,
     "Zona Húmeda y Lluviosa (Tropical)": {
@@ -50,7 +72,7 @@ presets = {
 
 col_preset, _ = st.columns([1, 1])
 with col_preset:
-    selected_preset = st.selectbox("⚡ Cargar perfil de referencia:", options=list(presets.keys()))
+    selected_preset = st.selectbox("⚡ Cargar escenario típico de demostración:", options=list(presets.keys()))
 
 active_values = presets[selected_preset] if presets[selected_preset] is not None else {}
 
@@ -77,7 +99,7 @@ with c4:
                          value=float(active_values.get("Rainfall", 130.0)), step=5.0)
     st.write("")
     st.write("")
-    run_btn = st.button("🚀 Analizar Terreno", type="primary", width="stretch")
+    run_btn = st.button("🚀 Analizar Terreno", type="primary", use_container_width=True)
 
 user_input = {
     "Nitrogen": val_n,
@@ -94,14 +116,25 @@ if run_btn or selected_preset != "Personalizado":
     input_vector = np.array([[user_input[col] for col in FEATURE_COLS]])
     input_scaled = scaler.transform(input_vector)
 
-    predicted_cluster = int(kmeans_model.predict(input_scaled)[0])
+    # -----------------------------------------------------------------------
+    # Predicción según modelo activo
+    # -----------------------------------------------------------------------
+    if use_gmm:
+        predicted_cluster = int(gmm_model.predict(input_scaled)[0])
+        soft_probs = gmm_model.predict_proba(input_scaled)[0]  # shape (k,)
+        cluster_col = "gmm_cluster" if "gmm_cluster" in df.columns else "kmeans_cluster"
+    else:
+        predicted_cluster = int(kmeans_model.predict(input_scaled)[0])
+        soft_probs = None
+        cluster_col = "kmeans_cluster"
 
     st.markdown("---")
-    st.success(f"### 📍 Resultado: Tu terreno pertenece a la **Ecorregión {predicted_cluster}**")
+    model_tag = "🟢 GMM" if use_gmm else "🔵 K-Means"
+    st.success(f"### 📍 Resultado [{model_tag}]: Tu terreno pertenece a la **Ecorregión {predicted_cluster}**")
 
     # Muestras históricas del clúster
-    cluster_df = df[df["kmeans_cluster"] == predicted_cluster]
-    centroid_real = df.groupby("kmeans_cluster")[FEATURE_COLS].mean().loc[predicted_cluster]
+    cluster_df = df[df[cluster_col] == predicted_cluster] if cluster_col in df.columns else df[df["kmeans_cluster"] == predicted_cluster]
+    centroid_real = df.groupby(cluster_col if cluster_col in df.columns else "kmeans_cluster")[FEATURE_COLS].mean().loc[predicted_cluster]
 
     res_col1, res_col2 = st.columns([1, 1])
 
@@ -115,6 +148,31 @@ if run_btn or selected_preset != "Personalizado":
                 badge_color = "🥇" if rank == 1 else ("🥈" if rank == 2 else "🥉")
                 st.markdown(f"**{badge_color} {crop}** — Afinidad del grupo: `{pct * 100:.1f}%`")
                 st.progress(float(pct))
+
+        # Probabilidades GMM — exclusivo del modo GMM
+        if use_gmm and soft_probs is not None:
+            st.markdown("#### 🎲 Probabilidad de Pertenencia por Ecorregión (GMM)")
+            st.caption("Una barra alta indica asignación clara; varias barras similares indican zona de transición.")
+            n_components = len(soft_probs)
+            fig_prob = go.Figure(go.Bar(
+                x=[f"Ecorregión {i}" for i in range(n_components)],
+                y=soft_probs,
+                marker_color=[
+                    "#2d6a4f" if i == predicted_cluster else "#a8dadc"
+                    for i in range(n_components)
+                ],
+                text=[f"{p*100:.1f}%" for p in soft_probs],
+                textposition="outside",
+            ))
+            fig_prob.update_layout(
+                yaxis=dict(range=[0, 1], title="Probabilidad"),
+                xaxis_title="Ecorregión",
+                title="Distribución de Probabilidad GMM",
+                template="plotly_white",
+                height=300,
+                margin=dict(l=20, r=20, t=50, b=20),
+            )
+            st.plotly_chart(fig_prob, use_container_width=True)
 
         st.markdown("#### 💡 Diagnóstico y Recomendaciones de Manejo")
         advice = []
@@ -175,4 +233,4 @@ if run_btn or selected_preset != "Personalizado":
             template="plotly_white",
             margin=dict(l=30, r=30, t=50, b=30)
         )
-        st.plotly_chart(fig_sim_radar, width="stretch")
+        st.plotly_chart(fig_sim_radar, use_container_width=True)

@@ -11,13 +11,14 @@ import streamlit as st
 import joblib
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
+from sklearn.mixture import GaussianMixture
 
 # Agregar directorio raíz al path para importar src
 ROOT_DIR = Path(__file__).resolve().parent.parent
 if str(ROOT_DIR) not in sys.path:
     sys.path.append(str(ROOT_DIR))
 
-from src.clustering import run_kmeans
+from src.clustering import run_kmeans, run_gmm
 from src.profiling import create_radar_chart, plot_pca_clusters, contingency_table
 
 FEATURE_COLS = ["Nitrogen", "Phosphorus", "Potassium", "Temperature", "Humidity", "pH_Value", "Rainfall"]
@@ -55,7 +56,7 @@ def get_model_and_scaler(k_clusters: int = 5):
     """
     models_dir = ROOT_DIR / "data" / "models"
     models_dir.mkdir(parents=True, exist_ok=True)
-    
+
     kmeans_path = models_dir / f"kmeans_k{k_clusters}.joblib"
     scaler_path = models_dir / "scaler.joblib"
 
@@ -67,10 +68,45 @@ def get_model_and_scaler(k_clusters: int = 5):
         df_raw = pd.read_csv(raw_path)
         scaler = StandardScaler()
         X_scaled = scaler.fit_transform(df_raw[FEATURE_COLS])
-        
+
         _, kmeans = run_kmeans(X_scaled, k=k_clusters, random_state=42)
-        
+
         joblib.dump(scaler, scaler_path)
         joblib.dump(kmeans, kmeans_path)
 
     return kmeans, scaler
+
+
+@st.cache_resource
+def get_gmm_model(k_clusters: int = 5, covariance_type: str = "full"):
+    """
+    Carga o entrena el modelo GMM y el StandardScaler.
+
+    Args:
+        k_clusters: Número de componentes GMM.
+        covariance_type: Tipo de estructura de covarianza ('full', 'diag', etc.).
+
+    Returns:
+        Tupla (gmm_model, scaler).
+    """
+    models_dir = ROOT_DIR / "data" / "models"
+    models_dir.mkdir(parents=True, exist_ok=True)
+
+    gmm_path = models_dir / f"gmm_k{k_clusters}_{covariance_type}.joblib"
+    scaler_path = models_dir / "scaler.joblib"
+
+    if gmm_path.exists() and scaler_path.exists():
+        scaler = joblib.load(scaler_path)
+        gmm = joblib.load(gmm_path)
+    else:
+        raw_path = ROOT_DIR / "data" / "raw" / "sensor_Crop_Dataset.csv"
+        df_raw = pd.read_csv(raw_path)
+        scaler = StandardScaler()
+        X_scaled = scaler.fit_transform(df_raw[FEATURE_COLS])
+
+        _, _, gmm = run_gmm(X_scaled, k=k_clusters, covariance_type=covariance_type, random_state=42)
+
+        joblib.dump(scaler, scaler_path)
+        joblib.dump(gmm, gmm_path)
+
+    return gmm, scaler

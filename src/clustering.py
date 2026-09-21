@@ -6,12 +6,15 @@ en Project Terra.
 from typing import Dict, Any, List, Literal, Tuple, Optional, Sequence
 import numpy as np
 import pandas as pd
-from sklearn.cluster import KMeans, AgglomerativeClustering
+from sklearn.cluster import KMeans, AgglomerativeClustering, HDBSCAN
 from sklearn.mixture import GaussianMixture
+from sklearn.manifold import TSNE
 from sklearn.metrics import silhouette_score, davies_bouldin_score, calinski_harabasz_score
 from sklearn.metrics.cluster import contingency_matrix
 from scipy.cluster.hierarchy import linkage, dendrogram
 import matplotlib.pyplot as plt
+import umap
+
 
 
 def find_optimal_k(
@@ -323,3 +326,84 @@ def compare_models(
     df = pd.DataFrame(results).T
     df.index.name = "model"
     return df.round(4)
+
+
+# ---------------------------------------------------------------------------
+# Reducción de Dimensionalidad (t-SNE, UMAP) y Clustering basado en Densidad (HDBSCAN)
+# ---------------------------------------------------------------------------
+
+
+def run_tsne_projection(
+    X: np.ndarray,
+    n_components: int = 2,
+    perplexity: float = 30.0,
+    random_state: int = 42,
+) -> np.ndarray:
+    """
+    Aplica t-SNE para reducir la dimensionalidad de los datos.
+
+    Args:
+        X: Matriz de características escaladas.
+        n_components: Número de componentes finales.
+        perplexity: Perplejidad para el algoritmo t-SNE.
+        random_state: Semilla aleatoria.
+
+    Returns:
+        Matriz con los datos proyectados en el espacio t-SNE.
+    """
+    tsne = TSNE(n_components=n_components, perplexity=perplexity, random_state=random_state, init="pca", learning_rate="auto")
+    X_tsne = tsne.fit_transform(X)
+    return X_tsne
+
+
+def run_umap_projection(
+    X: np.ndarray,
+    n_components: int = 2,
+    n_neighbors: int = 15,
+    min_dist: float = 0.1,
+    random_state: int = 42,
+) -> np.ndarray:
+    """
+    Aplica UMAP para reducir la dimensionalidad de los datos.
+
+    Args:
+        X: Matriz de características escaladas.
+        n_components: Número de dimensiones finales.
+        n_neighbors: Tamaño del vecindario local para UMAP.
+        min_dist: Distancia mínima entre puntos en el espacio comprimido.
+        random_state: Semilla aleatoria.
+
+    Returns:
+        Matriz con los datos proyectados en el espacio UMAP.
+    """
+    reducer = umap.UMAP(
+        n_components=n_components,
+        n_neighbors=n_neighbors,
+        min_dist=min_dist,
+        random_state=random_state
+    )
+    X_umap = reducer.fit_transform(X)
+    return X_umap
+
+
+def run_hdbscan(
+    X: np.ndarray,
+    min_cluster_size: int = 15,
+    min_samples: Optional[int] = None,
+) -> Tuple[np.ndarray, HDBSCAN]:
+    """
+    Aplica HDBSCAN para encontrar clústeres basados en densidad.
+    Es ideal para aplicar sobre datos proyectados con UMAP.
+
+    Args:
+        X: Matriz de datos (usualmente componentes de UMAP o características escaladas).
+        min_cluster_size: Tamaño mínimo para considerar un grupo como clúster.
+        min_samples: Parámetro conservador para la densidad de vecindarios.
+
+    Returns:
+        Tupla (labels, modelo_hdbscan)
+        NOTA: HDBSCAN asigna -1 a los puntos considerados ruido (outliers).
+    """
+    model = HDBSCAN(min_cluster_size=min_cluster_size, min_samples=min_samples)
+    labels = model.fit_predict(X)
+    return labels, model

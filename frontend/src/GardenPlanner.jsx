@@ -32,6 +32,7 @@ export function ModeChooser({ onChoose }) {
 export default function GardenPlanner({ onBack }) {
   const [form, setForm] = useState({ area: "", people: "2", sun: "2", water: "2", budget: "medium", goal: "mixed" });
   const [result, setResult] = useState(false);
+  const [variation, setVariation] = useState(0);
   const plan = useMemo(() => {
     if (!result) return [];
     const area = Math.max(Number(form.area), 1);
@@ -44,13 +45,15 @@ export default function GardenPlanner({ onBack }) {
     }).sort((a, b) => b.score - a.score);
     const spaceLimit = area < 3 ? 3 : area < 8 ? 4 : 5;
     const budgetLimit = { low: 3, medium: 4, high: 5 }[form.budget];
-    const selected = scored.slice(0, Math.min(spaceLimit, budgetLimit));
+    const selectionSize = Math.min(spaceLimit, budgetLimit);
+    const offset = variation % Math.max(1, scored.length - selectionSize + 1);
+    const selected = scored.slice(offset, offset + selectionSize);
     const total = selected.reduce((sum, crop) => sum + crop.score, 0);
     return selected.map((crop) => {
       const squareMeters = area * crop.score / total;
       return { ...crop, squareMeters, count: Math.max(1, Math.round(squareMeters * crop.plants)), monthlySaving: squareMeters * crop.saving };
     });
-  }, [form, result]);
+  }, [form, result, variation]);
   const totalSaving = plan.reduce((sum, crop) => sum + crop.monthlySaving, 0);
   const update = (key, value) => { setForm({ ...form, [key]: value }); setResult(false); };
 
@@ -67,18 +70,67 @@ export default function GardenPlanner({ onBack }) {
         <button className="button garden-submit" disabled={!form.area || Number(form.area) <= 0} onClick={() => { setResult(true); window.scrollTo({ top: 0, behavior: "smooth" }); }}>Diseñar mi huerta →</button>
       </section>
       <aside className="garden-aside"><span className="kicker">Qué recibirás</span><h3>Un punto de partida claro</h3><ol><li><b>Distribución</b><span>Cuántos m² dedicar a cada cultivo.</span></li><li><b>Cantidad</b><span>Número orientativo de plantas.</span></li><li><b>Cosecha</b><span>Cuándo podrías empezar a recoger.</span></li><li><b>Ahorro</b><span>Rango mensual aproximado.</span></li></ol><p>No reemplaza una evaluación local de luz, suelo o plagas.</p></aside>
-    </div> : <GardenResults form={form} plan={plan} totalSaving={totalSaving} onEdit={() => setResult(false)} />}
+    </div> : <GardenResults form={form} plan={plan} totalSaving={totalSaving} onEdit={() => setResult(false)} onVary={() => setVariation((current) => current + 1)} />}
   </div>;
 }
 
-function GardenResults({ form, plan, totalSaving, onEdit }) {
+function GardenResults({ form, plan, totalSaving, onEdit, onVary }) {
   const people = Number(form.people);
   const portions = Math.max(4, Math.round(Number(form.area) * 2.5));
   return <div className="garden-results">
-    <div className="garden-hero"><div><span className="kicker">Tu huerta · propuesta inicial</span><h2>Pequeña en espacio,<br /><em>útil cada semana.</em></h2></div><button className="button secondary" onClick={onEdit}>Editar datos</button></div>
+    <div className="garden-hero"><div><span className="kicker">Tu huerta · propuesta inicial</span><h2>Pequeña en espacio,<br /><em>útil cada semana.</em></h2></div><div className="garden-hero-actions"><button className="button garden-download" onClick={() => downloadGardenPdf(form, plan, totalSaving)}>Descargar PDF ↓</button><button className="button garden-variation" onClick={onVary}>Variar cultivos ↻</button><button className="garden-edit" onClick={onEdit}>Editar datos</button></div></div>
     <div className="metrics garden-metrics"><div className="metric"><div className="metric-label">Espacio organizado</div><div className="metric-value">{Number(form.area).toFixed(1)} m²</div><div className="metric-note">en {plan.length} grupos de cultivo</div></div><div className="metric"><div className="metric-label">Plantas aproximadas</div><div className="metric-value">{plan.reduce((sum, crop) => sum + crop.count, 0)}</div><div className="metric-note">siembra escalonada recomendada</div></div><div className="metric"><div className="metric-label">Porciones semanales</div><div className="metric-value">{portions}–{Math.round(portions * 1.4)}</div><div className="metric-note">para un hogar de {people}</div></div><div className="metric"><div className="metric-label">Ahorro orientativo</div><div className="metric-value">{COP.format(totalSaving * .7)}–{COP.format(totalSaving * 1.2)}</div><div className="metric-note">al mes, cuando esté produciendo</div></div></div>
     <section className="result-section"><div className="section-head"><div><h2>Así puedes repartirla</h2><p>Empieza con pocas variedades y siembra en fechas distintas.</p></div></div><div className="garden-plan-grid">{plan.map((crop, index) => <article key={crop.id}><span>0{index + 1}</span><h3>{crop.name}</h3><strong>{crop.squareMeters.toFixed(1)} m²</strong><p>≈ {crop.count} plantas</p><small>Primera cosecha: {crop.harvest}</small><div className="garden-bar"><i style={{ width: `${crop.squareMeters / Number(form.area) * 100}%` }} /></div></article>)}</div></section>
+    <section className="result-section cultivation-guide"><div className="section-head"><div><span className="kicker">Acompañamiento</span><h2>Qué hacer durante el cultivo</h2><p>Una guía breve para revisar la huerta sin esperar hasta la cosecha.</p></div></div><div className="cultivation-steps"><article><span>01 · Primera semana</span><h3>Observar y ajustar</h3><p>Comprueba el drenaje, protege los brotes del sol extremo y mantén el sustrato húmedo, no encharcado.</p></article><article><span>02 · Cada semana</span><h3>Revisar señales</h3><p>Mira el envés de las hojas, retira partes enfermas y cambia la frecuencia de riego si la tierra sigue húmeda.</p></article><article><span>03 · Cada 2–3 semanas</span><h3>Sembrar por tandas</h3><p>Repite una parte de lechugas, cilantro o aromáticas para tener cosechas continuas y no recoger todo a la vez.</p></article><article><span>04 · Al cosechar</span><h3>Registrar y mejorar</h3><p>Anota qué produjo mejor, cuánto consumió el hogar y qué cultivo conviene ampliar en el siguiente ciclo.</p></article></div></section>
     <div className="garden-notes"><section><h3>Para que funcione mejor</h3><ul><li>Siembra una parte cada 2 o 3 semanas para no cosechar todo al mismo tiempo.</li><li>Usa recipientes con drenaje y sustrato suelto; evita tierra compactada.</li><li>Revisa el sol real durante una semana antes de ubicar las plantas.</li></ul></section><section><h3>Cómo leer el ahorro</h3><p>Es una aproximación doméstica basada en el espacio y cultivos sugeridos. No incluye tu tiempo, herramientas, pérdidas, plagas ni variaciones de precio.</p></section></div>
     <div className="non-guarantee"><b>Empieza pequeño y ajusta.</b><span>La producción cambia con el clima, la variedad, el recipiente y el manejo. Observa las primeras semanas antes de ampliar la huerta.</span></div>
   </div>;
+}
+
+function downloadGardenPdf(form, plan, totalSaving) {
+  const normalize = (text) => text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\x20-\x7E]/g, "-");
+  const wrap = (text, width = 88) => {
+    const words = normalize(text).split(/\s+/);
+    return words.reduce((lines, word) => {
+      const current = lines[lines.length - 1];
+      if (!current || `${current} ${word}`.length > width) lines.push(word);
+      else lines[lines.length - 1] = `${current} ${word}`;
+      return lines;
+    }, []);
+  };
+  const rows = [
+    "PLAN DE MI HUERTA",
+    `${Number(form.area).toFixed(1)} m2 | hogar de ${form.people} personas | ${plan.length} grupos de cultivo`,
+    `Ahorro domestico orientativo: ${COP.format(totalSaving * .7)} - ${COP.format(totalSaving * 1.2)} al mes`,
+    "",
+    "DISTRIBUCION RECOMENDADA",
+    ...plan.flatMap((crop) => wrap(`${crop.name}: ${crop.squareMeters.toFixed(1)} m2, aproximadamente ${crop.count} plantas. Primera cosecha: ${crop.harvest}.`)),
+    "",
+    "SEGUIMIENTO DURANTE EL CULTIVO",
+    ...["Primera semana: revisa drenaje, humedad y exposicion real al sol.", "Cada semana: inspecciona hojas, retira partes enfermas y ajusta el riego.", "Cada 2 o 3 semanas: siembra una nueva tanda de cultivos de ciclo corto.", "Al cosechar: registra que funciono y ajusta el siguiente ciclo."].flatMap((item) => wrap(item)),
+    "",
+    ...wrap("Estas cifras son orientativas. La produccion cambia con el clima, el recipiente, el sustrato, las plagas y el manejo."),
+  ];
+  const escaped = rows.map((row) => row.replaceAll("\\", "\\\\").replaceAll("(", "\\(").replaceAll(")", "\\)"));
+  const stream = `BT\n/F1 11 Tf\n50 790 Td\n${escaped.map((row, index) => `${index ? "0 -19 Td\n" : ""}(${row}) Tj`).join("\n")}\nET`;
+  const objects = [
+    "<< /Type /Catalog /Pages 2 0 R >>",
+    "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>",
+    `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`,
+    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+  ];
+  let pdf = "%PDF-1.4\n";
+  const offsets = [0];
+  objects.forEach((object, index) => {
+    offsets.push(pdf.length);
+    pdf += `${index + 1} 0 obj\n${object}\nendobj\n`;
+  });
+  const xref = pdf.length;
+  pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n${offsets.slice(1).map((offset) => `${String(offset).padStart(10, "0")} 00000 n `).join("\n")}\ntrailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(new Blob([pdf], { type: "application/pdf" }));
+  link.download = "plan-mi-huerta.pdf";
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(link.href), 1000);
 }

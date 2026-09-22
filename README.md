@@ -55,6 +55,7 @@ Fuente: [Crops NPK Data Set — Kaggle](https://www.kaggle.com/datasets/javakhan
 ```
 project-terra/
 ├── api/                # API FastAPI para datos, regiones y predicciones
+├── docs/               # Documentación (Changelog, Roadmap, Arquitectura)
 ├── frontend/           # Producto web React + Vite
 ├── app/                # Interfaz Streamlit heredada
 ├── data/
@@ -68,6 +69,13 @@ project-terra/
 ├── LICENSE
 └── README.md
 ```
+
+## Documentación y Seguimiento
+
+Para llevar un control detallado del avance, lo que se hizo y lo que se realizará a futuro, consulta la carpeta [`docs/`](docs/):
+
+- [**Changelog**](docs/CHANGELOG.md): Registro histórico de fases completadas y características implementadas.
+- [**Roadmap**](docs/ROADMAP.md): Lista de tareas pendientes y próximos pasos planificados.
 
 ## Cómo empezar
 

@@ -19,3 +19,9 @@
 .garden-card-body strong{display:block}
 .garden-card-body p{margin:6px 0 3px}
 @media(max-width:520px){.garden-card-art{height:142px}.garden-card-art .crop-illustration{width:134px;height:134px}}
+.garden-compatibility-note{margin:0;background:#e8eee3;border:1px solid #cddcc7;border-top:0;padding:11px 16px;font-size:11px;line-height:1.5;color:var(--ink-soft)}
+.garden-empty{margin-top:10px;padding:30px;max-width:720px;border-left:3px solid var(--clay)}
+.garden-empty h2{font:32px var(--display);font-weight:400;margin:10px 0}
+.garden-empty p{font-size:12px;line-height:1.6;color:var(--muted);max-width:580px}
+.garden-empty .button{margin-top:12px}
+.garden-hero-actions .garden-variation:disabled{opacity:.45;cursor:not-allowed}

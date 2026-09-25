@@ -2,19 +2,9 @@ import React, { useMemo, useState } from "react";
 import { downloadGardenPdf } from "./gardenPdf";
 import CropIllustration from "./CropIllustration";
 import { artworkFor } from "./cropArt";
+import { buildGardenPlan } from "./gardenPlanning";
 
 const COP = new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 });
-
-const CROPS = [
-  { id: "lechuga", name: "Lechuga", sun: 1, water: 2, plants: 9, harvest: "6–9 semanas", saving: 8500, food: 5, herbs: 0 },
-  { id: "tomate", name: "Tomate cherry", sun: 3, water: 2, plants: 2, harvest: "10–14 semanas", saving: 15000, food: 5, herbs: 0 },
-  { id: "cilantro", name: "Cilantro", sun: 1, water: 2, plants: 16, harvest: "5–8 semanas", saving: 6000, food: 2, herbs: 5 },
-  { id: "cebolla", name: "Cebolla larga", sun: 2, water: 2, plants: 12, harvest: "10–14 semanas", saving: 9000, food: 4, herbs: 2 },
-  { id: "zanahoria", name: "Zanahoria", sun: 2, water: 1, plants: 16, harvest: "10–13 semanas", saving: 7000, food: 5, herbs: 0 },
-  { id: "frijol", name: "Fríjol arbustivo", sun: 3, water: 1, plants: 8, harvest: "9–12 semanas", saving: 10000, food: 5, herbs: 0 },
-  { id: "acelga", name: "Acelga", sun: 1, water: 2, plants: 5, harvest: "8–12 semanas", saving: 7500, food: 5, herbs: 0 },
-  { id: "aromaticas", name: "Aromáticas", sun: 2, water: 1, plants: 6, harvest: "6–10 semanas", saving: 6500, food: 1, herbs: 5 },
-];
 
 const SelectButtons = ({ label, value, onChange, options }) => <div className="garden-choice"><span>{label}</span><div>{options.map(([id, title, note]) => <button type="button" key={id} className={value === id ? "active" : ""} onClick={() => onChange(id)}><b>{title}</b><small>{note}</small></button>)}</div></div>;
 
@@ -36,29 +26,12 @@ export default function GardenPlanner({ onBack }) {
   const [form, setForm] = useState({ area: "", people: "2", sun: "2", water: "2", budget: "medium", goal: "mixed" });
   const [result, setResult] = useState(false);
   const [variation, setVariation] = useState(0);
-  const plan = useMemo(() => {
-    if (!result) return [];
-    const area = Math.max(Number(form.area), 1);
-    const sun = Number(form.sun);
-    const water = Number(form.water);
-    const scored = CROPS.map((crop) => {
-      const climate = 6 - Math.abs(crop.sun - sun) * 1.6 - Math.abs(crop.water - water) * 1.2;
-      const goal = form.goal === "food" ? crop.food : form.goal === "herbs" ? crop.herbs : (crop.food + crop.herbs) / 2;
-      return { ...crop, score: climate + goal };
-    }).sort((a, b) => b.score - a.score);
-    const spaceLimit = area < 3 ? 3 : area < 8 ? 4 : 5;
-    const budgetLimit = { low: 3, medium: 4, high: 5 }[form.budget];
-    const selectionSize = Math.min(spaceLimit, budgetLimit);
-    const offset = variation % Math.max(1, scored.length - selectionSize + 1);
-    const selected = scored.slice(offset, offset + selectionSize);
-    const total = selected.reduce((sum, crop) => sum + crop.score, 0);
-    return selected.map((crop) => {
-      const squareMeters = area * crop.score / total;
-      return { ...crop, squareMeters, count: Math.max(1, Math.round(squareMeters * crop.plants)), monthlySaving: squareMeters * crop.saving };
-    });
-  }, [form, result, variation]);
+  const { plan, variantCount, compatibleCount } = useMemo(
+    () => result ? buildGardenPlan(form, variation) : { plan: [], variantCount: 0, compatibleCount: 0 },
+    [form, result, variation]
+  );
   const totalSaving = plan.reduce((sum, crop) => sum + crop.monthlySaving, 0);
-  const update = (key, value) => { setForm({ ...form, [key]: value }); setResult(false); };
+  const update = (key, value) => { setForm({ ...form, [key]: value }); setVariation(0); setResult(false); };
 
   return <div className="garden-planner">
     <button className="back-link" onClick={onBack}>← Cambiar tipo de plan</button>
@@ -73,15 +46,16 @@ export default function GardenPlanner({ onBack }) {
         <button className="button garden-submit" disabled={!form.area || Number(form.area) <= 0} onClick={() => { setResult(true); window.scrollTo({ top: 0, behavior: "smooth" }); }}>Diseñar mi huerta →</button>
       </section>
       <aside className="garden-aside"><span className="kicker">Qué recibirás</span><div className="garden-aside-art"><CropIllustration crop={{ id: "zanahoria" }} /><CropIllustration crop={{ id: "lechuga" }} /><CropIllustration crop={{ id: "tomate" }} /></div><h3>Un punto de partida claro</h3><ol><li><b>Distribución</b><span>Cuántos m² dedicar a cada cultivo.</span></li><li><b>Cantidad</b><span>Número orientativo de plantas.</span></li><li><b>Cosecha</b><span>Cuándo podrías empezar a recoger.</span></li><li><b>Ahorro</b><span>Rango mensual aproximado.</span></li></ol><p>No reemplaza una evaluación local de luz, suelo o plagas.</p></aside>
-    </div> : <GardenResults form={form} plan={plan} totalSaving={totalSaving} onEdit={() => setResult(false)} onVary={() => setVariation((current) => current + 1)} />}
+    </div> : plan.length ? <GardenResults form={form} plan={plan} totalSaving={totalSaving} compatibleCount={compatibleCount} variantCount={variantCount} onEdit={() => setResult(false)} onVary={() => setVariation((current) => current + 1)} /> : <div className="garden-empty panel" role="status"><span className="kicker">Sin combinación compatible</span><h2>Ajustemos las condiciones</h2><p>Con el sol y el agua indicados no encontramos cultivos compatibles en nuestro catálogo. No queremos recomendarte una cosecha que quizá no pueda prosperar.</p><p>Revisa las horas de sol y la disponibilidad de riego antes de intentar de nuevo. Esta guía no sustituye una evaluación local.</p><button className="button" onClick={() => setResult(false)}>Editar condiciones →</button></div>}
   </div>;
 }
 
-function GardenResults({ form, plan, totalSaving, onEdit, onVary }) {
+function GardenResults({ form, plan, totalSaving, compatibleCount, variantCount, onEdit, onVary }) {
   const people = Number(form.people);
   const portions = Math.max(4, Math.round(Number(form.area) * 2.5));
   return <div className="garden-results">
-    <div className="garden-hero"><div><span className="kicker">Tu huerta · propuesta inicial</span><h2>Pequeña en espacio,<br /><em>útil cada semana.</em></h2></div><div className="garden-hero-actions"><button className="button garden-download" onClick={() => downloadGardenPdf(form, plan, totalSaving)}>Descargar PDF ↓</button><button className="button garden-variation" onClick={onVary}>Variar cultivos ↻</button><button className="garden-edit" onClick={onEdit}>Editar datos</button></div></div>
+    <div className="garden-hero"><div><span className="kicker">Tu huerta · propuesta inicial</span><h2>Pequeña en espacio,<br /><em>útil cada semana.</em></h2></div><div className="garden-hero-actions"><button className="button garden-download" onClick={() => downloadGardenPdf(form, plan, totalSaving)}>Descargar PDF ↓</button><button className="button garden-variation" onClick={onVary} disabled={variantCount < 2}>Variar cultivos ↻</button><button className="garden-edit" onClick={onEdit}>Editar datos</button></div></div>
+    <p className="garden-compatibility-note" role="status">{variantCount < 2 ? `Con el sol y el agua indicados, ${compatibleCount === 1 ? "solo hay un cultivo compatible" : `estos son los ${compatibleCount} cultivos compatibles`} en nuestro catálogo; no hay otra combinación que podamos recomendar.` : `Las alternativas usan solo cultivos compatibles con el sol y el agua indicados (${compatibleCount} disponibles en nuestro catálogo).`}</p>
     <div className="metrics garden-metrics"><div className="metric"><div className="metric-label">Espacio organizado</div><div className="metric-value">{Number(form.area).toFixed(1)} m²</div><div className="metric-note">en {plan.length} grupos de cultivo</div></div><div className="metric"><div className="metric-label">Plantas aproximadas</div><div className="metric-value">{plan.reduce((sum, crop) => sum + crop.count, 0)}</div><div className="metric-note">siembra escalonada recomendada</div></div><div className="metric"><div className="metric-label">Porciones semanales</div><div className="metric-value">{portions}–{Math.round(portions * 1.4)}</div><div className="metric-note">para un hogar de {people}</div></div><div className="metric"><div className="metric-label">Ahorro orientativo</div><div className="metric-value">{COP.format(totalSaving * .7)}–{COP.format(totalSaving * 1.2)}</div><div className="metric-note">al mes, cuando esté produciendo</div></div></div>
     <section className="result-section"><div className="section-head"><div><h2>Así puedes repartirla</h2><p>Empieza con pocas variedades y siembra en fechas distintas.</p></div></div><div className="garden-plan-grid">{plan.map((crop, index) => <article key={crop.id}><div className="garden-card-art" style={{ background: artworkFor(crop).backdrop }}><span className="garden-card-number">0{index + 1} / TU CULTIVO</span><CropIllustration crop={crop} /></div><div className="garden-card-body"><h3>{crop.name}</h3><strong>{crop.squareMeters.toFixed(1)} m²</strong><p>≈ {crop.count} plantas</p><small>Primera cosecha: {crop.harvest}</small><div className="garden-bar"><i style={{ width: `${crop.squareMeters / Number(form.area) * 100}%` }} /></div></div></article>)}</div></section>
     <section className="result-section cultivation-guide"><div className="section-head"><div><span className="kicker">Acompañamiento</span><h2>Qué hacer durante el cultivo</h2><p>Una guía breve para revisar la huerta sin esperar hasta la cosecha.</p></div></div><div className="cultivation-steps"><article><span>01 · Primera semana</span><h3>Observar y ajustar</h3><p>Comprueba el drenaje, protege los brotes del sol extremo y mantén el sustrato húmedo, no encharcado.</p></article><article><span>02 · Cada semana</span><h3>Revisar señales</h3><p>Mira el envés de las hojas, retira partes enfermas y cambia la frecuencia de riego si la tierra sigue húmeda.</p></article><article><span>03 · Cada 2–3 semanas</span><h3>Sembrar por tandas</h3><p>Repite una parte de lechugas, cilantro o aromáticas para tener cosechas continuas y no recoger todo a la vez.</p></article><article><span>04 · Al cosechar</span><h3>Registrar y mejorar</h3><p>Anota qué produjo mejor, cuánto consumió el hogar y qué cultivo conviene ampliar en el siguiente ciclo.</p></article></div></section>

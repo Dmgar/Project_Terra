@@ -43,3 +43,10 @@ their provenance. `POST /api/optimize` returns the constrained allocation,
 three scenarios, financial totals, active constraints, and an optional manual
 comparison. The bundled catalog is cached locally and remains available if an
 external source is temporarily unavailable.
+
+## Interface language
+
+Use approachable, action-oriented Spanish for navigation and buttons (for example,
+“Ver mi recomendación” rather than “Ejecutar recomendación”). Avoid decorative
+numbered section labels such as “01 / Resumen de campo” across the website;
+retain numbering only when it clarifies an actual process or identifies a region.

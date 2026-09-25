@@ -8,3 +8,9 @@ El PDF de la huerta debe tener identidad visual coherente con TERRA y texto espa
 **Why:** El primer PDF era texto plano, no reflejaba la marca y corrompía el formato monetario por escribir caracteres Unicode con offsets y glifos incompatibles. WinAnsi cubre los acentos españoles, pero no todos los símbolos Unicode.
 
 **How to apply:** Si se cambia el contenido de la descarga, comprobar el PDF renderizado y su texto extraído con casos que incluyan tildes, ñ, m² y montos COP; para símbolos fuera de WinAnsi, usar un equivalente compatible o considerar una fuente embebida con soporte Unicode completo.
+
+Mantener la paleta verde/crema y los títulos serif: el usuario confirmó que ese rediseño mejoró mucho el PDF, pero pidió que los cultivos sean reconocibles de un vistazo con ilustraciones o siluetas tanto en la página como en la descarga.
+
+**Why:** La coherencia de marca por sí sola no hacía suficientemente atractivas las recomendaciones; los motivos botánicos ayudan a dirigir la mirada sin reemplazar el texto.
+
+**How to apply:** Cuando se añadan cultivos o se modifique su representación visual, mantener los motivos correspondientes en ambos formatos y comprobarlos renderizados.

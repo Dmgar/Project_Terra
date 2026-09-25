@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createGardenPdf } from "../src/gardenPdf.js";
+import { artworkFor, cropArt } from "../src/cropArt.js";
 
 test("exports two branded PDF pages with Spanish text and stable byte offsets", async () => {
   const crops = [
@@ -23,4 +24,15 @@ test("exports two branded PDF pages with Spanish text and stable byte offsets", 
   assert.doesNotMatch(source, /\$\xB411\.587/);
   const xref = Number(source.match(/startxref\n(\d+)/)?.[1]);
   assert.equal(source.slice(xref, xref + 4), "xref");
+});
+
+test("every recommended crop has its own vector silhouette for both formats", () => {
+  const ids = ["lechuga", "tomate", "cilantro", "cebolla", "zanahoria", "frijol", "acelga", "aromaticas"];
+  assert.deepEqual(Object.keys(cropArt).sort(), ids.sort());
+  for (const id of ids) {
+    const art = artworkFor({ id });
+    assert.ok(art.shapes.length >= 3, id);
+    assert.match(art.backdrop, /^#[0-9a-f]{6}$/i);
+  }
+  assert.notDeepEqual(artworkFor({ id: "tomate" }).shapes, artworkFor({ id: "zanahoria" }).shapes);
 });

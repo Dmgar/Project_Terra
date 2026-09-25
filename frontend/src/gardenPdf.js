@@ -1,5 +1,6 @@
 // A small, self-contained PDF renderer for TERRA's two-page household garden plan.
 // PDF's WinAnsi encoding covers Spanish accents; byte offsets must be measured after encoding.
+import { artworkFor } from "./cropArt.js";
 const PAGE_W = 595;
 const PAGE_H = 842;
 const COLORS = {
@@ -53,6 +54,16 @@ class Page {
   rect(x, top, width, height, color) {
     this.commands.push(`${rgb(color)} rg ${x} ${PAGE_H - top - height} ${width} ${height} re f`);
   }
+  ellipse(cx, topCy, rx, ry, color) {
+    const k = 0.55228475;
+    const cy = PAGE_H - topCy;
+    this.commands.push(`${rgb(color)} rg ${cx + rx} ${cy} m ${cx + rx} ${cy + ry * k} ${cx + rx * k} ${cy + ry} ${cx} ${cy + ry} c ${cx - rx * k} ${cy + ry} ${cx - rx} ${cy + ry * k} ${cx - rx} ${cy} c ${cx - rx} ${cy - ry * k} ${cx - rx * k} ${cy - ry} ${cx} ${cy - ry} c ${cx + rx * k} ${cy - ry} ${cx + rx} ${cy - ry * k} ${cx + rx} ${cy} c f`);
+  }
+  polygon(points, color) {
+    const coords = [];
+    for (let i = 0; i < points.length; i += 2) coords.push(`${points[i]} ${PAGE_H - points[i + 1]} ${i ? "l" : "m"}`);
+    this.commands.push(`${rgb(color)} rg ${coords.join(" ")} h f`);
+  }
   rule(x1, top1, x2, top2, color = COLORS.line, width = 1) {
     this.commands.push(`${width} w ${rgb(color)} RG ${x1} ${PAGE_H - top1} m ${x2} ${PAGE_H - top2} l S`);
   }
@@ -67,6 +78,16 @@ class Page {
   get stream() {
     return this.commands.join("\n") + "\n";
   }
+}
+
+function drawCropArtwork(page, crop, x, top, size, showBackdrop = true) {
+  const art = artworkFor(crop);
+  if (showBackdrop) page.rect(x, top, size, size, art.backdrop);
+  const point = (value) => value * size / 100;
+  art.shapes.forEach(([type, ...shape]) => {
+    if (type === "ellipse") page.ellipse(x + point(shape[0]), top + point(shape[1]), point(shape[2]), point(shape[3]), shape[4]);
+    else page.polygon(shape[0].map((value, index) => (index % 2 ? top : x) + point(value)), shape[1]);
+  });
 }
 
 function brand(page, dark = true) {
@@ -128,6 +149,8 @@ export function createGardenPdf(form, plan, totalSaving, date = new Date()) {
   first.text(40, 105, "TU HUERTA  /  PROPUESTA INICIAL", "bold", 9, "#a8c39c");
   first.text(40, 150, "Pequeña en espacio,", "serif", 32, COLORS.white);
   first.text(40, 185, "útil cada semana.", "serif", 32, "#c3d8b6");
+  drawCropArtwork(first, plan[0], 431, 82, 98);
+  if (plan[1]) drawCropArtwork(first, plan[1], 487, 134, 52);
   first.text(40, 243, "01 / UN PLAN A TU MEDIDA", "bold", 9, COLORS.moss);
 
   const stats = [
@@ -158,7 +181,8 @@ export function createGardenPdf(form, plan, totalSaving, date = new Date()) {
     const baseline = y + rowHeight / 2 + 5;
     first.rect(40, y, 515, rowHeight, index % 2 ? COLORS.paper : COLORS.card);
     first.rect(40, y, 3, rowHeight, index % 2 ? COLORS.moss : COLORS.clay);
-    first.text(52, baseline, crop.name, "serif", 15, COLORS.ink);
+    drawCropArtwork(first, crop, 51, y + (rowHeight - 38) / 2, 38);
+    first.text(100, baseline, crop.name, "serif", 15, COLORS.ink);
     first.text(278, baseline, `${decimal(crop.squareMeters)} m²`, "bold", 10, COLORS.ink);
     first.text(350, baseline, `${crop.count}`, "sans", 10, COLORS.ink);
     first.text(444, baseline, crop.harvest, "sans", 9, COLORS.soft);
@@ -176,6 +200,7 @@ export function createGardenPdf(form, plan, totalSaving, date = new Date()) {
   brand(second);
   second.text(40, 109, "02 / ACOMPAÑAMIENTO", "bold", 9, "#a8c39c");
   second.text(40, 145, "Cultivar también es observar.", "serif", 27, COLORS.white);
+  drawCropArtwork(second, plan[plan.length - 1], 471, 76, 76);
   second.text(40, 199, "Qué hacer durante el cultivo", "serif", 24, COLORS.ink);
   second.text(40, 217, "Pequeñas revisiones para mejorar el próximo ciclo.", "sans", 10, COLORS.muted);
 

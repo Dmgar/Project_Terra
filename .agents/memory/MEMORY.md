@@ -1,0 +1,1 @@
+- [PDF de huerta y caracteres](garden-pdf-encoding.md) — mantener una descarga ligera con estilo TERRA y verificar tildes y offsets del PDF a nivel de bytes.

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { downloadGardenPdf } from "./gardenPdf";
 
 const COP = new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 });
 
@@ -85,52 +86,4 @@ function GardenResults({ form, plan, totalSaving, onEdit, onVary }) {
     <div className="garden-notes"><section><h3>Para que funcione mejor</h3><ul><li>Siembra una parte cada 2 o 3 semanas para no cosechar todo al mismo tiempo.</li><li>Usa recipientes con drenaje y sustrato suelto; evita tierra compactada.</li><li>Revisa el sol real durante una semana antes de ubicar las plantas.</li></ul></section><section><h3>Cómo leer el ahorro</h3><p>Es una aproximación doméstica basada en el espacio y cultivos sugeridos. No incluye tu tiempo, herramientas, pérdidas, plagas ni variaciones de precio.</p></section></div>
     <div className="non-guarantee"><b>Empieza pequeño y ajusta.</b><span>La producción cambia con el clima, la variedad, el recipiente y el manejo. Observa las primeras semanas antes de ampliar la huerta.</span></div>
   </div>;
-}
-
-function downloadGardenPdf(form, plan, totalSaving) {
-  const normalize = (text) => text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\x20-\x7E]/g, "-");
-  const wrap = (text, width = 88) => {
-    const words = normalize(text).split(/\s+/);
-    return words.reduce((lines, word) => {
-      const current = lines[lines.length - 1];
-      if (!current || `${current} ${word}`.length > width) lines.push(word);
-      else lines[lines.length - 1] = `${current} ${word}`;
-      return lines;
-    }, []);
-  };
-  const rows = [
-    "PLAN DE MI HUERTA",
-    `${Number(form.area).toFixed(1)} m2 | hogar de ${form.people} personas | ${plan.length} grupos de cultivo`,
-    `Ahorro domestico orientativo: ${COP.format(totalSaving * .7)} - ${COP.format(totalSaving * 1.2)} al mes`,
-    "",
-    "DISTRIBUCION RECOMENDADA",
-    ...plan.flatMap((crop) => wrap(`${crop.name}: ${crop.squareMeters.toFixed(1)} m2, aproximadamente ${crop.count} plantas. Primera cosecha: ${crop.harvest}.`)),
-    "",
-    "SEGUIMIENTO DURANTE EL CULTIVO",
-    ...["Primera semana: revisa drenaje, humedad y exposicion real al sol.", "Cada semana: inspecciona hojas, retira partes enfermas y ajusta el riego.", "Cada 2 o 3 semanas: siembra una nueva tanda de cultivos de ciclo corto.", "Al cosechar: registra que funciono y ajusta el siguiente ciclo."].flatMap((item) => wrap(item)),
-    "",
-    ...wrap("Estas cifras son orientativas. La produccion cambia con el clima, el recipiente, el sustrato, las plagas y el manejo."),
-  ];
-  const escaped = rows.map((row) => row.replaceAll("\\", "\\\\").replaceAll("(", "\\(").replaceAll(")", "\\)"));
-  const stream = `BT\n/F1 11 Tf\n50 790 Td\n${escaped.map((row, index) => `${index ? "0 -19 Td\n" : ""}(${row}) Tj`).join("\n")}\nET`;
-  const objects = [
-    "<< /Type /Catalog /Pages 2 0 R >>",
-    "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>",
-    `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`,
-    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-  ];
-  let pdf = "%PDF-1.4\n";
-  const offsets = [0];
-  objects.forEach((object, index) => {
-    offsets.push(pdf.length);
-    pdf += `${index + 1} 0 obj\n${object}\nendobj\n`;
-  });
-  const xref = pdf.length;
-  pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n${offsets.slice(1).map((offset) => `${String(offset).padStart(10, "0")} 00000 n `).join("\n")}\ntrailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(new Blob([pdf], { type: "application/pdf" }));
-  link.download = "plan-mi-huerta.pdf";
-  link.click();
-  setTimeout(() => URL.revokeObjectURL(link.href), 1000);
 }

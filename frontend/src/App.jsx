@@ -584,7 +584,7 @@ function Scatter({ points = [] }) {
         >
           <defs>
             <filter id="tooltip-shadow">
-              <feDropShadow dx="2" dy="2" stdDeviation="3" flood-opacity="0.15" />
+              <feDropShadow dx="2" dy="2" stdDeviation="3" floodOpacity="0.15" />
             </filter>
           </defs>
           <path d="M52 330H665M52 330V24" stroke="#cfd8ce" fill="none" />

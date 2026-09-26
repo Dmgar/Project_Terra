@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 
+import pandas as pd
 from src.clustering import (
     compute_hierarchical_linkage,
     find_optimal_gmm,
@@ -12,6 +13,11 @@ from src.clustering import (
     run_tsne_projection,
     run_umap_projection,
     compare_models,
+    select_features_kruskal,
+    select_features_mi,
+    encode_categorical_for_clustering,
+    prepare_mixed_data,
+    run_kprototypes,
 )
 
 
@@ -154,3 +160,69 @@ def test_run_hdbscan_returns_labels_and_model(separated_points):
     assert unique_labels == {0, 1}  # Finds 2 clusters
     assert hasattr(model, "labels_")
     assert np.array_equal(labels, model.labels_)
+
+
+def test_select_features_kruskal():
+    X = pd.DataFrame({
+        "feat_informative": [1, 2, 1, 2, 10, 11, 10, 12],
+        "feat_noise": [5, 5, 5, 5, 5, 5, 5, 5],
+    })
+    y = pd.Series([0, 0, 0, 0, 1, 1, 1, 1])
+    selected = select_features_kruskal(
+        X,
+        y,
+        alpha=0.05,
+        min_features=1,
+    )
+    assert "feat_informative" in selected
+    assert len(selected) >= 1
+
+
+def test_select_features_mi():
+    X = pd.DataFrame({
+        "feat_strong": [0, 0, 0, 0, 10, 10, 10, 10],
+        "feat_weak": [1, 2, 3, 4, 1, 2, 3, 4],
+    })
+    y = pd.Series([0, 0, 0, 0, 1, 1, 1, 1])
+    selected = select_features_mi(X, y, k=1)
+    assert selected == ["feat_strong"]
+
+
+def test_encode_categorical_for_clustering():
+    df = pd.DataFrame({
+        "soil": ["Arcilloso", "Arenoso", "Franco", "Arcilloso"],
+        "num": [1.0, 2.0, 3.0, 4.0],
+    })
+    onehot_mat, onehot_cols = encode_categorical_for_clustering(df, ["soil"], method="onehot")
+    assert onehot_mat.shape == (4, 3)
+    assert len(onehot_cols) == 3
+
+    ord_mat, ord_cols = encode_categorical_for_clustering(df, ["soil"], method="ordinal")
+    assert ord_mat.shape == (4, 1)
+    assert ord_cols == ["soil"]
+
+
+def test_prepare_mixed_data():
+    df = pd.DataFrame({
+        "Nitrogen": [10.0, 20.0, 30.0, 40.0],
+        "Phosphorus": [50.0, 60.0, 70.0, 80.0],
+        "Soil_Type": ["Arcilloso", "Arenoso", "Franco", "Arcilloso"],
+    })
+    X_comb, feat_names = prepare_mixed_data(
+        df, num_cols=["Nitrogen", "Phosphorus"], cat_cols=["Soil_Type"]
+    )
+    # 2 numeric scaled + 3 one-hot columns = 5 columns
+    assert X_comb.shape == (4, 5)
+    assert len(feat_names) == 5
+    assert feat_names[:2] == ["Nitrogen", "Phosphorus"]
+
+
+def test_run_kprototypes_returns_fallback_when_not_installed():
+    df = pd.DataFrame({
+        "Nitrogen": [10.0, 20.0],
+        "Soil_Type": ["Arcilloso", "Arenoso"],
+    })
+    labels, model = run_kprototypes(df, num_cols=["Nitrogen"], cat_cols=["Soil_Type"], k=2)
+    # kmodes is not installed in the standard test environment, so it returns None, None safely
+    assert labels is None
+    assert model is None

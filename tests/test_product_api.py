@@ -59,3 +59,5 @@ def test_recommendation_returns_evidence():
     assert result["sampleCount"] > 0
     assert result["crops"]
     assert result["advice"]
+    assert "gmmProbabilities" in result
+    assert len(result["gmmProbabilities"]) == 5

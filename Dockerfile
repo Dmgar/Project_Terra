@@ -3,7 +3,7 @@
 # Run:   docker run -p 5000:5000 project-terra
 
 # ---- Stage 1: Frontend build ----
-FROM node:24-alpine AS frontend-builder
+FROM node:20-alpine AS frontend-builder
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm ci --legacy-peer-deps

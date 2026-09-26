@@ -584,12 +584,12 @@ def run_kprototypes(
         print("kmodes no instalado. pip install kmodes")
         return None, None
 
-    # K-Prototypes espera array con columnas categóricas al final
-    cat_indices = [df.columns.get_loc(c) for c in cat_cols]
     # Convertir categóricas a string para kmodes
     X_mixed = df[num_cols + cat_cols].copy()
     for c in cat_cols:
         X_mixed[c] = X_mixed[c].astype(str)
+
+    cat_indices = [X_mixed.columns.get_loc(c) for c in cat_cols]
 
     model = KPrototypes(n_clusters=k, init="Cao", random_state=random_state, n_init=n_init, verbose=0)
     labels = model.fit_predict(X_mixed, categorical=cat_indices)

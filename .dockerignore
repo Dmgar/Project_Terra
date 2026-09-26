@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node / Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Git & IDE
+.git/
+.gitignore
+.github/
+.agents/
+.claude/
+.idea/
+.vscode/
+
+# Logs & temp
+*.log
+scratch/

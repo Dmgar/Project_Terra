@@ -8,6 +8,7 @@ import joblib
 import numpy as np
 import pandas as pd
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -54,7 +55,76 @@ class RecommendationInput(BaseModel):
     Rainfall: Annotated[float, Field(ge=20, le=350)]
 
 
+class DistributionItem(BaseModel):
+    name: str
+    value: int
+    share: float
+
+
+class FeatureStat(BaseModel):
+    feature: str
+    mean: float
+    std: float
+    min: float
+    median: float
+    max: float
+
+
+class OverviewMetrics(BaseModel):
+    samples: int
+    features: int
+    regions: int
+    crops: int
+    soils: int
+
+
+class OverviewResponse(BaseModel):
+    metrics: OverviewMetrics
+    cropDistribution: list[DistributionItem]
+    soilDistribution: list[DistributionItem]
+    clusterDistribution: list[DistributionItem]
+    featureStats: list[FeatureStat]
+
+
+class RegionProfile(BaseModel):
+    id: int
+    count: int
+    share: float
+    topCrop: str | None
+    crops: list[DistributionItem]
+    soils: list[DistributionItem]
+    profile: dict[str, float]
+    normalizedProfile: dict[str, float]
+
+
+class RegionsResponse(BaseModel):
+    regions: list[RegionProfile]
+
+
+class PCAPoint(BaseModel):
+    x: float
+    y: float
+    cluster: int
+    crop: str
+    soil: str
+
+
+class PCAResponse(BaseModel):
+    points: list[PCAPoint]
+    explainedVariance: list[float]
+
+
 app = FastAPI(title="Project Terra API", version="1.0.0")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.include_router(economics_router)
 
 
@@ -95,6 +165,14 @@ def load_model():
     if not MODEL_PATH.exists() or not SCALER_PATH.exists():
         raise FileNotFoundError("No se encontraron los artefactos del modelo entrenado.")
     return joblib.load(MODEL_PATH), joblib.load(SCALER_PATH)
+
+
+@lru_cache(maxsize=1)
+def load_gmm_model():
+    gmm_path = ROOT_DIR / "data" / "models" / "gmm_k5_full.joblib"
+    if not gmm_path.exists() or not SCALER_PATH.exists():
+        return None, None
+    return joblib.load(gmm_path), joblib.load(SCALER_PATH)
 
 
 def normalize_profile(profile: dict[str, float], frame: pd.DataFrame) -> dict[str, float]:
@@ -146,7 +224,7 @@ def health():
     return {"status": "ok"}
 
 
-@app.get("/api/overview")
+@app.get("/api/overview", response_model=OverviewResponse)
 def overview():
     try:
         frame = load_dataset()
@@ -167,7 +245,7 @@ def overview():
     }
 
 
-@app.get("/api/regions")
+@app.get("/api/regions", response_model=RegionsResponse)
 def regions():
     try:
         frame = load_dataset()
@@ -177,7 +255,7 @@ def regions():
     return {"regions": [region_payload(frame, cluster_id) for cluster_id in ids]}
 
 
-@app.get("/api/pca")
+@app.get("/api/pca", response_model=PCAResponse)
 def pca():
     try:
         frame = load_dataset()
@@ -231,13 +309,20 @@ def recommend(payload: RecommendationInput):
     try:
         frame = load_dataset()
         model, scaler = load_model()
+        gmm_model, gmm_scaler = load_gmm_model()
     except (FileNotFoundError, ValueError) as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     values = payload.model_dump()
     vector = np.array([[values[key] for key in FEATURE_COLS]])
     cluster_id = int(model.predict(scaler.transform(vector))[0])
     region = region_payload(frame, cluster_id)
-    return {
+    
+    # GMM soft probabilities
+    gmm_probs = None
+    if gmm_model is not None and gmm_scaler is not None:
+        gmm_probs = gmm_model.predict_proba(gmm_scaler.transform(vector))[0].tolist()
+    
+    response = {
         "cluster": cluster_id,
         "confidenceLabel": "Perfil ambiental más cercano",
         "sampleCount": region["count"],
@@ -249,6 +334,11 @@ def recommend(payload: RecommendationInput):
         "normalizedUser": normalize_profile(values, frame),
         "normalizedCentroid": region["normalizedProfile"],
     }
+    if gmm_probs is not None:
+        response["gmmProbabilities"] = [
+            {"cluster": i, "probability": round(float(p), 4)} for i, p in enumerate(gmm_probs)
+        ]
+    return response
 
 
 if FRONTEND_DIST.exists():

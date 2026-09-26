@@ -1,0 +1,11 @@
+.scatter-wrap{position:relative}
+.scatter-controls{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.scatter-controls select{padding:6px 10px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:3px;font:12px var(--body);min-width:180px}
+.scatter-controls select:focus{outline:0;border-color:var(--clay)}
+.point-count{font:11px var(--mono);color:var(--muted);align-self:center;margin-left:auto}
+.tooltip rect{filter:drop-shadow(0 4px 8px rgba(0,0,0,.15))}
+.tooltip text{pointer-events:none}
+@media(max-width:900px){
+  .scatter-controls select{flex:1;min-width:140px}
+  .point-count{width:100%;margin-left:0;margin-top:4px}
+}

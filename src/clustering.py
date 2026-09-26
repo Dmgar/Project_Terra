@@ -11,9 +11,10 @@ from sklearn.mixture import GaussianMixture
 from sklearn.manifold import TSNE
 from sklearn.metrics import silhouette_score, davies_bouldin_score, calinski_harabasz_score
 from sklearn.metrics.cluster import contingency_matrix
+from sklearn.feature_selection import mutual_info_classif
 from scipy.cluster.hierarchy import linkage, dendrogram
+from scipy.stats import kruskal
 import matplotlib.pyplot as plt
-import umap
 
 
 
@@ -376,6 +377,7 @@ def run_umap_projection(
     Returns:
         Matriz con los datos proyectados en el espacio UMAP.
     """
+    import umap
     reducer = umap.UMAP(
         n_components=n_components,
         n_neighbors=n_neighbors,
@@ -406,4 +408,190 @@ def run_hdbscan(
     """
     model = HDBSCAN(min_cluster_size=min_cluster_size, min_samples=min_samples)
     labels = model.fit_predict(X)
+    return labels, model
+
+
+# ---------------------------------------------------------------------------
+# Feature Selection (P3-7: Selección de variables)
+# ---------------------------------------------------------------------------
+
+
+def select_features_kruskal(
+    X: pd.DataFrame,
+    y: pd.Series,
+    alpha: float = 0.05,
+    min_features: int = 3,
+) -> list[str]:
+    """
+    Selecciona variables usando test de Kruskal-Wallis (no paramétrico).
+    Conserva variables que discriminan significativamente entre clases.
+
+    Args:
+        X: DataFrame con características (numéricas).
+        y: Serie con etiquetas de clase (ej. 'Crop').
+        alpha: Nivel de significancia.
+        min_features: Mínimo de variables a conservar aunque no sean significativas.
+
+    Returns:
+        Lista de nombres de variables seleccionadas.
+    """
+    selected = []
+    pvals = {}
+    for col in X.select_dtypes(include=[np.number]).columns:
+        groups = [X[col][y == cls].values for cls in y.unique()]
+        if len(groups) < 2:
+            continue
+        # Filtrar grupos vacíos
+        groups = [g for g in groups if len(g) > 1]
+        if len(groups) < 2:
+            continue
+        try:
+            _, p = kruskal(*groups)
+            pvals[col] = p
+            if p < alpha:
+                selected.append(col)
+        except Exception:
+            pvals[col] = 1.0
+
+    # Si no hay suficientes significativas, tomar las mejores por p-value
+    if len(selected) < min_features:
+        sorted_by_p = sorted(pvals.items(), key=lambda x: x[1])
+        selected = [col for col, _ in sorted_by_p[:min_features]]
+
+    return selected
+
+
+def select_features_mi(
+    X: pd.DataFrame,
+    y: pd.Series,
+    k: int = 5,
+) -> list[str]:
+    """
+    Selecciona top-k variables por Mutual Information con la etiqueta.
+
+    Args:
+        X: DataFrame con características (numéricas).
+        y: Serie con etiquetas de clase.
+        k: Número de variables a seleccionar.
+
+    Returns:
+        Lista de nombres de variables (top-k MI).
+    """
+    X_num = X.select_dtypes(include=[np.number])
+    mi = mutual_info_classif(X_num, y, random_state=42)
+    mi_series = pd.Series(mi, index=X_num.columns).sort_values(ascending=False)
+    return mi_series.head(k).index.tolist()
+
+
+# ---------------------------------------------------------------------------
+# Mixed Data Clustering (P3-8: Incorporar Soil_Type)
+# ---------------------------------------------------------------------------
+
+
+def encode_categorical_for_clustering(
+    df: pd.DataFrame,
+    cat_cols: list[str],
+    method: Literal["onehot", "ordinal"] = "onehot",
+) -> Tuple[np.ndarray, list[str]]:
+    """
+    Codifica variables categóricas para clustering mixto.
+
+    Args:
+        df: DataFrame con datos.
+        cat_cols: Columnas categóricas a codificar.
+        method: "onehot" (One-Hot) o "ordinal" (OrdinalEncoder).
+
+    Returns:
+        Tupla (matriz_codificada, nombres_columnas_nuevas).
+    """
+    from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder
+
+    if method == "onehot":
+        enc = OneHotEncoder(sparse_output=False, handle_unknown="ignore")
+        encoded = enc.fit_transform(df[cat_cols])
+        feat_names = enc.get_feature_names_out(cat_cols).tolist()
+    else:
+        enc = OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1)
+        encoded = enc.fit_transform(df[cat_cols])
+        feat_names = cat_cols
+
+    return encoded, feat_names
+
+
+def prepare_mixed_data(
+    df: pd.DataFrame,
+    num_cols: list[str],
+    cat_cols: list[str],
+    cat_method: Literal["onehot", "ordinal"] = "onehot",
+    scaler=None,
+) -> Tuple[np.ndarray, list[str]]:
+    """
+    Prepara matriz combinada numérica + categórica para clustering.
+
+    Args:
+        df: DataFrame original.
+        num_cols: Columnas numéricas (se escalan).
+        cat_cols: Columnas categóricas (se codifican).
+        cat_method: Método de codificación categórica.
+        scaler: Scaler sklearn ya ajustado (opcional, se crea uno nuevo si None).
+
+    Returns:
+        Tupla (X_combinada, feature_names).
+    """
+    from sklearn.preprocessing import StandardScaler
+
+    X_num = df[num_cols].values
+    if scaler is None:
+        scaler = StandardScaler()
+        X_num_scaled = scaler.fit_transform(X_num)
+    else:
+        X_num_scaled = scaler.transform(X_num)
+
+    X_cat, cat_names = encode_categorical_for_clustering(df, cat_cols, cat_method)
+
+    X_combined = np.hstack([X_num_scaled, X_cat])
+    feature_names = num_cols + cat_names
+
+    return X_combined, feature_names
+
+
+def run_kprototypes(
+    df: pd.DataFrame,
+    num_cols: list[str],
+    cat_cols: list[str],
+    k: int,
+    random_state: int = 42,
+    n_init: int = 10,
+):
+    """
+    Ejecuta K-Prototypes para datos mixtos (numéricos + categóricos).
+    Requiere instalar: pip install kmodes
+
+    Args:
+        df: DataFrame con datos.
+        num_cols: Columnas numéricas.
+        cat_cols: Columnas categóricas.
+        k: Número de clústeres.
+        random_state: Semilla.
+        n_init: Número de inicializaciones.
+
+    Returns:
+        Tupla (labels, modelo) o (None, None) si kmodes no está instalado.
+    """
+    try:
+        from kmodes.kprototypes import KPrototypes
+    except ImportError:
+        print("kmodes no instalado. pip install kmodes")
+        return None, None
+
+    # K-Prototypes espera array con columnas categóricas al final
+    cat_indices = [df.columns.get_loc(c) for c in cat_cols]
+    # Convertir categóricas a string para kmodes
+    X_mixed = df[num_cols + cat_cols].copy()
+    for c in cat_cols:
+        X_mixed[c] = X_mixed[c].astype(str)
+
+    model = KPrototypes(n_clusters=k, init="Cao", random_state=random_state, n_init=n_init, verbose=0)
+    labels = model.fit_predict(X_mixed, categorical=cat_indices)
+
     return labels, model

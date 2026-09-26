@@ -26,6 +26,9 @@ from src.clustering import (
 from src.profiling import purity_score, contingency_table
 
 def main():
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
     print("=== Iniciando Pipeline de Clustering Project Terra ===")
 
     raw_path = ROOT_DIR / "data" / "raw" / "sensor_Crop_Dataset.csv"

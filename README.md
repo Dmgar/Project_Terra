@@ -55,16 +55,15 @@ Fuente: [Crops NPK Data Set — Kaggle](https://www.kaggle.com/datasets/javakhan
 ```
 project-terra/
 ├── api/                # API FastAPI para datos, regiones y predicciones
-├── docs/               # Documentación (Changelog, Roadmap, Arquitectura)
+├── docs/               # Documentación (Changelog, Roadmap)
 ├── frontend/           # Producto web React + Vite
 ├── app/                # Interfaz Streamlit heredada
 ├── data/
 │   ├── raw/            # Dataset original (sensor_Crop_Dataset.csv)
 │   ├── processed/      # Dataset escalado y enriquecido con clústeres
-│   └── models/         # Modelos serializados (KMeans, StandardScaler)
-├── notebooks/          # 01 EDA, 02 Preprocesamiento/PCA, 03 Clustering+Modelo, 04 Profiling, 05 Informe/Dashboard
-├── src/                # Módulos reutilizables (clustering.py, profiling.py)
-├── reports/            # Informe técnico, figuras y dashboards
+│   └── models/         # Modelos serializados (KMeans, StandardScaler, GMM)
+├── notebooks/          # 01 EDA, 02 Preprocesamiento/PCA, 03 Clustering+Modelo, 04 Profiling, 05 Informe/Dashboard, 03_b UMAP/t-SNE
+├── src/                # Módulos reutilizables (clustering.py, profiling.py, run_pipeline.py)
 ├── requirements.txt
 ├── LICENSE
 └── README.md

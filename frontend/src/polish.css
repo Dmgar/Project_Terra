@@ -1,6 +1,0 @@
-/* Keep navigation and content headings, but remove decorative section counters. */
-.topline,
-.mode-number,
-.region-no,
-.garden-card-number,
-.detail .panel > .kicker{display:none}

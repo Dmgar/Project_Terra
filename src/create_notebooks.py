@@ -1,10 +1,26 @@
 """
-Script para generar los Jupyter Notebooks 03_clustering_model.ipynb
-y 04_cluster_profiling.ipynb con formato nativo y celdas listas.
+⚠️  DEPRECADO — GENERADOR DE NOTEBOOKS HISTÓRICO
+
+Este script genera los notebooks 03 y 04 EN SU VERSIÓN ORIGINAL.
+Los notebooks actuales (03_clustering_model.ipynb, 04_cluster_profiling.ipynb)
+han sido EXTENDIDOS A MANO con secciones GMM, UMAP, K-Prototypes, etc.
+que este generador NO incluye.
+
+EJECUTAR ESTE SCRIPT SOBRESCRIBIRÍA EL TRABAJO MANUAL.
+
+Uso seguro (solo lectura):
+  python -m src.create_notebooks --dry-run
+
+Forzar sobrescritura (PELIGROSO, pierde trabajo manual):
+  python -m src.create_notebooks --force
+
+Recomendación: NO USAR. Los notebooks finales están en ./notebooks/
 """
 
+import argparse
 import json
 from pathlib import Path
+import sys
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 NOTEBOOKS_DIR = ROOT_DIR / "notebooks"
@@ -362,19 +378,58 @@ def create_notebook_04():
 
 
 def main():
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    parser = argparse.ArgumentParser(
+        description="Generador histórico de notebooks (DEPRECADO — véase docstring)"
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Sobrescribe notebooks existentes (PIERDE TRABAJO MANUAL)",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Muestra qué haría sin escribir archivos",
+    )
+    args = parser.parse_args()
+
+    nb3_path = NOTEBOOKS_DIR / "03_clustering_model.ipynb"
+    nb4_path = NOTEBOOKS_DIR / "04_cluster_profiling.ipynb"
+
+    if not args.force and (nb3_path.exists() or nb4_path.exists()):
+        print("❌  ABORTADO: Los notebooks objetivo ya existen.")
+        print(f"    {nb3_path} → {'existe' if nb3_path.exists() else 'no existe'}")
+        print(f"    {nb4_path} → {'existe' if nb4_path.exists() else 'no existe'}")
+        print("")
+        print("    Estos notebooks contienen extensiones manuales (GMM, UMAP, K-Prototypes,")
+        print("    feature selection, Soil_Type, etc.) que este generador NO reproduce.")
+        print("")
+        print("    Para forzar la sobrescritura (NO RECOMENDADO):")
+        print("      python -m src.create_notebooks --force")
+        print("")
+        print("    Para solo ver qué haría (dry-run):")
+        print("      python -m src.create_notebooks --dry-run")
+        sys.exit(1)
+
+    if args.dry_run:
+        print(f"[dry-run] Crearía: {nb3_path}")
+        print(f"[dry-run] Crearía: {nb4_path}")
+        print("Notebooks existentes:", "SÍ" if nb3_path.exists() else "NO")
+        return
+
     NOTEBOOKS_DIR.mkdir(parents=True, exist_ok=True)
 
     nb3 = create_notebook_03()
-    nb3_path = NOTEBOOKS_DIR / "03_clustering_model.ipynb"
     with open(nb3_path, "w", encoding="utf-8") as f:
         json.dump(nb3, f, indent=1, ensure_ascii=False)
-    print(f"Notebook 03 creado exitosamente en: {nb3_path}")
+    print(f"Notebook 03 creado en: {nb3_path}")
 
     nb4 = create_notebook_04()
-    nb4_path = NOTEBOOKS_DIR / "04_cluster_profiling.ipynb"
     with open(nb4_path, "w", encoding="utf-8") as f:
         json.dump(nb4, f, indent=1, ensure_ascii=False)
-    print(f"Notebook 04 creado exitosamente en: {nb4_path}")
+    print(f"Notebook 04 creado en: {nb4_path}")
 
 
 if __name__ == "__main__":

@@ -287,20 +287,75 @@ def pca():
     }
 
 
-def management_advice(values: dict[str, float]) -> list[str]:
+def management_advice(values: dict[str, float], cluster_id: int, frame: pd.DataFrame) -> list[str]:
+    """
+    Genera recomendaciones de manejo comparando el perfil del usuario
+    contra el centroide de su ecorregión asignada.
+    """
+    cluster_data = frame[frame["kmeans_cluster"] == cluster_id]
+    if cluster_data.empty:
+        return ["No hay datos suficientes para esta ecorregión."]
+
+    centroid = cluster_data[FEATURE_COLS].mean()
     advice = []
-    if values["pH_Value"] < 5.5:
-        advice.append("Considera un análisis de encalado para corregir la acidez del suelo.")
-    elif values["pH_Value"] > 7.5:
-        advice.append("Monitorea la disponibilidad de hierro y zinc en este suelo alcalino.")
-    if values["Rainfall"] > 220:
-        advice.append("Prioriza drenaje superficial para reducir el riesgo de saturación radicular.")
-    elif values["Rainfall"] < 60:
-        advice.append("Evalúa riego suplementario eficiente para compensar el déficit hídrico.")
-    if values["Nitrogen"] < 40:
-        advice.append("Valida el nitrógeno disponible antes de definir el plan de fertilización.")
+
+    # pH — comparar contra centroide del cluster, no umbral fijo
+    user_ph = values["pH_Value"]
+    cluster_ph = centroid["pH_Value"]
+    ph_diff = user_ph - cluster_ph
+    if ph_diff < -0.5:
+        advice.append(
+            f"Tu pH ({user_ph:.1f}) está {abs(ph_diff):.1f} unidades por debajo del "
+            f"típico de esta ecorregión ({cluster_ph:.1f}). Considera análisis de encalado."
+        )
+    elif ph_diff > 0.5:
+        advice.append(
+            f"Tu pH ({user_ph:.1f}) está {ph_diff:.1f} unidades por encima del "
+            f"típico de esta ecorregión ({cluster_ph:.1f}). Monitorea disponibilidad de Fe y Zn."
+        )
+
+    # Rainfall — comparar contra centroide
+    user_rf = values["Rainfall"]
+    cluster_rf = centroid["Rainfall"]
+    rf_diff_pct = (user_rf - cluster_rf) / cluster_rf * 100 if cluster_rf else 0
+    if rf_diff_pct > 30:
+        advice.append(
+            f"Precipitación {rf_diff_pct:.0f}% mayor que el promedio de la ecorregión "
+            f"({cluster_rf:.0f} mm). Prioriza drenaje para evitar saturación radicular."
+        )
+    elif rf_diff_pct < -30:
+        advice.append(
+            f"Precipitación {abs(rf_diff_pct):.0f}% menor que el promedio de la ecorregión "
+            f"({cluster_rf:.0f} mm). Evalúa riego suplementario eficiente."
+        )
+
+    # Nitrogen — comparar contra centroide
+    user_n = values["Nitrogen"]
+    cluster_n = centroid["Nitrogen"]
+    n_diff_pct = (user_n - cluster_n) / cluster_n * 100 if cluster_n else 0
+    if n_diff_pct < -25:
+        advice.append(
+            f"Nitrógeno {abs(n_diff_pct):.0f}% por debajo del típico de la ecorregión "
+            f"({cluster_n:.0f} mg/kg). Valida N disponible antes de planificar fertilización."
+        )
+
+    # Temperature — alerta por estrés térmico
+    user_temp = values["Temperature"]
+    cluster_temp = centroid["Temperature"]
+    if user_temp > cluster_temp + 3:
+        advice.append(
+            f"Temperatura {user_temp - cluster_temp:.1f}°C arriba del promedio de la ecorregión. "
+            f"Considera variedades tolerantes a estrés térmico y manejo de riego."
+        )
+    elif user_temp < cluster_temp - 3:
+        advice.append(
+            f"Temperatura {cluster_temp - user_temp:.1f}°C abajo del promedio. "
+            f"Verifica fechas de siembra y riesgo de heladas."
+        )
+
     return advice or [
-        "Las condiciones ingresadas están dentro de rangos equilibrados para esta ecorregión."
+        "Tu perfil coincide bien con el centroide de esta ecorregión. "
+        "Mantén el monitoreo rutinario de suelo y clima."
     ]
 
 
@@ -328,7 +383,7 @@ def recommend(payload: RecommendationInput):
         "sampleCount": region["count"],
         "share": region["share"],
         "crops": region["crops"][:5],
-        "advice": management_advice(values),
+        "advice": management_advice(values, cluster_id, frame),
         "userProfile": values,
         "centroidProfile": region["profile"],
         "normalizedUser": normalize_profile(values, frame),

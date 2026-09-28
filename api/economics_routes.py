@@ -9,7 +9,6 @@ from data.economics.catalog import catalog_response
 from .economics_engine import InfeasiblePlanError, optimize_plan
 from .economics_models import OptimizationRequest, OptimizationResponse
 
-
 router = APIRouter(tags=["economics"])
 
 

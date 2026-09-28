@@ -1,9 +1,6 @@
 """Tests for src.create_notebooks module."""
 
-import pytest
 import json
-from pathlib import Path
-import tempfile
 
 
 def test_create_notebooks_imports():

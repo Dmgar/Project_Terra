@@ -1,23 +1,22 @@
 import numpy as np
-import pytest
-
 import pandas as pd
+
 from src.clustering import (
+    compare_models,
     compute_hierarchical_linkage,
+    encode_categorical_for_clustering,
     find_optimal_gmm,
     find_optimal_k,
+    prepare_mixed_data,
     run_gmm,
     run_hdbscan,
     run_hierarchical,
     run_kmeans,
+    run_kprototypes,
     run_tsne_projection,
     run_umap_projection,
-    compare_models,
     select_features_kruskal,
     select_features_mi,
-    encode_categorical_for_clustering,
-    prepare_mixed_data,
-    run_kprototypes,
 )
 
 
@@ -106,8 +105,8 @@ def test_run_gmm_returns_labels_probs_and_model(separated_points):
 
 
 def test_compare_models_returns_dataframe_with_expected_columns(separated_points):
-    km_labels, km_model = run_kmeans(separated_points, k=2, random_state=42)
-    gmm_labels, gmm_probs, gmm_model = run_gmm(
+    km_labels, _km_model = run_kmeans(separated_points, k=2, random_state=42)
+    gmm_labels, _gmm_probs, gmm_model = run_gmm(
         separated_points, k=2, random_state=42, n_init=2
     )
 

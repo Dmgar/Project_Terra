@@ -18,7 +18,6 @@ from .economics_models import (
     ScenarioResult,
 )
 
-
 SCENARIOS = ("conservative", "expected", "favorable")
 MULTIPLIERS = {
     "conservative": (0.85, 0.85, 1.10),

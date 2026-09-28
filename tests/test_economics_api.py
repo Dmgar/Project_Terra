@@ -7,7 +7,6 @@ from api.economics_engine import InfeasiblePlanError, optimize_plan
 from api.economics_models import OptimizationRequest
 from api.server import app
 
-
 ENVIRONMENT = {
     "nitrogen": 50,
     "phosphorus": 30,

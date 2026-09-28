@@ -11,7 +11,6 @@ from pydantic import (
     model_validator,
 )
 
-
 Positive = Annotated[float, Field(gt=0, allow_inf_nan=False)]
 NonNegative = Annotated[float, Field(ge=0, allow_inf_nan=False)]
 

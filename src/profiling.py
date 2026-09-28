@@ -3,19 +3,18 @@ Módulo para análisis diferencial, perfilado ambiental,
 validación agronómica y visualizaciones en Project Terra.
 """
 
-from typing import List, Optional, Tuple, Union
+
 import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from sklearn.decomposition import PCA
-from sklearn.metrics import confusion_matrix
 
 
 def cluster_summary(
     df: pd.DataFrame,
     cluster_col: str,
-    feature_cols: List[str],
+    feature_cols: list[str],
     agg: str = "mean",
 ) -> pd.DataFrame:
     """
@@ -37,7 +36,7 @@ def cluster_summary(
 def create_radar_chart(
     df: pd.DataFrame,
     cluster_col: str,
-    feature_cols: List[str],
+    feature_cols: list[str],
     title: str = "Firma Ambiental por Clúster (Ecorregiones)",
 ) -> go.Figure:
     """
@@ -80,7 +79,7 @@ def create_radar_chart(
             theta=categories,
             fill='toself',
             name=f'Clúster {cluster_id}',
-            line=dict(color=color, width=2),
+            line={"color": color, "width": 2},
             customdata=r_real,
             hovertemplate=(
                 f"<b>Clúster {cluster_id}</b><br>"
@@ -91,17 +90,17 @@ def create_radar_chart(
         ))
 
     fig.update_layout(
-        polar=dict(
-            radialaxis=dict(
-                visible=True,
-                range=[0, 1],
-                showticklabels=False
-            )
-        ),
+        polar={
+            "radialaxis": {
+                "visible": True,
+                "range": [0, 1],
+                "showticklabels": False
+            }
+        },
         showlegend=True,
-        title=dict(text=title, x=0.5, font=dict(size=18)),
+        title={"text": title, "x": 0.5, "font": {"size": 18}},
         template="plotly_white",
-        margin=dict(l=40, r=40, t=60, b=40)
+        margin={"l": 40, "r": 40, "t": 60, "b": 40}
     )
 
     return fig
@@ -111,7 +110,7 @@ def contingency_table(
     df: pd.DataFrame,
     cluster_col: str,
     label_col: str = "Crop",
-    normalize: Optional[str] = "index",
+    normalize: str | None = "index",
 ) -> pd.DataFrame:
     """
     Genera una tabla de contingencia cruzando la asignación de clústeres
@@ -135,7 +134,7 @@ def contingency_table(
 from sklearn.metrics.cluster import contingency_matrix
 
 
-def purity_score(y_true: Union[pd.Series, np.ndarray], y_pred: Union[pd.Series, np.ndarray]) -> float:
+def purity_score(y_true: pd.Series | np.ndarray, y_pred: pd.Series | np.ndarray) -> float:
     """
     Calcula la métrica de pureza del clustering respecto a una etiqueta real:
     Purity = (1 / N) * sum_k(max_j |w_k ∩ c_j|)
@@ -147,12 +146,12 @@ def purity_score(y_true: Union[pd.Series, np.ndarray], y_pred: Union[pd.Series, 
 def plot_pca_clusters(
     X_scaled: np.ndarray,
     labels: np.ndarray,
-    pca_obj: Optional[PCA] = None,
-    hover_df: Optional[pd.DataFrame] = None,
-    sample_size: Optional[int] = 3000,
+    pca_obj: PCA | None = None,
+    hover_df: pd.DataFrame | None = None,
+    sample_size: int | None = 3000,
     random_state: int = 42,
     title: str = "Proyección PCA 2D de Clústeres",
-) -> Tuple[go.Figure, PCA]:
+) -> tuple[go.Figure, PCA]:
     """
     Proyecta los datos en 2 dimensiones usando PCA y genera un gráfico interactivo
     de dispersión en Plotly coloreado por clúster.
@@ -207,12 +206,12 @@ def plot_pca_clusters(
         color_discrete_sequence=px.colors.qualitative.Safe
     )
 
-    fig.update_traces(marker=dict(size=6, line=dict(width=0.5, color='DarkSlateGrey')))
+    fig.update_traces(marker={"size": 6, "line": {"width": 0.5, "color": 'DarkSlateGrey'}})
     fig.update_layout(
         xaxis_title=f"Componente Principal 1 ({var_ratio[0]*100:.1f}%)",
         yaxis_title=f"Componente Principal 2 ({var_ratio[1]*100:.1f}%)",
         legend_title="Asignación",
-        margin=dict(l=40, r=40, t=60, b=40)
+        margin={"l": 40, "r": 40, "t": 60, "b": 40}
     )
 
     return fig, pca_obj

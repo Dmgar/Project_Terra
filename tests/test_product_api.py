@@ -7,7 +7,6 @@ from fastapi.testclient import TestClient
 
 from api.server import DATA_PATH, RAW_DATA_PATH, app
 
-
 client = TestClient(app)
 HAS_DATA = Path(DATA_PATH).exists() or Path(RAW_DATA_PATH).exists()
 

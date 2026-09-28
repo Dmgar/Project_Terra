@@ -1,10 +1,10 @@
 """Tests for src.run_pipeline module."""
 
-import pytest
+import sys
+
 import numpy as np
 import pandas as pd
-from pathlib import Path
-import sys
+import pytest
 
 
 def test_run_pipeline_imports():

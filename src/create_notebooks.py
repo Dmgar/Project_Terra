@@ -19,8 +19,8 @@ Recomendación: NO USAR. Los notebooks finales están en ./notebooks/
 
 import argparse
 import json
-from pathlib import Path
 import sys
+from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 NOTEBOOKS_DIR = ROOT_DIR / "notebooks"
@@ -402,13 +402,13 @@ def main():
         print("❌  ABORTADO: Los notebooks objetivo ya existen.")
         print(f"    {nb3_path} → {'existe' if nb3_path.exists() else 'no existe'}")
         print(f"    {nb4_path} → {'existe' if nb4_path.exists() else 'no existe'}")
-        print("")
+        print()
         print("    Estos notebooks contienen extensiones manuales (GMM, UMAP, K-Prototypes,")
         print("    feature selection, Soil_Type, etc.) que este generador NO reproduce.")
-        print("")
+        print()
         print("    Para forzar la sobrescritura (NO RECOMENDADO):")
         print("      python -m src.create_notebooks --force")
-        print("")
+        print()
         print("    Para solo ver qué haría (dry-run):")
         print("      python -m src.create_notebooks --dry-run")
         sys.exit(1)

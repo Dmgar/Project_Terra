@@ -5,9 +5,9 @@ y exportar los datos enriquecidos y modelos serializados.
 
 import sys
 from pathlib import Path
-import pandas as pd
-import numpy as np
+
 import joblib
+import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
 # Asegurar importación de src
@@ -16,14 +16,14 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.append(str(ROOT_DIR))
 
 from src.clustering import (
-    find_optimal_k,
-    run_kmeans,
-    run_hierarchical,
-    find_optimal_gmm,
-    run_gmm,
     compare_models,
+    find_optimal_gmm,
+    find_optimal_k,
+    run_gmm,
+    run_hierarchical,
+    run_kmeans,
 )
-from src.profiling import purity_score, contingency_table
+
 
 def main():
     if hasattr(sys.stdout, "reconfigure"):

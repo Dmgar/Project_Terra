@@ -3,25 +3,29 @@ Módulo para entrenamiento y evaluación de algoritmos de clustering
 en Project Terra.
 """
 
-from typing import Dict, Any, List, Literal, Tuple, Optional, Sequence
+from collections.abc import Sequence
+from typing import Any, Literal
+
 import numpy as np
 import pandas as pd
-from sklearn.cluster import KMeans, AgglomerativeClustering, HDBSCAN
-from sklearn.mixture import GaussianMixture
-from sklearn.manifold import TSNE
-from sklearn.metrics import silhouette_score, davies_bouldin_score, calinski_harabasz_score
-from sklearn.metrics.cluster import contingency_matrix
-from sklearn.feature_selection import mutual_info_classif
-from scipy.cluster.hierarchy import linkage, dendrogram
+from scipy.cluster.hierarchy import linkage
 from scipy.stats import kruskal
-import matplotlib.pyplot as plt
-
+from sklearn.cluster import HDBSCAN, AgglomerativeClustering, KMeans
+from sklearn.feature_selection import mutual_info_classif
+from sklearn.manifold import TSNE
+from sklearn.metrics import (
+    calinski_harabasz_score,
+    davies_bouldin_score,
+    silhouette_score,
+)
+from sklearn.metrics.cluster import contingency_matrix
+from sklearn.mixture import GaussianMixture
 
 
 def find_optimal_k(
     X: np.ndarray,
     k_range: Sequence[int] = range(2, 11),
-    sample_size_silhouette: Optional[int] = 5000,
+    sample_size_silhouette: int | None = 5000,
     random_state: int = 42,
 ) -> pd.DataFrame:
     """
@@ -69,7 +73,7 @@ def run_kmeans(
     X: np.ndarray,
     k: int,
     random_state: int = 42,
-) -> Tuple[np.ndarray, KMeans]:
+) -> tuple[np.ndarray, KMeans]:
     """
     Ajusta un modelo K-Means con un K específico.
 
@@ -89,7 +93,7 @@ def run_kmeans(
 def compute_hierarchical_linkage(
     X: np.ndarray,
     method: str = "ward",
-    sample_size: Optional[int] = 2000,
+    sample_size: int | None = 2000,
     random_state: int = 42,
 ) -> np.ndarray:
     """
@@ -119,7 +123,7 @@ def run_hierarchical(
     X: np.ndarray,
     k: int,
     linkage_method: str = "ward",
-) -> Tuple[np.ndarray, AgglomerativeClustering]:
+) -> tuple[np.ndarray, AgglomerativeClustering]:
     """
     Ajusta un modelo de Clustering Jerárquico Aglomerativo.
 
@@ -145,7 +149,7 @@ def find_optimal_gmm(
     X: np.ndarray,
     k_range: Sequence[int] = range(2, 11),
     covariance_types: Sequence[str] = ("full", "tied", "diag", "spherical"),
-    sample_size_silhouette: Optional[int] = 5000,
+    sample_size_silhouette: int | None = 5000,
     random_state: int = 42,
     n_init: int = 5,
 ) -> pd.DataFrame:
@@ -222,7 +226,7 @@ def run_gmm(
     covariance_type: str = "full",
     random_state: int = 42,
     n_init: int = 10,
-) -> Tuple[np.ndarray, np.ndarray, GaussianMixture]:
+) -> tuple[np.ndarray, np.ndarray, GaussianMixture]:
     """
     Ajusta un modelo GMM final con los hiperparámetros seleccionados.
 
@@ -262,9 +266,9 @@ def compare_models(
     X: np.ndarray,
     labels_kmeans: np.ndarray,
     labels_gmm: np.ndarray,
-    y_true: Optional[np.ndarray] = None,
-    gmm_model: Optional[GaussianMixture] = None,
-    sample_size_silhouette: Optional[int] = 5000,
+    y_true: np.ndarray | None = None,
+    gmm_model: GaussianMixture | None = None,
+    sample_size_silhouette: int | None = 5000,
     random_state: int = 42,
 ) -> pd.DataFrame:
     """
@@ -289,10 +293,10 @@ def compare_models(
     Returns:
         DataFrame con índice ['kmeans', 'gmm'] y columnas de métricas.
     """
-    results: Dict[str, Dict[str, Any]] = {}
+    results: dict[str, dict[str, Any]] = {}
 
     for name, labels in [("kmeans", labels_kmeans), ("gmm", labels_gmm)]:
-        row: Dict[str, Any] = {}
+        row: dict[str, Any] = {}
 
         # Silhouette
         if len(np.unique(labels)) > 1:
@@ -391,8 +395,8 @@ def run_umap_projection(
 def run_hdbscan(
     X: np.ndarray,
     min_cluster_size: int = 15,
-    min_samples: Optional[int] = None,
-) -> Tuple[np.ndarray, HDBSCAN]:
+    min_samples: int | None = None,
+) -> tuple[np.ndarray, HDBSCAN]:
     """
     Aplica HDBSCAN para encontrar clústeres basados en densidad.
     Es ideal para aplicar sobre datos proyectados con UMAP.
@@ -450,7 +454,7 @@ def select_features_kruskal(
             pvals[col] = p
             if p < alpha:
                 selected.append(col)
-        except Exception:
+        except ValueError:
             pvals[col] = 1.0
 
     # Si no hay suficientes significativas, tomar las mejores por p-value
@@ -492,7 +496,7 @@ def encode_categorical_for_clustering(
     df: pd.DataFrame,
     cat_cols: list[str],
     method: Literal["onehot", "ordinal"] = "onehot",
-) -> Tuple[np.ndarray, list[str]]:
+) -> tuple[np.ndarray, list[str]]:
     """
     Codifica variables categóricas para clustering mixto.
 
@@ -524,7 +528,7 @@ def prepare_mixed_data(
     cat_cols: list[str],
     cat_method: Literal["onehot", "ordinal"] = "onehot",
     scaler=None,
-) -> Tuple[np.ndarray, list[str]]:
+) -> tuple[np.ndarray, list[str]]:
     """
     Prepara matriz combinada numérica + categórica para clustering.
 

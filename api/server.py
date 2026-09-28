@@ -16,7 +16,6 @@ from sklearn.decomposition import PCA
 
 from .economics_routes import router as economics_router
 
-
 ROOT_DIR = Path(__file__).resolve().parent.parent
 DATA_PATH = ROOT_DIR / "data" / "processed" / "sensor_Crop_Dataset_clustered.csv"
 RAW_DATA_PATH = ROOT_DIR / "data" / "raw" / "sensor_Crop_Dataset.csv"
@@ -209,7 +208,7 @@ def region_payload(frame: pd.DataFrame, cluster_id: int) -> dict:
     soils = distribution(subset["Soil_Type"]) if "Soil_Type" in subset else []
     return {
         "id": int(cluster_id),
-        "count": int(len(subset)),
+        "count": len(subset),
         "share": round(float(len(subset) / len(frame) * 100), 2),
         "topCrop": crops[0]["name"] if crops else None,
         "crops": crops,
@@ -232,7 +231,7 @@ def overview():
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     return {
         "metrics": {
-            "samples": int(len(frame)),
+            "samples": len(frame),
             "features": len(FEATURE_COLS),
             "regions": int(frame["kmeans_cluster"].nunique()),
             "crops": int(frame["Crop"].nunique()) if "Crop" in frame else 0,
@@ -354,8 +353,10 @@ def management_advice(values: dict[str, float], cluster_id: int, frame: pd.DataF
         )
 
     return advice or [
-        "Tu perfil coincide bien con el centroide de esta ecorregión. "
-        "Mantén el monitoreo rutinario de suelo y clima."
+        (
+            "Tu perfil coincide bien con el centroide de esta ecorregión. "
+            "Mantén el monitoreo rutinario de suelo y clima."
+        )
     ]
 
 

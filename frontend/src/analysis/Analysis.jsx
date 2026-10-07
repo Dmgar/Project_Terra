@@ -222,7 +222,7 @@ function Scatter({ points = [] }) {
                 fontSize="10"
                 fontFamily="var(--mono)"
               >
-                PC1: {Number(hoveredPoint.x).toFixed(2)}, PC2:{' '}
+                UMAP 1: {Number(hoveredPoint.x).toFixed(2)}, UMAP 2:{' '}
                 {Number(hoveredPoint.y).toFixed(2)}
               </text>
             </g>
@@ -252,12 +252,12 @@ export default function Analysis() {
   const [data, setData] = useState(null);
   const [overview, setOverview] = useState(null);
   const [error, setError] = useState("");
-  const [tab, setTab] = useState("pca");
+  const [tab, setTab] = useState("umap");
   const tabsRef = useRef(null);
   useSlidingIndicator(tabsRef, tab);
 
   useEffect(() => {
-    Promise.all([api("/api/pca"), api("/api/overview")])
+    Promise.all([api("/api/umap"), api("/api/overview")])
       .then(([a, b]) => {
         setData(a);
         setOverview(b);
@@ -266,7 +266,7 @@ export default function Analysis() {
   }, []);
 
   const tabs = [
-    ["pca", "Proyección PCA"],
+    ["umap", "Proyección UMAP"],
     ["features", "Variables ambientales"],
     ["clusters", "Comparación de grupos"],
   ];
@@ -319,10 +319,10 @@ export default function Analysis() {
         </div>
 
         <div key={tab} className="tab-panel">
-        {tab === "pca" && (
+        {tab === "umap" && (
           <div className="grid-2">
             <div className="panel" style={{ gridColumn: "span 2" }}>
-              <h3>Proyección de componentes principales</h3>
+              <h3>Proyección UMAP</h3>
               <p className="panel-caption">
                 Una vista bidimensional de la similitud ambiental en siete
                 dimensiones. Cada punto es una observación.
@@ -343,12 +343,9 @@ export default function Analysis() {
                 ))}
               </div>
               <div className="note">
-                PC1 explica{" "}
-                {(data?.explainedVariance?.[0] || 0).toFixed(1)}% de la
-                varianza; PC2 explica{" "}
-                {(data?.explainedVariance?.[1] || 0).toFixed(1)}%. La
-                proyección sirve para inspección; el agrupamiento opera en las
-                siete dimensiones.
+                UMAP proyecta el agrupamiento en dos dimensiones preservando la estructura 
+                no lineal y local. La proyección sirve para inspección visual, mientras que 
+                el modelo de K-Means opera directamente sobre las dimensiones embebidas.
               </div>
             </div>
           </div>

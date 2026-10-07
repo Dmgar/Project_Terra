@@ -2,7 +2,7 @@
 
 Este archivo detalla las características planificadas, ideas de mejora y los próximos pasos del proyecto para escalar el producto y su análisis.
 
-## Completado ✅
+## Completado 
 
 ### Backend & Modelos
 - [x] **Pruebas Automatizadas:** 36 tests Python (`pytest`) + 6 tests JS (`node --test`) cubriendo clustering, profiling, economics API, product API, app utils, pipeline y feature selection.
@@ -20,6 +20,8 @@ Este archivo detalla las características planificadas, ideas de mejora y los pr
 - [x] **`max_ha` placeholders reemplazados**: 6 cultivos con valores realistas por región colombiana.
 - [x] **Desminificación `App.jsx` + `index.css`**: 25 líneas → 1100+ líneas legibles; CSS consolidado.
 - [x] **`create_notebooks.py` protegido**: Aborta si notebooks existen, `--dry-run`/`--force` disponibles.
+- [x] **Migración a UMAP**: Reemplazo de PCA por UMAP en la fase de reducción de dimensionalidad, logrando mejor preservación de la estructura local no lineal.
+- [x] **Filtro matemático OOD (Out-of-Distribution)**: Cálculo de norma euclidiana basada en Z-scores para identificar y advertir sobre parámetros de terreno físicamente extremos o anómalos.
 
 ### Frontend
 - [x] **Exportación de Reportes (Plan Comercial):** PDF + CSV con siluetas, trazabilidad, 3 escenarios, comparación manual.
@@ -29,6 +31,7 @@ Este archivo detalla las características planificadas, ideas de mejora y los pr
 ## Próximos Pasos (To-Do)
 
 ### Backend & Modelos
+- [ ] **Contrastive Learning (Aprendizaje Contrastivo) para Tabular Data:** Diseñar una arquitectura SimCLR (Encoder MLP + Projection Head) aplicando enmascaramiento y ruido Gaussiano. Contrastar los clústeres obtenidos sobre el espacio latente contra el pipeline actual de UMAP + K-Means para medir la pureza agronómica.
 - [ ] **Despliegue a Producción:** Desplegar contenedor Docker / FastAPI en entorno cloud (ej. Render, Railway, AWS ECS).
 - [ ] **Mejora del Modelo de Clustering:** Explorar la inclusión de nuevas variables (como `Soil_Type`, `Variety`, altitud o datos satelitales) para mejorar el coeficiente de Silueta y la coherencia agronómica.
 - [ ] **Integración en Tiempo Real:** Conectar con APIs climáticas (ej. OpenWeather / IDEAM) o sistemas de mercado (SIPSA) para que los datos de la planeación económica se actualicen dinámicamente.

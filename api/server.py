@@ -19,395 +19,412 @@ from .economics_routes import router as economics_router
 ROOT_DIR = Path(__file__).resolve().parent.parent
 DATA_PATH = ROOT_DIR / "data" / "processed" / "sensor_Crop_Dataset_clustered.csv"
 RAW_DATA_PATH = ROOT_DIR / "data" / "raw" / "sensor_Crop_Dataset.csv"
-MODEL_PATH = ROOT_DIR / "data" / "models" / "kmeans_k5.joblib"
+MODEL_PATH = ROOT_DIR / "data" / "models" / "kmeans_umap_k5.joblib"
 SCALER_PATH = ROOT_DIR / "data" / "models" / "scaler.joblib"
+UMAP_PATH = ROOT_DIR / "data" / "models" / "umap_reducer.joblib"
 FRONTEND_DIST = ROOT_DIR / "frontend" / "dist"
 
 FEATURE_COLS = [
-    "Nitrogen",
-    "Phosphorus",
-    "Potassium",
-    "Temperature",
-    "Humidity",
-    "pH_Value",
-    "Rainfall",
+  "Nitrogen",
+  "Phosphorus",
+  "Potassium",
+  "Temperature",
+  "Humidity",
+  "pH_Value",
+  "Rainfall",
 ]
 
 FEATURE_RANGES = {
-    "Nitrogen": (0.0, 180.0),
-    "Phosphorus": (5.0, 150.0),
-    "Potassium": (5.0, 210.0),
-    "Temperature": (5.0, 50.0),
-    "Humidity": (10.0, 100.0),
-    "pH_Value": (3.5, 9.5),
-    "Rainfall": (20.0, 350.0),
+  "Nitrogen": (0.0, 180.0),
+  "Phosphorus": (5.0, 150.0),
+  "Potassium": (5.0, 210.0),
+  "Temperature": (5.0, 50.0),
+  "Humidity": (10.0, 100.0),
+  "pH_Value": (3.5, 9.5),
+  "Rainfall": (20.0, 350.0),
 }
 
 
 class RecommendationInput(BaseModel):
-    Nitrogen: Annotated[float, Field(ge=0, le=180)]
-    Phosphorus: Annotated[float, Field(ge=5, le=150)]
-    Potassium: Annotated[float, Field(ge=5, le=210)]
-    Temperature: Annotated[float, Field(ge=5, le=50)]
-    Humidity: Annotated[float, Field(ge=10, le=100)]
-    pH_Value: Annotated[float, Field(ge=3.5, le=9.5)]
-    Rainfall: Annotated[float, Field(ge=20, le=350)]
+  Nitrogen: Annotated[float, Field(ge=0, le=180)]
+  Phosphorus: Annotated[float, Field(ge=5, le=150)]
+  Potassium: Annotated[float, Field(ge=5, le=210)]
+  Temperature: Annotated[float, Field(ge=5, le=50)]
+  Humidity: Annotated[float, Field(ge=10, le=100)]
+  pH_Value: Annotated[float, Field(ge=3.5, le=9.5)]
+  Rainfall: Annotated[float, Field(ge=20, le=350)]
 
 
 class DistributionItem(BaseModel):
-    name: str
-    value: int
-    share: float
+  name: str
+  value: int
+  share: float
 
 
 class FeatureStat(BaseModel):
-    feature: str
-    mean: float
-    std: float
-    min: float
-    median: float
-    max: float
+  feature: str
+  mean: float
+  std: float
+  min: float
+  median: float
+  max: float
 
 
 class OverviewMetrics(BaseModel):
-    samples: int
-    features: int
-    regions: int
-    crops: int
-    soils: int
+  samples: int
+  features: int
+  regions: int
+  crops: int
+  soils: int
 
 
 class OverviewResponse(BaseModel):
-    metrics: OverviewMetrics
-    cropDistribution: list[DistributionItem]
-    soilDistribution: list[DistributionItem]
-    clusterDistribution: list[DistributionItem]
-    featureStats: list[FeatureStat]
+  metrics: OverviewMetrics
+  cropDistribution: list[DistributionItem]
+  soilDistribution: list[DistributionItem]
+  clusterDistribution: list[DistributionItem]
+  featureStats: list[FeatureStat]
 
 
 class RegionProfile(BaseModel):
-    id: int
-    count: int
-    share: float
-    topCrop: str | None
-    crops: list[DistributionItem]
-    soils: list[DistributionItem]
-    profile: dict[str, float]
-    normalizedProfile: dict[str, float]
+  id: int
+  count: int
+  share: float
+  topCrop: str | None
+  crops: list[DistributionItem]
+  soils: list[DistributionItem]
+  profile: dict[str, float]
+  normalizedProfile: dict[str, float]
 
 
 class RegionsResponse(BaseModel):
-    regions: list[RegionProfile]
+  regions: list[RegionProfile]
 
 
-class PCAPoint(BaseModel):
-    x: float
-    y: float
-    cluster: int
-    crop: str
-    soil: str
+class UMAPPoint(BaseModel):
+  x: float
+  y: float
+  cluster: int
+  crop: str
+  soil: str
 
 
-class PCAResponse(BaseModel):
-    points: list[PCAPoint]
-    explainedVariance: list[float]
+class UMAPResponse(BaseModel):
+  points: list[UMAPPoint]
+  explainedVariance: list[float]
 
 
 app = FastAPI(title="Project Terra API", version="1.0.0")
 app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+  CORSMiddleware,
+  allow_origins=[
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+  ],
+  allow_credentials=True,
+  allow_methods=["*"],
+  allow_headers=["*"],
 )
 app.include_router(economics_router)
 
 
 def distribution(series: pd.Series) -> list[dict]:
-    counts = series.value_counts()
-    total = int(counts.sum())
-    return [
-        {
-            "name": str(name),
-            "value": int(value),
-            "share": round(float(value / total * 100), 2),
-        }
-        for name, value in counts.items()
-    ]
+  counts = series.value_counts()
+  total = int(counts.sum())
+  return [
+    {
+      "name": str(name),
+      "value": int(value),
+      "share": round(float(value / total * 100), 2),
+    }
+    for name, value in counts.items()
+  ]
 
 
 @lru_cache(maxsize=1)
 def load_dataset() -> pd.DataFrame:
-    path = DATA_PATH if DATA_PATH.exists() else RAW_DATA_PATH
-    if not path.exists():
-        raise FileNotFoundError(
-            "No se encontró el dataset. Añade sensor_Crop_Dataset.csv y ejecuta el pipeline."
-        )
-    frame = pd.read_csv(path)
-    missing = set(FEATURE_COLS) - set(frame.columns)
-    if missing:
-        raise ValueError(f"Faltan columnas requeridas: {', '.join(sorted(missing))}")
-    if "kmeans_cluster" not in frame.columns:
-        model, scaler = load_model()
-        frame["kmeans_cluster"] = model.predict(
-            scaler.transform(frame[FEATURE_COLS].to_numpy())
-        )
-    return frame
+  path = DATA_PATH if DATA_PATH.exists() else RAW_DATA_PATH
+  if not path.exists():
+    raise FileNotFoundError(
+      "No se encontró el dataset. Añade sensor_Crop_Dataset.csv y ejecuta el pipeline."
+    )
+  frame = pd.read_csv(path)
+  missing = set(FEATURE_COLS) - set(frame.columns)
+  if missing:
+    raise ValueError(f"Faltan columnas requeridas: {', '.join(sorted(missing))}")
+  if "kmeans_cluster" not in frame.columns:
+    model, scaler = load_model()
+    frame["kmeans_cluster"] = model.predict(
+      scaler.transform(frame[FEATURE_COLS].to_numpy())
+    )
+  return frame
 
 
 @lru_cache(maxsize=1)
 def load_model():
-    if not MODEL_PATH.exists() or not SCALER_PATH.exists():
-        raise FileNotFoundError("No se encontraron los artefactos del modelo entrenado.")
-    return joblib.load(MODEL_PATH), joblib.load(SCALER_PATH)
+  if not MODEL_PATH.exists() or not SCALER_PATH.exists():
+    raise FileNotFoundError("No se encontraron los artefactos del modelo entrenado.")
+  return joblib.load(MODEL_PATH), joblib.load(SCALER_PATH)
+
+
+@lru_cache(maxsize=1)
+def load_umap_model():
+  if not UMAP_PATH.exists():
+    raise FileNotFoundError("No se encontró el modelo UMAP.")
+  return joblib.load(UMAP_PATH)
 
 
 @lru_cache(maxsize=1)
 def load_gmm_model():
-    gmm_path = ROOT_DIR / "data" / "models" / "gmm_k5_full.joblib"
-    if not gmm_path.exists() or not SCALER_PATH.exists():
-        return None, None
-    return joblib.load(gmm_path), joblib.load(SCALER_PATH)
+  gmm_path = ROOT_DIR / "data" / "models" / "gmm_k5_full.joblib"
+  if not gmm_path.exists() or not SCALER_PATH.exists():
+    return None, None
+  return joblib.load(gmm_path), joblib.load(SCALER_PATH)
 
 
 def normalize_profile(profile: dict[str, float], frame: pd.DataFrame) -> dict[str, float]:
-    mins = frame[FEATURE_COLS].min()
-    spans = frame[FEATURE_COLS].max() - mins
-    return {
-        key: round(float((profile[key] - mins[key]) / (spans[key] or 1)), 4)
-        for key in FEATURE_COLS
-    }
+  mins = frame[FEATURE_COLS].min()
+  spans = frame[FEATURE_COLS].max() - mins
+  return {
+    key: round(float((profile[key] - mins[key]) / (spans[key] or 1)), 4)
+    for key in FEATURE_COLS
+  }
 
 
 def feature_stats(frame: pd.DataFrame) -> list[dict]:
-    stats = frame[FEATURE_COLS].describe().T
-    return [
-        {
-            "feature": feature,
-            "mean": round(float(row["mean"]), 2),
-            "std": round(float(row["std"]), 2),
-            "min": round(float(row["min"]), 2),
-            "median": round(float(row["50%"]), 2),
-            "max": round(float(row["max"]), 2),
-        }
-        for feature, row in stats.iterrows()
-    ]
+  stats = frame[FEATURE_COLS].describe().T
+  return [
+    {
+      "feature": feature,
+      "mean": round(float(row["mean"]), 2),
+      "std": round(float(row["std"]), 2),
+      "min": round(float(row["min"]), 2),
+      "median": round(float(row["50%"]), 2),
+      "max": round(float(row["max"]), 2),
+    }
+    for feature, row in stats.iterrows()
+  ]
 
 
 def region_payload(frame: pd.DataFrame, cluster_id: int) -> dict:
-    subset = frame[frame["kmeans_cluster"] == cluster_id]
-    profile = {
-        key: round(float(value), 2)
-        for key, value in subset[FEATURE_COLS].mean().items()
-    }
-    crops = distribution(subset["Crop"]) if "Crop" in subset else []
-    soils = distribution(subset["Soil_Type"]) if "Soil_Type" in subset else []
-    return {
-        "id": int(cluster_id),
-        "count": len(subset),
-        "share": round(float(len(subset) / len(frame) * 100), 2),
-        "topCrop": crops[0]["name"] if crops else None,
-        "crops": crops,
-        "soils": soils,
-        "profile": profile,
-        "normalizedProfile": normalize_profile(profile, frame),
-    }
+  subset = frame[frame["kmeans_cluster"] == cluster_id]
+  profile = {
+    key: round(float(value), 2)
+    for key, value in subset[FEATURE_COLS].mean().items()
+  }
+  crops = distribution(subset["Crop"]) if "Crop" in subset else []
+  soils = distribution(subset["Soil_Type"]) if "Soil_Type" in subset else []
+  return {
+    "id": int(cluster_id),
+    "count": len(subset),
+    "share": round(float(len(subset) / len(frame) * 100), 2),
+    "topCrop": crops[0]["name"] if crops else None,
+    "crops": crops,
+    "soils": soils,
+    "profile": profile,
+    "normalizedProfile": normalize_profile(profile, frame),
+  }
 
 
 @app.get("/api/health")
 def health():
-    return {"status": "ok"}
+  return {"status": "ok"}
 
 
 @app.get("/api/overview", response_model=OverviewResponse)
 def overview():
-    try:
-        frame = load_dataset()
-    except (FileNotFoundError, ValueError) as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
-    return {
-        "metrics": {
-            "samples": len(frame),
-            "features": len(FEATURE_COLS),
-            "regions": int(frame["kmeans_cluster"].nunique()),
-            "crops": int(frame["Crop"].nunique()) if "Crop" in frame else 0,
-            "soils": int(frame["Soil_Type"].nunique()) if "Soil_Type" in frame else 0,
-        },
-        "cropDistribution": distribution(frame["Crop"]) if "Crop" in frame else [],
-        "soilDistribution": distribution(frame["Soil_Type"]) if "Soil_Type" in frame else [],
-        "clusterDistribution": distribution(frame["kmeans_cluster"]),
-        "featureStats": feature_stats(frame),
-    }
+  try:
+    frame = load_dataset()
+  except (FileNotFoundError, ValueError) as exc:
+    raise HTTPException(status_code=503, detail=str(exc)) from exc
+  return {
+    "metrics": {
+      "samples": len(frame),
+      "features": len(FEATURE_COLS),
+      "regions": int(frame["kmeans_cluster"].nunique()),
+      "crops": int(frame["Crop"].nunique()) if "Crop" in frame else 0,
+      "soils": int(frame["Soil_Type"].nunique()) if "Soil_Type" in frame else 0,
+    },
+    "cropDistribution": distribution(frame["Crop"]) if "Crop" in frame else [],
+    "soilDistribution": distribution(frame["Soil_Type"]) if "Soil_Type" in frame else [],
+    "clusterDistribution": distribution(frame["kmeans_cluster"]),
+    "featureStats": feature_stats(frame),
+  }
 
 
 @app.get("/api/regions", response_model=RegionsResponse)
 def regions():
-    try:
-        frame = load_dataset()
-    except (FileNotFoundError, ValueError) as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
-    ids = sorted(int(value) for value in frame["kmeans_cluster"].unique())
-    return {"regions": [region_payload(frame, cluster_id) for cluster_id in ids]}
+  try:
+    frame = load_dataset()
+  except (FileNotFoundError, ValueError) as exc:
+    raise HTTPException(status_code=503, detail=str(exc)) from exc
+  ids = sorted(int(value) for value in frame["kmeans_cluster"].unique())
+  return {"regions": [region_payload(frame, cluster_id) for cluster_id in ids]}
 
 
-@app.get("/api/pca", response_model=PCAResponse)
-def pca():
-    try:
-        frame = load_dataset()
-        _, scaler = load_model()
-    except (FileNotFoundError, ValueError) as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
-    scaled = scaler.transform(frame[FEATURE_COLS].to_numpy())
-    reducer = PCA(n_components=2, random_state=42)
-    coordinates = reducer.fit_transform(scaled)
-    rng = np.random.default_rng(42)
-    indices = np.sort(rng.choice(len(frame), size=min(2500, len(frame)), replace=False))
-    points = []
-    for index in indices:
-        row = frame.iloc[index]
-        points.append(
-            {
-                "x": round(float(coordinates[index, 0]), 4),
-                "y": round(float(coordinates[index, 1]), 4),
-                "cluster": int(row["kmeans_cluster"]),
-                "crop": str(row["Crop"]) if "Crop" in frame else "",
-                "soil": str(row["Soil_Type"]) if "Soil_Type" in frame else "",
-            }
-        )
-    return {
-        "points": points,
-        "explainedVariance": [
-            round(float(value * 100), 2) for value in reducer.explained_variance_ratio_
-        ],
-    }
+@app.get("/api/umap", response_model=UMAPResponse)
+def umap_endpoint():
+  try:
+    frame = load_dataset()
+  except (FileNotFoundError, ValueError) as exc:
+    raise HTTPException(status_code=503, detail=str(exc)) from exc
+  
+  rng = np.random.default_rng(42)
+  indices = np.sort(rng.choice(len(frame), size=min(2500, len(frame)), replace=False))
+  points = []
+  for index in indices:
+    row = frame.iloc[index]
+    points.append(
+      {
+        "x": round(float(row["umap_1"]), 4),
+        "y": round(float(row["umap_2"]), 4),
+        "cluster": int(row["kmeans_cluster"]),
+        "crop": str(row["Crop"]) if "Crop" in frame else "",
+        "soil": str(row["Soil_Type"]) if "Soil_Type" in frame else "",
+      }
+    )
+  return {
+    "points": points,
+    "explainedVariance": [],
+  }
 
 
 def management_advice(values: dict[str, float], cluster_id: int, frame: pd.DataFrame) -> list[str]:
-    """
-    Genera recomendaciones de manejo comparando el perfil del usuario
-    contra el centroide de su ecorregión asignada.
-    """
-    cluster_data = frame[frame["kmeans_cluster"] == cluster_id]
-    if cluster_data.empty:
-        return ["No hay datos suficientes para esta ecorregión."]
+  """
+  Genera recomendaciones de manejo comparando el perfil del usuario
+  contra el centroide de su ecorregión asignada.
+  """
+  cluster_data = frame[frame["kmeans_cluster"] == cluster_id]
+  if cluster_data.empty:
+    return ["No hay datos suficientes para esta ecorregión."]
 
-    centroid = cluster_data[FEATURE_COLS].mean()
-    advice = []
+  centroid = cluster_data[FEATURE_COLS].mean()
+  advice = []
 
-    # pH — comparar contra centroide del cluster, no umbral fijo
-    user_ph = values["pH_Value"]
-    cluster_ph = centroid["pH_Value"]
-    ph_diff = user_ph - cluster_ph
-    if ph_diff < -0.5:
-        advice.append(
-            f"Tu pH ({user_ph:.1f}) está {abs(ph_diff):.1f} unidades por debajo del "
-            f"típico de esta ecorregión ({cluster_ph:.1f}). Considera análisis de encalado."
-        )
-    elif ph_diff > 0.5:
-        advice.append(
-            f"Tu pH ({user_ph:.1f}) está {ph_diff:.1f} unidades por encima del "
-            f"típico de esta ecorregión ({cluster_ph:.1f}). Monitorea disponibilidad de Fe y Zn."
-        )
+  # pH — comparar contra centroide del cluster, no umbral fijo
+  user_ph = values["pH_Value"]
+  cluster_ph = centroid["pH_Value"]
+  ph_diff = user_ph - cluster_ph
+  if ph_diff < -0.5:
+    advice.append(
+      f"Tu pH ({user_ph:.1f}) está {abs(ph_diff):.1f} unidades por debajo del "
+      f"típico de esta ecorregión ({cluster_ph:.1f}). Considera análisis de encalado."
+    )
+  elif ph_diff > 0.5:
+    advice.append(
+      f"Tu pH ({user_ph:.1f}) está {ph_diff:.1f} unidades por encima del "
+      f"típico de esta ecorregión ({cluster_ph:.1f}). Monitorea disponibilidad de Fe y Zn."
+    )
 
-    # Rainfall — comparar contra centroide
-    user_rf = values["Rainfall"]
-    cluster_rf = centroid["Rainfall"]
-    rf_diff_pct = (user_rf - cluster_rf) / cluster_rf * 100 if cluster_rf else 0
-    if rf_diff_pct > 30:
-        advice.append(
-            f"Precipitación {rf_diff_pct:.0f}% mayor que el promedio de la ecorregión "
-            f"({cluster_rf:.0f} mm). Prioriza drenaje para evitar saturación radicular."
-        )
-    elif rf_diff_pct < -30:
-        advice.append(
-            f"Precipitación {abs(rf_diff_pct):.0f}% menor que el promedio de la ecorregión "
-            f"({cluster_rf:.0f} mm). Evalúa riego suplementario eficiente."
-        )
+  # Rainfall — comparar contra centroide
+  user_rf = values["Rainfall"]
+  cluster_rf = centroid["Rainfall"]
+  rf_diff_pct = (user_rf - cluster_rf) / cluster_rf * 100 if cluster_rf else 0
+  if rf_diff_pct > 30:
+    advice.append(
+      f"Precipitación {rf_diff_pct:.0f}% mayor que el promedio de la ecorregión "
+      f"({cluster_rf:.0f} mm). Prioriza drenaje para evitar saturación radicular."
+    )
+  elif rf_diff_pct < -30:
+    advice.append(
+      f"Precipitación {abs(rf_diff_pct):.0f}% menor que el promedio de la ecorregión "
+      f"({cluster_rf:.0f} mm). Evalúa riego suplementario eficiente."
+    )
 
-    # Nitrogen — comparar contra centroide
-    user_n = values["Nitrogen"]
-    cluster_n = centroid["Nitrogen"]
-    n_diff_pct = (user_n - cluster_n) / cluster_n * 100 if cluster_n else 0
-    if n_diff_pct < -25:
-        advice.append(
-            f"Nitrógeno {abs(n_diff_pct):.0f}% por debajo del típico de la ecorregión "
-            f"({cluster_n:.0f} mg/kg). Valida N disponible antes de planificar fertilización."
-        )
+  # Nitrogen — comparar contra centroide
+  user_n = values["Nitrogen"]
+  cluster_n = centroid["Nitrogen"]
+  n_diff_pct = (user_n - cluster_n) / cluster_n * 100 if cluster_n else 0
+  if n_diff_pct < -25:
+    advice.append(
+      f"Nitrógeno {abs(n_diff_pct):.0f}% por debajo del típico de la ecorregión "
+      f"({cluster_n:.0f} mg/kg). Valida N disponible antes de planificar fertilización."
+    )
 
-    # Temperature — alerta por estrés térmico
-    user_temp = values["Temperature"]
-    cluster_temp = centroid["Temperature"]
-    if user_temp > cluster_temp + 3:
-        advice.append(
-            f"Temperatura {user_temp - cluster_temp:.1f}°C arriba del promedio de la ecorregión. "
-            f"Considera variedades tolerantes a estrés térmico y manejo de riego."
-        )
-    elif user_temp < cluster_temp - 3:
-        advice.append(
-            f"Temperatura {cluster_temp - user_temp:.1f}°C abajo del promedio. "
-            f"Verifica fechas de siembra y riesgo de heladas."
-        )
+  # Temperature — alerta por estrés térmico
+  user_temp = values["Temperature"]
+  cluster_temp = centroid["Temperature"]
+  if user_temp > cluster_temp + 3:
+    advice.append(
+      f"Temperatura {user_temp - cluster_temp:.1f}°C arriba del promedio de la ecorregión. "
+      f"Considera variedades tolerantes a estrés térmico y manejo de riego."
+    )
+  elif user_temp < cluster_temp - 3:
+    advice.append(
+      f"Temperatura {cluster_temp - user_temp:.1f}°C abajo del promedio. "
+      f"Verifica fechas de siembra y riesgo de heladas."
+    )
 
-    return advice or [
-        (
-            "Tu perfil coincide bien con el centroide de esta ecorregión. "
-            "Mantén el monitoreo rutinario de suelo y clima."
-        )
-    ]
+  return advice or [
+    (
+      "Tu perfil coincide bien con el centroide de esta ecorregión. "
+      "Mantén el monitoreo rutinario de suelo y clima."
+    )
+  ]
 
 
 @app.post("/api/recommend")
 def recommend(payload: RecommendationInput):
-    try:
-        frame = load_dataset()
-        model, scaler = load_model()
-        gmm_model, gmm_scaler = load_gmm_model()
-    except (FileNotFoundError, ValueError) as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
-    values = payload.model_dump()
-    vector = np.array([[values[key] for key in FEATURE_COLS]])
-    cluster_id = int(model.predict(scaler.transform(vector))[0])
-    region = region_payload(frame, cluster_id)
+  try:
+    frame = load_dataset()
+    model, scaler = load_model()
+    umap_reducer = load_umap_model()
+    gmm_model, gmm_scaler = load_gmm_model()
+  except (FileNotFoundError, ValueError) as exc:
+    raise HTTPException(status_code=503, detail=str(exc)) from exc
+  values = payload.model_dump()
+  vector = np.array([[values[key] for key in FEATURE_COLS]])
+  
+  scaled_vector = scaler.transform(vector)
+  
+  # Detecion de anomalias / Outliers mediante la norma Euclidiana de los Z-scores
+  z_norm = float(np.linalg.norm(scaled_vector[0]))
+  is_outlier = z_norm > 4.5
+  
+  embedded_vector = umap_reducer.transform(scaled_vector)
+  cluster_id = int(model.predict(embedded_vector)[0])
+  region = region_payload(frame, cluster_id)
+  
+  # GMM soft probabilities
+  gmm_probs = None
+  if gmm_model is not None and gmm_scaler is not None:
+    gmm_probs = gmm_model.predict_proba(gmm_scaler.transform(vector))[0].tolist()
     
-    # GMM soft probabilities
-    gmm_probs = None
-    if gmm_model is not None and gmm_scaler is not None:
-        gmm_probs = gmm_model.predict_proba(gmm_scaler.transform(vector))[0].tolist()
-    
-    response = {
-        "cluster": cluster_id,
-        "confidenceLabel": "Perfil ambiental más cercano",
-        "sampleCount": region["count"],
-        "share": region["share"],
-        "crops": region["crops"][:5],
-        "advice": management_advice(values, cluster_id, frame),
-        "userProfile": values,
-        "centroidProfile": region["profile"],
-        "normalizedUser": normalize_profile(values, frame),
-        "normalizedCentroid": region["normalizedProfile"],
-    }
-    if gmm_probs is not None:
-        response["gmmProbabilities"] = [
-            {"cluster": i, "probability": round(float(p), 4)} for i, p in enumerate(gmm_probs)
-        ]
-    return response
+  advice_list = management_advice(values, cluster_id, frame)
+  if is_outlier:
+    advice_list.insert(0, "️ ALERTA: Los valores ingresados son extremos o muy atípicos respecto a los datos de entrenamiento. El modelo asignó la ecorregión más parecida, pero ten cautela con la recomendación.")
+  
+  response = {
+    "cluster": cluster_id,
+    "isOutlier": is_outlier,
+    "confidenceLabel": "Anomalía (OOD)" if is_outlier else "Perfil ambiental más cercano",
+    "sampleCount": region["count"],
+    "share": region["share"],
+    "crops": region["crops"][:5],
+    "advice": advice_list,
+    "userProfile": values,
+    "centroidProfile": region["profile"],
+    "normalizedUser": normalize_profile(values, frame),
+    "normalizedCentroid": region["normalizedProfile"],
+  }
+  if gmm_probs is not None:
+    response["gmmProbabilities"] = [
+      {"cluster": i, "probability": round(float(p), 4)} for i, p in enumerate(gmm_probs)
+    ]
+  return response
 
 
 if FRONTEND_DIST.exists():
-    assets_dir = FRONTEND_DIST / "assets"
-    if assets_dir.exists():
-        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+  assets_dir = FRONTEND_DIST / "assets"
+  if assets_dir.exists():
+    app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
 
-    @app.get("/{path:path}", include_in_schema=False)
-    def frontend(path: str):
-        dist_root = FRONTEND_DIST.resolve()
-        requested = (dist_root / path).resolve()
-        if not requested.is_relative_to(dist_root):
-            raise HTTPException(status_code=404, detail="Recurso no encontrado.")
-        if path and requested.is_file():
-            return FileResponse(requested)
-        return FileResponse(dist_root / "index.html")
+  @app.get("/{path:path}", include_in_schema=False)
+  def frontend(path: str):
+    dist_root = FRONTEND_DIST.resolve()
+    requested = (dist_root / path).resolve()
+    if not requested.is_relative_to(dist_root):
+      raise HTTPException(status_code=404, detail="Recurso no encontrado.")
+    if path and requested.is_file():
+      return FileResponse(requested)
+    return FileResponse(dist_root / "index.html")

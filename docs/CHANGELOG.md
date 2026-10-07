@@ -10,6 +10,7 @@ Todas las actualizaciones, cambios notables y fases completadas del proyecto se 
 ## [Fase 5] - Producto de inteligencia agronómica
 - **Agregado:** Interfaz web responsive desarrollada con React + Vite, mejorando la usabilidad frente a prototipos anteriores.
 - **Agregado:** API REST en FastAPI para exponer la ejecución de los modelos, clústeres, y lógicas económicas.
+- **Agregado:** Detección automática de anomalías y datos OOD (Out-of-Distribution) mediante evaluación de norma Z-score.
 - **Cambio:** La interfaz inicial desarrollada en Streamlit ha sido depreciada y trasladada a la carpeta `app/` a modo de legado.
 
 ## [Fase 4] - Análisis diferencial y validación
@@ -19,7 +20,8 @@ Todas las actualizaciones, cambios notables y fases completadas del proyecto se 
 
 ## [Fase 3] - Ejecución del clustering multivariado
 - **Completado:** Entrenamiento definitivo de los modelos no supervisados (K-Means y Jerárquico Aglomerativo).
-- **Agregado:** Serialización del modelo elegido y su correspondiente escalador (StandardScaler/RobustScaler) dentro del directorio `data/models/`.
+- **Mejora:** Transición de PCA a **UMAP** (Uniform Manifold Approximation and Projection) para aislar mejor la estructura local no lineal de los datos y utilizar embeddings mejorados en K-Means.
+- **Agregado:** Serialización de los modelos elegidos (`umap_reducer`, `kmeans_umap`) y su correspondiente escalador dentro del directorio `data/models/`.
 
 ## [Fase 2] - Determinación del número de clústeres (K)
 - **Completado:** Evaluación paramétrica utilizando los métodos del Codo (Inercia), coeficiente de Silueta y el índice Davies-Bouldin.

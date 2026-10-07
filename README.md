@@ -7,7 +7,7 @@
 
 > Análisis exploratorio y clustering de zonas agrícolas para la recomendación inteligente de cultivos.
 
-**Project Terra** explora si es posible descubrir "ecorregiones funcionales" agrícolas a partir de variables de suelo y clima (N, P, K, pH, temperatura, humedad y precipitación), sin depender de fronteras políticas ni reglas empíricas. Usando técnicas de aprendizaje no supervisado (K-Means, Clustering Jerárquico, PCA), el proyecto agrupa zonas de muestreo en perfiles ambientales homogéneos y valida su coherencia agronómica contrastando los clústeres contra el cultivo real reportado en cada registro.
+**Project Terra** explora si es posible descubrir "ecorregiones funcionales" agrícolas a partir de variables de suelo y clima (N, P, K, pH, temperatura, humedad y precipitación), sin depender de fronteras políticas ni reglas empíricas. Usando técnicas de aprendizaje no supervisado (K-Means, Clustering Jerárquico, UMAP, PCA), el proyecto agrupa zonas de muestreo en perfiles ambientales homogéneos y valida su coherencia agronómica contrastando los clústeres contra el cultivo real reportado en cada registro.
 
 Proyecto del curso **Analítica y Minería de Datos** — Escuela de Transformación Digital, Universidad Tecnológica de Bolívar (UTB).
 
@@ -24,7 +24,7 @@ Proyecto del curso **Analítica y Minería de Datos** — Escuela de Transformac
 **Objetivos específicos:**
 - Realizar un EDA exhaustivo (distribuciones, atípicos, correlaciones multivariantes, relaciones no lineales).
 - Preprocesar y estandarizar variables (StandardScaler / RobustScaler).
-- Reducir dimensionalidad con PCA para visualización y eficiencia computacional.
+- Reducir dimensionalidad con UMAP y PCA para aislar la estructura local no lineal, optimizando la visualización interactiva y el clustering.
 - Segmentar con K-Means y Clustering Jerárquico Aglomerativo, determinando K óptimo (Método del Codo, Silueta, Davies-Bouldin).
 - Caracterizar cada clúster (estadísticos descriptivos, radar charts / boxplots paralelos).
 - Validar coherencia agronómica contra `label` (cultivo real) y, si aplica, rendimiento (ANOVA / Kruskal-Wallis).
@@ -100,17 +100,17 @@ Descarga el dataset desde Kaggle y colócalo en `data/raw/sensor_Crop_Dataset.cs
 ```mermaid
 flowchart TD
     A[Data Ingestion<br>Kaggle CSV] --> B[EDA & Preprocessing<br>Standard/Robust Scaler]
-    B --> C[Modelado No Supervisado<br>K-Means / Jerárquico]
-    C --> D[Visualización Proyectada<br>PCA 2D Interactivo]
+    B --> C[Modelado No Supervisado<br>K-Means sobre UMAP]
+    C --> D[Visualización Proyectada<br>UMAP 2D Interactivo]
     D --> E[Análisis Diferencial & Validación<br>Radar Charts / Kruskal-Wallis]
-    E --> F[Producto web React + FastAPI<br>Recomendación interactiva]
+    E --> F[Producto web React + FastAPI<br>Recomendación interactiva + OOD]
 ```
 
 - [x] 1. **Ingeniería de datos y EDA avanzado** — limpieza, correlaciones, pairplots, PCA preliminar. *(Completado, [`01_eda_crops_npk.ipynb`](notebooks/01_eda_crops_npk.ipynb))*
 - [x] 2. **Determinación del número de clústeres (K)** — codo (inercia), silueta y Davies-Bouldin. *(Completado, [`03_clustering_model.ipynb`](notebooks/03_clustering_model.ipynb): ninguna métrica marca un K claramente óptimo — silueta baja en todo el rango (0.09–0.11) y Davies-Bouldin decrece de forma monótona; se fijó K=5 por interpretabilidad, tan arbitrario como cualquier otro K en ese rango)*
 - [x] 3. **Ejecución del clustering multivariado** — K-Means y Jerárquico sobre features escalados (PCA solo para visualización). *(Completado, [`03_clustering_model.ipynb`](notebooks/03_clustering_model.ipynb) + [`src/run_pipeline.py`](src/run_pipeline.py): K-Means (K=5) y Jerárquico Aglomerativo entrenados; modelo y scaler serializados en `data/models/`)*
 - [x] 4. **Análisis diferencial y validación** — perfil/firma ambiental (radar charts), análisis de `Soil_Type`, pureza y Kruskal-Wallis. *(Completado, [`04_cluster_profiling.ipynb`](notebooks/04_cluster_profiling.ipynb): con K=5 los clústeres se explican sobre todo por Humedad, pH, Precipitación y Potasio (Kruskal-Wallis H > 8,000), no por Nitrógeno/Fósforo; pureza global respecto al cultivo real = 17.50% y `Soil_Type` tampoco correlaciona — coherencia agronómica débil)*
-- [x] 5. **Producto de inteligencia agronómica** — interfaz React responsive conectada a una API FastAPI, con análisis de ecorregiones y recomendación interactiva basada en el modelo real. La interfaz Streamlit original se conserva en `app/` como referencia histórica.
+- [x] 5. **Producto de inteligencia agronómica** — interfaz React responsive conectada a una API FastAPI, con análisis de ecorregiones proyectadas en UMAP, recomendación interactiva basada en K-Means y detección matemática de anomalías (OOD) por normas Z-score. La interfaz Streamlit original se conserva en `app/` como referencia histórica.
 - [x] 6. **Planeación económica de la parcela** — optimizador de distribución por hectáreas con restricciones de área, presupuesto y agua; escenarios conservador, esperado y favorable; comparación manual y referencias editables de DANE SIPSA, UPRA/EVA y FAO CROPWAT.
 
 > **Hallazgo clave**: con las variables disponibles (N, P, K, temperatura, humedad, pH, precipitación), el dataset no muestra una estructura de clústeres fuerte ni agronómicamente coherente para ningún K probado — ver conclusiones de `03_clustering_model.ipynb`, `04_cluster_profiling.ipynb` y `05_dashboard.ipynb` para el detalle y las alternativas propuestas (usar solo las variables con mayor poder discriminante, incorporar `Soil_Type`/`Variety`, etc.).
@@ -128,6 +128,13 @@ Todos sus valores son visibles y editables. DANE SIPSA aporta contexto de
 precios mayoristas, UPRA/EVA aporta contexto de producción y rendimiento, las
 fichas UPRA aportan contexto de costos, y FAO-56/CROPWAT aporta la metodología
 hídrica. Las cifras no son cotizaciones en tiempo real ni garantías de utilidad.
+
+## Trabajo Futuro: Contrastive Learning
+
+Actualmente el clustering se basa en **UMAP + K-Means**. Como próximo hito de investigación, planeamos contrastar este enfoque con **Contrastive Learning (Aprendizaje Contrastivo)** para datos tabulares:
+1. **Data Augmentation:** Usaremos técnicas de enmascaramiento (masking) y adición de ruido Gaussiano para generar vistas correlacionadas de los perfiles de suelo.
+2. **Arquitectura:** Un *Encoder* MLP (Multi-Layer Perceptron) acoplado a un *Projection Head* entrenado con la función de pérdida InfoNCE (estilo SimCLR).
+3. **Clustering sobre Embeddings:** Aplicaremos K-Means sobre el espacio latente aprendido por el encoder para evaluar si las representaciones contrastivas logran separar con mayor pureza agronómica las ecorregiones funcionales.
 
 ## Entregables esperados
 

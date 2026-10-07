@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import "./garden.css";
 import { downloadGardenPdf } from "./gardenPdf";
 import CropIllustration from "./CropIllustration";
 import { artworkFor } from "./cropArt";
@@ -8,14 +9,44 @@ const COP = new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP",
 
 const SelectButtons = ({ label, value, onChange, options }) => <div className="garden-choice"><span>{label}</span><div>{options.map(([id, title, note]) => <button type="button" key={id} className={value === id ? "active" : ""} onClick={() => onChange(id)}><b>{title}</b><small>{note}</small></button>)}</div></div>;
 
+// Al pulsar una tarjeta, un círculo se expande desde el punto del clic y rellena el recuadro;
+// la navegación se aplaza lo justo para que se vea (y se omite si el usuario reduce el movimiento).
+const RIPPLE_MS = 420;
+
 export function ModeChooser({ onChoose }) {
+  const [ripple, setRipple] = useState(null);
+
+  const choose = (mode) => (event) => {
+    if (ripple) return;
+    const box = event.currentTarget.getBoundingClientRect();
+    // Con teclado (Enter/Espacio) el evento no trae posición: se expande desde el centro.
+    const x = event.detail === 0 ? box.width / 2 : event.clientX - box.left;
+    const y = event.detail === 0 ? box.height / 2 : event.clientY - box.top;
+    // Radio hasta la esquina más lejana: así el círculo siempre termina cubriendo toda la tarjeta.
+    const radius = Math.hypot(Math.max(x, box.width - x), Math.max(y, box.height - y));
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return onChoose(mode);
+    setRipple({ mode, x, y, radius });
+    setTimeout(() => onChoose(mode), RIPPLE_MS);
+  };
+
+  const rippleFor = (mode) =>
+    ripple?.mode === mode && (
+      <span
+        className="ripple"
+        aria-hidden="true"
+        style={{ left: ripple.x, top: ripple.y, width: ripple.radius * 2, height: ripple.radius * 2 }}
+      />
+    );
+
   return <div className="planner-entry">
     <div className="planner-entry-copy"><span className="kicker">Elige el nivel de detalle</span><h2>¿Qué quieres cultivar?</h2><p>Ambos caminos usan el espacio disponible, pero responden a necesidades distintas.</p></div>
     <div className="planner-modes">
-      <button className="planner-mode garden-mode" onClick={() => onChoose("garden")}>
+      <button className="planner-mode garden-mode" onClick={choose("garden")}>
+        {rippleFor("garden")}
         <span className="mode-number">01 / SENCILLO</span><span className="mode-crop-art"><CropIllustration crop={{ id: "tomate" }} /><CropIllustration crop={{ id: "lechuga" }} /></span><h3>Mi huerta</h3><p>Para patios, terrazas, balcones y espacios pequeños. Prioriza alimentos para el hogar y ahorro cotidiano.</p><ul><li>Área en metros cuadrados</li><li>5 preguntas sencillas</li><li>Plan de plantas y cosecha</li></ul><strong>Crear mi huerta →</strong>
       </button>
-      <button className="planner-mode commercial-mode" onClick={() => onChoose("commercial")}>
+      <button className="planner-mode commercial-mode" onClick={choose("commercial")}>
+        {rippleFor("commercial")}
         <span className="mode-number">02 / AVANZADO</span><i>↗</i><h3>Producción comercial</h3><p>Para parcelas productivas. Maximiza ganancia con presupuesto, agua, mercado y supuestos editables.</p><ul><li>Área en hectáreas</li><li>Restricciones económicas</li><li>Escenarios y trazabilidad</li></ul><strong>Abrir plan avanzado →</strong>
       </button>
     </div>

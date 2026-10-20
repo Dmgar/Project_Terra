@@ -386,10 +386,16 @@ def recommend(payload: RecommendationInput):
   try:
     frame = load_dataset()
     model, scaler = load_model()
-    umap_reducer = load_umap_model()
     gmm_model, gmm_scaler = load_gmm_model()
   except (FileNotFoundError, ValueError) as exc:
     raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+  umap_reducer = None
+  try:
+    umap_reducer = load_umap_model()
+  except Exception:
+    umap_reducer = None
+
   values = payload.model_dump()
   vector = np.array([[values[key] for key in FEATURE_COLS]])
   
@@ -400,15 +406,30 @@ def recommend(payload: RecommendationInput):
   z_norm = float(np.linalg.norm(scaled_vector[0]))
   is_outlier = z_norm > 3.6744
   
-  embedded_vector = umap_reducer.transform(scaled_vector)
-  target_dtype = getattr(model, "cluster_centers_", None).dtype if hasattr(model, "cluster_centers_") else np.float32
-  cluster_id = int(model.predict(np.asarray(embedded_vector, dtype=target_dtype))[0])
+  cluster_id = None
+  if umap_reducer is not None:
+    try:
+      embedded_vector = umap_reducer.transform(scaled_vector)
+      target_dtype = getattr(model, "cluster_centers_", None).dtype if hasattr(model, "cluster_centers_") else np.float32
+      cluster_id = int(model.predict(np.asarray(embedded_vector, dtype=target_dtype))[0])
+    except Exception:
+      cluster_id = None
+
+  if cluster_id is None:
+    centroids = frame.groupby("kmeans_cluster")[FEATURE_COLS].mean()
+    scaled_centroids = scaler.transform(centroids.values)
+    dists = np.linalg.norm(scaled_centroids - scaled_vector, axis=1)
+    cluster_id = int(centroids.index[np.argmin(dists)])
+
   region = region_payload(frame, cluster_id)
   
   # GMM soft probabilities
   gmm_probs = None
   if gmm_model is not None and gmm_scaler is not None:
-    gmm_probs = gmm_model.predict_proba(gmm_scaler.transform(vector))[0].tolist()
+    try:
+      gmm_probs = gmm_model.predict_proba(gmm_scaler.transform(vector))[0].tolist()
+    except Exception:
+      gmm_probs = None
     
   advice_list = management_advice(values, cluster_id, frame)
   if is_outlier:

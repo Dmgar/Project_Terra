@@ -13,11 +13,15 @@ router = APIRouter(tags=["economics"])
 
 
 @router.get("/api/economics/catalog", response_model=dict[str, Any])
+@router.get("/app/economics/catalog", response_model=dict[str, Any])
+@router.get("/economics/catalog", response_model=dict[str, Any])
 def economics_catalog() -> dict[str, Any]:
     return catalog_response()
 
 
 @router.post("/api/optimize", response_model=OptimizationResponse)
+@router.post("/app/optimize", response_model=OptimizationResponse)
+@router.post("/optimize", response_model=OptimizationResponse)
 def optimize(payload: OptimizationRequest) -> OptimizationResponse:
     try:
         return optimize_plan(payload)

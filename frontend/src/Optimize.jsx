@@ -24,8 +24,16 @@ const num = (value) => Number(value || 0);
 const money = (value) => value == null ? "—" : COP.format(value);
 const pretty = (id) => id ? id.charAt(0).toUpperCase() + id.slice(1) : "—";
 
-async function request(url, options) {
-  const response = await fetch(url, options);
+const API_BASE_URL = "/api";
+
+async function request(endpoint, options) {
+  const normalizedUrl = endpoint.startsWith("http://") || endpoint.startsWith("https://")
+    ? endpoint
+    : endpoint.startsWith("/api")
+      ? endpoint
+      : `${API_BASE_URL}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`;
+
+  const response = await fetch(normalizedUrl, options);
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
     throw new Error(body.detail || `La solicitud no pudo completarse (${response.status}).`);

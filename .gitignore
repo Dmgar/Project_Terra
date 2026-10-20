@@ -14,7 +14,49 @@ data/raw/*
 !data/raw/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
+data/crop_data.csv
 
 # Frontend
 frontend/node_modules/
 frontend/dist/
+
+# -------------------------------------------------------------
+# Paper, Manuscript & Research Publication Files
+# -------------------------------------------------------------
+# LaTeX documents, bibliographies, and compilation artifacts
+*.tex
+*.bib
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.nav
+*.snm
+*.vrb
+
+# Paper manuscript drafts, proposals & generated figures
+paper/
+manuscript/
+latex/
+docs/figures/
+docs/paper/
+docs/manuscript/
+docs/PAPER_MANUSCRIPT_PROPOSAL.md
+*PAPER_MANUSCRIPT*
+*manuscript*
+
+# Research, audit & paper generation scripts
+scripts/*
+!scripts/export_umap.py
+!scripts/post-merge.sh
+audit_export_final.py
+unify_terra_canonical_partition.py
+verify_canonical_audit.py
+verify_categories_and_ssb.py

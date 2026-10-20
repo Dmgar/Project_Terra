@@ -115,14 +115,11 @@ def _scenario(
     suitability = np.array(
         [_suitability(crop.crop_id, request.environmental_values) for crop in crops]
     )
-    # This score is deliberately separate from prices/yields/costs.  The
-    # displayed totals below always use raw_profit_per_ha.
-    adjusted_objective_score = raw_profit_per_ha * (
-        1 - request.suitability_tiebreak_weight * (1 - suitability)
-    )
     water = np.array([crop.water_m3_per_ha for crop in crops])
     base_constraints = np.vstack((np.ones(len(crops)), numbers.costs, water))
     base_bounds = np.array([request.area_ha, request.budget_cop, request.water_m3])
+
+    # Etapa 1: Maximización de la utilidad pura
     raw_result = linprog(
         c=-raw_profit_per_ha,
         A_ub=base_constraints,
@@ -134,14 +131,14 @@ def _scenario(
         raise InfeasiblePlanError(
             f"No existe una asignación factible para el escenario {name}: {raw_result.message}"
         )
-    # Preserve the mathematically maximum raw profit, then use environmental
-    # suitability only to choose among economically equivalent allocations.
+
+    # Etapa 2: Maximizar la compatibilidad biofísica (afinidad edafoclimática) sum(S_i * x_i)
+    # sujeto a preservar la ganancia económica óptima con tolerancia epsilon.
     optimal_raw_profit = float(np.dot(raw_profit_per_ha, raw_result.x))
-    profit_tolerance = max(abs(optimal_raw_profit) * 1e-10, 0.01)
     result = linprog(
-        c=-adjusted_objective_score,
+        c=-suitability,
         A_ub=np.vstack((base_constraints, -raw_profit_per_ha)),
-        b_ub=np.append(base_bounds, -(optimal_raw_profit - profit_tolerance)),
+        b_ub=np.append(base_bounds, -optimal_raw_profit),
         bounds=[(crop.min_ha, crop.max_ha) for crop in crops],
         method="highs",
     )
@@ -160,9 +157,7 @@ def _scenario(
             cost_cop_per_ha=round(float(numbers.costs[index]), 2),
             water_m3_per_ha=round(float(water[index]), 4),
             suitability_score=round(float(suitability[index]), 4),
-            adjusted_objective_score=round(
-                float(adjusted_objective_score[index]), 2
-            ),
+            adjusted_objective_score=round(float(suitability[index]), 4),
             raw_profit_per_ha_cop=round(float(raw_profit_per_ha[index]), 2),
             break_even_price_cop_per_kg=round(
                 float(numbers.costs[index] / (numbers.yields[index] * 1000)), 4

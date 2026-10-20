@@ -98,8 +98,16 @@ export const datasetLabels = {
 
 export const displayDatasetLabel = (value) => datasetLabels[value] || value;
 
-export async function api(url, options) {
-  const response = await fetch(url, options);
+export const API_BASE_URL = "/api";
+
+export async function api(endpoint, options) {
+  const normalizedUrl = endpoint.startsWith("http://") || endpoint.startsWith("https://")
+    ? endpoint
+    : endpoint.startsWith("/api")
+      ? endpoint
+      : `${API_BASE_URL}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`;
+
+  const response = await fetch(normalizedUrl, options);
   if (!response.ok) {
     throw new Error(`La solicitud no pudo completarse (${response.status}).`);
   }

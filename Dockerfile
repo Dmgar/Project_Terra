@@ -13,9 +13,9 @@ RUN npm run build
 # ---- Stage 2: Python deps ----
 FROM python:3.12-slim AS python-deps
 WORKDIR /app
-RUN pip install --no-cache-dir --upgrade pip
+RUN pip install --no-cache-dir uv
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN uv pip install --system --no-cache -r requirements.txt
 
 # ---- Stage 3: Runtime ----
 FROM python:3.12-slim

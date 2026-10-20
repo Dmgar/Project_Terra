@@ -114,13 +114,18 @@ class UMAPResponse(BaseModel):
   explainedVariance: list[float]
 
 
-app = FastAPI(title="Project Terra API", version="1.0.0")
+app = FastAPI(title="Project Terra API", version="1.0.0", root_path="/api")
 app.add_middleware(
   CORSMiddleware,
   allow_origins=[
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://localhost:5000",
+    "http://127.0.0.1:5000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
   ],
+  allow_origin_regex=r"https://.*\.vercel\.app",
   allow_credentials=True,
   allow_methods=["*"],
   allow_headers=["*"],
@@ -227,11 +232,15 @@ def region_payload(frame: pd.DataFrame, cluster_id: int) -> dict:
 
 
 @app.get("/api/health")
+@app.get("/app/health")
+@app.get("/health")
 def health():
   return {"status": "ok"}
 
 
 @app.get("/api/overview", response_model=OverviewResponse)
+@app.get("/app/overview", response_model=OverviewResponse)
+@app.get("/overview", response_model=OverviewResponse)
 def overview():
   try:
     frame = load_dataset()
@@ -253,6 +262,8 @@ def overview():
 
 
 @app.get("/api/regions", response_model=RegionsResponse)
+@app.get("/app/regions", response_model=RegionsResponse)
+@app.get("/regions", response_model=RegionsResponse)
 def regions():
   try:
     frame = load_dataset()
@@ -263,6 +274,11 @@ def regions():
 
 
 @app.get("/api/umap", response_model=UMAPResponse)
+@app.get("/app/umap", response_model=UMAPResponse)
+@app.get("/umap", response_model=UMAPResponse)
+@app.get("/api/pca", response_model=UMAPResponse)
+@app.get("/app/pca", response_model=UMAPResponse)
+@app.get("/pca", response_model=UMAPResponse)
 def umap_endpoint():
   try:
     frame = load_dataset()
@@ -364,6 +380,8 @@ def management_advice(values: dict[str, float], cluster_id: int, frame: pd.DataF
 
 
 @app.post("/api/recommend")
+@app.post("/app/recommend")
+@app.post("/recommend")
 def recommend(payload: RecommendationInput):
   try:
     frame = load_dataset()
@@ -377,12 +395,14 @@ def recommend(payload: RecommendationInput):
   
   scaled_vector = scaler.transform(vector)
   
-  # Detecion de anomalias / Outliers mediante la norma Euclidiana de los Z-scores
+  # Deteccion de anomalias / Outliers mediante la norma Euclidiana de los Z-scores
+  # Umbral calibrado empiricamente en el percentil 99.5 del dataset de entrenamiento (||z||_2 = 3.6744)
   z_norm = float(np.linalg.norm(scaled_vector[0]))
-  is_outlier = z_norm > 4.5
+  is_outlier = z_norm > 3.6744
   
   embedded_vector = umap_reducer.transform(scaled_vector)
-  cluster_id = int(model.predict(embedded_vector)[0])
+  target_dtype = getattr(model, "cluster_centers_", None).dtype if hasattr(model, "cluster_centers_") else np.float32
+  cluster_id = int(model.predict(np.asarray(embedded_vector, dtype=target_dtype))[0])
   region = region_payload(frame, cluster_id)
   
   # GMM soft probabilities

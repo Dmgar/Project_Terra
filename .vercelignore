@@ -1,0 +1,39 @@
+# Python cache & virtual environment
+venv/
+.env
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Development & Research notebooks/tests
+notebooks/
+tests/
+
+# Paper, manuscript, figures & LaTeX artifacts
+*.tex
+*.bib
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+docs/figures/
+docs/PAPER_MANUSCRIPT_PROPOSAL.md
+paper/
+manuscript/
+latex/
+
+# Research & audit scripts
+scripts/
+audit_export_final.py
+unify_terra_canonical_partition.py
+verify_canonical_audit.py
+verify_categories_and_ssb.py
+data/crop_data.csv

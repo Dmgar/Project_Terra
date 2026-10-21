@@ -4,8 +4,7 @@
     "backend": {
       "root": ".",
       "framework": "fastapi",
-      "entrypoint": "api/index.py",
-      "includeFiles": "data/**"
+      "entrypoint": "api/index.py"
     },
     "frontend": {
       "root": "frontend",

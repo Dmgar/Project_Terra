@@ -1,4 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Figtree:wght@400;500;600;700&family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..700,0..100;1,9..144,300..700,0..100&display=swap');
+/* Una sola familia para todo el sitio. Nunito (variable) tiene terminaciones redondeadas, cálidas y legibles,
+   propias de sitios de organizaciones del campo; la jerarquía sale del peso y el tamaño. */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400..800&display=swap');
 
 :root {
   --ink: #173b35;
@@ -12,9 +14,11 @@
   --sun: #d79b51;
   --clay: #b96b4b;
   --muted: #71807a;
-  --display: 'Fraunces', Georgia, serif;
-  --body: 'Figtree', system-ui, sans-serif;
-  --mono: 'DM Mono', monospace;
+  --display: 'Nunito', system-ui, sans-serif;
+  --body: 'Nunito', system-ui, sans-serif;
+  /* Antes era una monoespaciada; ahora los datos usan la misma familia con cifras tabulares. */
+  --mono: 'Nunito', system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
 }
 
 * {

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import GardenPlanner, { ModeChooser } from "./GardenPlanner";
+import { Header } from "./ui";
 import { downloadCommercialPdf, downloadCommercialCsv } from "./commercialPdf";
 
 const ENV_KEYS = [
@@ -118,9 +119,9 @@ export default function Optimize({ mode }) {
     request("/api/optimize", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }).then((data) => { setResult(data); setStage(4); window.scrollTo({ top: 0, behavior: "smooth" }); }).catch((e) => setError(e.message)).finally(() => setRunning(false));
   };
   const stageTitle = ["", "Tu parcela", "Tu ambiente", "Supuestos económicos", "Resultado"][stage];
-  if (!mode) return <><div className="optimize-page"><div className="topline"><span className="kicker">05 / Cultiva con un plan</span><span className="top-status"><i className="dot" /> dos niveles · una mejor decisión</span></div><h1 className="page-title">Del balcón a la parcela,<br /><em>empieza a tu medida.</em></h1><p className="intro">Elige una guía sencilla para tu huerta o abre el análisis completo para producción comercial. Lo avanzado sigue disponible cuando lo necesites.</p><ModeChooser onChoose={(choice) => navigate(choice === "garden" ? "/producto/plan/huerta" : "/producto/plan/comercial")} /></div></>;
-  if (mode === "garden") return <><div className="optimize-page"><div className="topline"><span className="kicker">05 / Mi huerta</span><span className="top-status"><i className="dot" /> sencillo · hogar y ahorro</span></div><h1 className="page-title">Cultiva cerca,<br /><em>cosecha seguido.</em></h1><p className="intro">Una guía simple para organizar espacios pequeños sin pedirte datos técnicos que quizá no tienes.</p><GardenPlanner onBack={() => navigate("/producto/plan")} /></div></>;
-  return <><div className="optimize-page"><div className="topline"><span className="kicker">05 / Plan rentable</span><span className="top-status"><i className="dot" /> cálculo transparente · Colombia</span></div><h1 className="page-title">Planifica con<br /><em>los pies en la tierra.</em></h1><p className="intro">Distribuye tu parcela entre cultivos, presupuesto y agua. Ajusta cada supuesto, entiende los límites y compara el plan con tu propia intuición.</p>
+  if (!mode) return <><Header title={<>Del balcón a la parcela,<br /><em>empieza a tu medida.</em></>} description="Elige una guía sencilla para tu huerta o abre el análisis completo para producción comercial. Lo avanzado sigue disponible cuando lo necesites." /><div className="optimize-page"><ModeChooser onChoose={(choice) => navigate(choice === "garden" ? "/producto/plan/huerta" : "/producto/plan/comercial")} /></div></>;
+  if (mode === "garden") return <><Header title={<>Cultiva cerca,<br /><em>cosecha seguido.</em></>} description="Una guía simple para organizar espacios pequeños sin pedirte datos técnicos que quizá no tienes." /><div className="optimize-page"><GardenPlanner onBack={() => navigate("/producto/plan")} /></div></>;
+  return <><Header title={<>Planifica con<br /><em>los pies en la tierra.</em></>} description="Distribuye tu parcela entre cultivos, presupuesto y agua. Ajusta cada supuesto, entiende los límites y compara el plan con tu propia intuición." /><div className="optimize-page">
     <button className="back-link" onClick={() => navigate("/producto/plan")}>← Cambiar tipo de plan</button>
     <div className="stepper">{["Tu parcela", "Ambiente", "Supuestos", "Resultado"].map((label, i) => <button key={label} className={stage === i + 1 ? "active" : stage > i + 1 ? "done" : ""} onClick={() => stage > i + 1 && setStage(i + 1)}><span>0{i + 1}</span>{label}</button>)}</div>
     {loading ? <div className="panel loading opt-loading">Leyendo catálogo económico…</div> : error && !catalog ? <ErrorBox message={error} /> : stage === 4 && result ? <Results result={result} crops={crops} area={form.area_ha} form={form} /> : <div className="opt-workspace"><div className="opt-form">

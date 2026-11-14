@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 
 import "./legacy.css";
 import "./index.css";
+import "./agrizen.css";
 import Layout from "./Layout";
 import { Header, ErrorBoundary } from "./ui";
 import Home from "./product/Home";

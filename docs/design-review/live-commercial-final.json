@@ -1,0 +1,161 @@
+{
+  "url": "http://127.0.0.1:5173/producto/plan/comercial",
+  "date": "2026-11-13T23:50:52.721Z",
+  "runs": [
+    {
+      "tag": "light-375x812",
+      "scheme": "light",
+      "viewport": {
+        "width": 375,
+        "height": 812
+      },
+      "screenshot": "light-375x812.png",
+      "findings": [],
+      "census": {
+        "sizes": {
+          "16px": 24,
+          "24px": 1,
+          "34px": 3,
+          "12px": 38,
+          "10px": 3,
+          "14px": 6,
+          "20px": 1
+        },
+        "families": {
+          "Figtree": 60,
+          "DM Mono": 16
+        },
+        "radii": {
+          "6px": 1,
+          "16px": 1,
+          "3px": 5,
+          "5px": 1,
+          "50%": 1
+        },
+        "colors": 11,
+        "shadows": 0
+      },
+      "runtimeIssues": []
+    },
+    {
+      "tag": "light-1280x800",
+      "scheme": "light",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "light-1280x800.png",
+      "findings": [
+        {
+          "severity": "minor",
+          "rule": "demasiados-colores-de-texto",
+          "selector": "body",
+          "detail": "13 colores de texto distintos"
+        }
+      ],
+      "census": {
+        "sizes": {
+          "16px": 24,
+          "24px": 1,
+          "14px": 10,
+          "57.6px": 2,
+          "12px": 41,
+          "34px": 1,
+          "20px": 1
+        },
+        "families": {
+          "Figtree": 64,
+          "DM Mono": 16
+        },
+        "radii": {
+          "6px": 4,
+          "16px": 1,
+          "3px": 5,
+          "5px": 1,
+          "50%": 1
+        },
+        "colors": 13,
+        "shadows": 0
+      },
+      "runtimeIssues": []
+    },
+    {
+      "tag": "dark-375x812",
+      "scheme": "dark",
+      "viewport": {
+        "width": 375,
+        "height": 812
+      },
+      "screenshot": "dark-375x812.png",
+      "findings": [],
+      "census": {
+        "sizes": {
+          "16px": 24,
+          "24px": 1,
+          "34px": 3,
+          "12px": 38,
+          "10px": 3,
+          "14px": 6,
+          "20px": 1
+        },
+        "families": {
+          "Figtree": 60,
+          "DM Mono": 16
+        },
+        "radii": {
+          "6px": 1,
+          "16px": 1,
+          "3px": 5,
+          "5px": 1,
+          "50%": 1
+        },
+        "colors": 11,
+        "shadows": 0
+      },
+      "runtimeIssues": []
+    },
+    {
+      "tag": "dark-1280x800",
+      "scheme": "dark",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "dark-1280x800.png",
+      "findings": [
+        {
+          "severity": "minor",
+          "rule": "demasiados-colores-de-texto",
+          "selector": "body",
+          "detail": "13 colores de texto distintos"
+        }
+      ],
+      "census": {
+        "sizes": {
+          "16px": 24,
+          "24px": 1,
+          "14px": 10,
+          "57.6px": 2,
+          "12px": 41,
+          "34px": 1,
+          "20px": 1
+        },
+        "families": {
+          "Figtree": 64,
+          "DM Mono": 16
+        },
+        "radii": {
+          "6px": 4,
+          "16px": 1,
+          "3px": 5,
+          "5px": 1,
+          "50%": 1
+        },
+        "colors": 13,
+        "shadows": 0
+      },
+      "runtimeIssues": []
+    }
+  ],
+  "runtimeIssues": []
+}

@@ -1,0 +1,443 @@
+{
+  "url": "http://127.0.0.1:5173/",
+  "date": "2026-11-13T23:49:33.098Z",
+  "runs": [
+    {
+      "tag": "light-320x568",
+      "scheme": "light",
+      "viewport": {
+        "width": 320,
+        "height": 568
+      },
+      "screenshot": "light-320x568.png",
+      "findings": [],
+      "census": {
+        "sizes": {
+          "16px": 43,
+          "24px": 6,
+          "14px": 17,
+          "38px": 2,
+          "12px": 5,
+          "30px": 2
+        },
+        "families": {
+          "Figtree": 74,
+          "DM Mono": 1
+        },
+        "radii": {
+          "6px": 2,
+          "5px": 1,
+          "48%": 1,
+          "70px": 2,
+          "50%": 1
+        },
+        "colors": 11,
+        "shadows": 0
+      },
+      "runtimeIssues": []
+    },
+    {
+      "tag": "light-375x812",
+      "scheme": "light",
+      "viewport": {
+        "width": 375,
+        "height": 812
+      },
+      "screenshot": "light-375x812.png",
+      "findings": [],
+      "census": {
+        "sizes": {
+          "16px": 43,
+          "24px": 6,
+          "14px": 17,
+          "38px": 2,
+          "12px": 5,
+          "30px": 2
+        },
+        "families": {
+          "Figtree": 74,
+          "DM Mono": 1
+        },
+        "radii": {
+          "6px": 2,
+          "5px": 1,
+          "48%": 1,
+          "70px": 2,
+          "50%": 1
+        },
+        "colors": 11,
+        "shadows": 0
+      },
+      "runtimeIssues": []
+    },
+    {
+      "tag": "light-568x320",
+      "scheme": "light",
+      "viewport": {
+        "width": 568,
+        "height": 320
+      },
+      "screenshot": "light-568x320.png",
+      "findings": [],
+      "census": {
+        "sizes": {
+          "16px": 43,
+          "24px": 6,
+          "14px": 17,
+          "56.8px": 2,
+          "12px": 5,
+          "30px": 2
+        },
+        "families": {
+          "Figtree": 74,
+          "DM Mono": 1
+        },
+        "radii": {
+          "6px": 2,
+          "5px": 1,
+          "48%": 1,
+          "70px": 2,
+          "50%": 1
+        },
+        "colors": 11,
+        "shadows": 0
+      },
+      "runtimeIssues": []
+    },
+    {
+      "tag": "light-768x1024",
+      "scheme": "light",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "screenshot": "light-768x1024.png",
+      "findings": [],
+      "census": {
+        "sizes": {
+          "16px": 43,
+          "24px": 6,
+          "14px": 17,
+          "46.08px": 2,
+          "12px": 5,
+          "30px": 2
+        },
+        "families": {
+          "Figtree": 74,
+          "DM Mono": 1
+        },
+        "radii": {
+          "6px": 2,
+          "5px": 1,
+          "48%": 1,
+          "70px": 2,
+          "50%": 1
+        },
+        "colors": 11,
+        "shadows": 0
+      },
+      "runtimeIssues": []
+    },
+    {
+      "tag": "light-1280x800",
+      "scheme": "light",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "light-1280x800.png",
+      "findings": [
+        {
+          "severity": "minor",
+          "rule": "demasiados-colores-de-texto",
+          "selector": "body",
+          "detail": "13 colores de texto distintos"
+        }
+      ],
+      "census": {
+        "sizes": {
+          "16px": 43,
+          "24px": 6,
+          "14px": 21,
+          "66.56px": 2,
+          "12px": 5,
+          "46px": 2
+        },
+        "families": {
+          "Figtree": 78,
+          "DM Mono": 1
+        },
+        "radii": {
+          "6px": 5,
+          "5px": 1,
+          "48%": 1,
+          "70px": 2,
+          "50%": 1
+        },
+        "colors": 13,
+        "shadows": 0
+      },
+      "runtimeIssues": []
+    },
+    {
+      "tag": "light-1920x1080",
+      "scheme": "light",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshot": "light-1920x1080.png",
+      "findings": [
+        {
+          "severity": "minor",
+          "rule": "demasiados-colores-de-texto",
+          "selector": "body",
+          "detail": "13 colores de texto distintos"
+        }
+      ],
+      "census": {
+        "sizes": {
+          "16px": 43,
+          "24px": 6,
+          "14px": 21,
+          "76px": 2,
+          "12px": 5,
+          "46px": 2
+        },
+        "families": {
+          "Figtree": 78,
+          "DM Mono": 1
+        },
+        "radii": {
+          "6px": 5,
+          "5px": 1,
+          "48%": 1,
+          "70px": 2,
+          "50%": 1
+        },
+        "colors": 13,
+        "shadows": 0
+      },
+      "runtimeIssues": []
+    },
+    {
+      "tag": "dark-320x568",
+      "scheme": "dark",
+      "viewport": {
+        "width": 320,
+        "height": 568
+      },
+      "screenshot": "dark-320x568.png",
+      "findings": [],
+      "census": {
+        "sizes": {
+          "16px": 43,
+          "24px": 6,
+          "14px": 17,
+          "38px": 2,
+          "12px": 5,
+          "30px": 2
+        },
+        "families": {
+          "Figtree": 74,
+          "DM Mono": 1
+        },
+        "radii": {
+          "6px": 2,
+          "5px": 1,
+          "48%": 1,
+          "70px": 2,
+          "50%": 1
+        },
+        "colors": 12,
+        "shadows": 0
+      },
+      "runtimeIssues": []
+    },
+    {
+      "tag": "dark-375x812",
+      "scheme": "dark",
+      "viewport": {
+        "width": 375,
+        "height": 812
+      },
+      "screenshot": "dark-375x812.png",
+      "findings": [],
+      "census": {
+        "sizes": {
+          "16px": 43,
+          "24px": 6,
+          "14px": 17,
+          "38px": 2,
+          "12px": 5,
+          "30px": 2
+        },
+        "families": {
+          "Figtree": 74,
+          "DM Mono": 1
+        },
+        "radii": {
+          "6px": 2,
+          "5px": 1,
+          "48%": 1,
+          "70px": 2,
+          "50%": 1
+        },
+        "colors": 12,
+        "shadows": 0
+      },
+      "runtimeIssues": []
+    },
+    {
+      "tag": "dark-568x320",
+      "scheme": "dark",
+      "viewport": {
+        "width": 568,
+        "height": 320
+      },
+      "screenshot": "dark-568x320.png",
+      "findings": [],
+      "census": {
+        "sizes": {
+          "16px": 43,
+          "24px": 6,
+          "14px": 17,
+          "56.8px": 2,
+          "12px": 5,
+          "30px": 2
+        },
+        "families": {
+          "Figtree": 74,
+          "DM Mono": 1
+        },
+        "radii": {
+          "6px": 2,
+          "5px": 1,
+          "48%": 1,
+          "70px": 2,
+          "50%": 1
+        },
+        "colors": 12,
+        "shadows": 0
+      },
+      "runtimeIssues": []
+    },
+    {
+      "tag": "dark-768x1024",
+      "scheme": "dark",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "screenshot": "dark-768x1024.png",
+      "findings": [],
+      "census": {
+        "sizes": {
+          "16px": 43,
+          "24px": 6,
+          "14px": 17,
+          "46.08px": 2,
+          "12px": 5,
+          "30px": 2
+        },
+        "families": {
+          "Figtree": 74,
+          "DM Mono": 1
+        },
+        "radii": {
+          "6px": 2,
+          "5px": 1,
+          "48%": 1,
+          "70px": 2,
+          "50%": 1
+        },
+        "colors": 12,
+        "shadows": 0
+      },
+      "runtimeIssues": []
+    },
+    {
+      "tag": "dark-1280x800",
+      "scheme": "dark",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "dark-1280x800.png",
+      "findings": [
+        {
+          "severity": "minor",
+          "rule": "demasiados-colores-de-texto",
+          "selector": "body",
+          "detail": "14 colores de texto distintos"
+        }
+      ],
+      "census": {
+        "sizes": {
+          "16px": 43,
+          "24px": 6,
+          "14px": 21,
+          "66.56px": 2,
+          "12px": 5,
+          "46px": 2
+        },
+        "families": {
+          "Figtree": 78,
+          "DM Mono": 1
+        },
+        "radii": {
+          "6px": 5,
+          "5px": 1,
+          "48%": 1,
+          "70px": 2,
+          "50%": 1
+        },
+        "colors": 14,
+        "shadows": 0
+      },
+      "runtimeIssues": []
+    },
+    {
+      "tag": "dark-1920x1080",
+      "scheme": "dark",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshot": "dark-1920x1080.png",
+      "findings": [
+        {
+          "severity": "minor",
+          "rule": "demasiados-colores-de-texto",
+          "selector": "body",
+          "detail": "14 colores de texto distintos"
+        }
+      ],
+      "census": {
+        "sizes": {
+          "16px": 43,
+          "24px": 6,
+          "14px": 21,
+          "76px": 2,
+          "12px": 5,
+          "46px": 2
+        },
+        "families": {
+          "Figtree": 78,
+          "DM Mono": 1
+        },
+        "radii": {
+          "6px": 5,
+          "5px": 1,
+          "48%": 1,
+          "70px": 2,
+          "50%": 1
+        },
+        "colors": 14,
+        "shadows": 0
+      },
+      "runtimeIssues": []
+    }
+  ],
+  "runtimeIssues": []
+}

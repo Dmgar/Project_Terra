@@ -37,8 +37,21 @@ function Scatter({ points = [] }) {
     [points, filterCrop, filterSoil]
   );
 
-  const xScale = (x) => 55 + ((Number(x) || 0) + 4) / 8 / zoom * 600 + pan.x;
-  const yScale = (y) => 322 - ((Number(y) || 0) + 4) / 8 / zoom * 285 + pan.y;
+  // La escala se calcula con el rango real de los puntos. Antes asumía coordenadas de -4 a 4 (la proyección
+  // PCA anterior); las de UMAP van de ~0,5 a ~10 y los puntos caían fuera del lienzo.
+  const extent = useMemo(() => {
+    const spanOf = (values) => {
+      const finite = values.map(Number).filter(Number.isFinite);
+      const min = Math.min(...finite);
+      const max = Math.max(...finite);
+      return finite.length ? { min, range: max - min || 1 } : { min: 0, range: 1 };
+    };
+    return { x: spanOf(points.map((p) => p.x)), y: spanOf(points.map((p) => p.y)) };
+  }, [points]);
+  // 0,03–0,97 deja un margen para que los puntos del borde no queden pegados a los ejes.
+  const unit = (value, { min, range }) => 0.03 + 0.94 * (((Number(value) || 0) - min) / range);
+  const xScale = (x) => 55 + unit(x, extent.x) / zoom * 600 + pan.x;
+  const yScale = (y) => 322 - unit(y, extent.y) / zoom * 285 + pan.y;
 
   const handleWheel = (e) => {
     e.preventDefault();
@@ -327,21 +340,8 @@ export default function Analysis() {
                 Una vista bidimensional de la similitud ambiental en siete
                 dimensiones. Cada punto es una observación.
               </p>
+              {/* La leyenda ya la dibuja <Scatter>; estaba repetida aquí. */}
               <Scatter points={data?.points} />
-              <div className="legend">
-                {[
-                  ["#b96b4b", "Ecorregión 0"],
-                  ["#719b68", "Ecorregión 1"],
-                  ["#6b9fa0", "Ecorregión 2"],
-                  ["#d79b51", "Ecorregión 3"],
-                  ["#7f78a5", "Ecorregión 4"],
-                ].map((x) => (
-                  <span key={x[1]}>
-                    <i style={{ background: x[0] }} />
-                    {x[1]}
-                  </span>
-                ))}
-              </div>
               <div className="note">
                 UMAP proyecta el agrupamiento en dos dimensiones preservando la estructura 
                 no lineal y local. La proyección sirve para inspección visual, mientras que 

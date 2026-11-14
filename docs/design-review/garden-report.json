@@ -1,0 +1,310 @@
+{
+  "url": "http://127.0.0.1:5173/producto/plan/huerta",
+  "date": "2026-11-13T23:26:40.447Z",
+  "runs": [
+    {
+      "tag": "light-320x568",
+      "scheme": "light",
+      "viewport": {
+        "width": 320,
+        "height": 568
+      },
+      "screenshot": "light-320x568.png",
+      "findings": [],
+      "census": {
+        "sizes": {
+          "16px": 64,
+          "24px": 1,
+          "34px": 2,
+          "12px": 13,
+          "32px": 1,
+          "14px": 38,
+          "26px": 1
+        },
+        "families": {
+          "Figtree": 116,
+          "DM Mono": 4
+        },
+        "radii": {
+          "6px": 1,
+          "16px": 1,
+          "5px": 1,
+          "50%": 1
+        },
+        "colors": 11,
+        "shadows": 0
+      },
+      "runtimeIssues": [
+        "network: Failed to load resource: the server responded with a status of 500 (Internal Server Error) http://127.0.0.1:5173/api/health",
+        "network: Failed to load resource: the server responded with a status of 500 (Internal Server Error) http://127.0.0.1:5173/api/economics/catalog"
+      ]
+    },
+    {
+      "tag": "light-375x812",
+      "scheme": "light",
+      "viewport": {
+        "width": 375,
+        "height": 812
+      },
+      "screenshot": "light-375x812.png",
+      "findings": [],
+      "census": {
+        "sizes": {
+          "16px": 64,
+          "24px": 1,
+          "34px": 2,
+          "12px": 13,
+          "32px": 1,
+          "14px": 38,
+          "26px": 1
+        },
+        "families": {
+          "Figtree": 116,
+          "DM Mono": 4
+        },
+        "radii": {
+          "6px": 1,
+          "16px": 1,
+          "5px": 1,
+          "50%": 1
+        },
+        "colors": 11,
+        "shadows": 0
+      },
+      "runtimeIssues": [
+        "network: Failed to load resource: the server responded with a status of 500 (Internal Server Error) http://127.0.0.1:5173/api/health",
+        "network: Failed to load resource: the server responded with a status of 500 (Internal Server Error) http://127.0.0.1:5173/api/economics/catalog"
+      ]
+    },
+    {
+      "tag": "light-568x320",
+      "scheme": "light",
+      "viewport": {
+        "width": 568,
+        "height": 320
+      },
+      "screenshot": "light-568x320.png",
+      "findings": [],
+      "census": {
+        "sizes": {
+          "16px": 64,
+          "24px": 1,
+          "34px": 2,
+          "12px": 13,
+          "32px": 1,
+          "14px": 38,
+          "26px": 1
+        },
+        "families": {
+          "Figtree": 116,
+          "DM Mono": 4
+        },
+        "radii": {
+          "6px": 1,
+          "16px": 1,
+          "5px": 1,
+          "50%": 1
+        },
+        "colors": 11,
+        "shadows": 0
+      },
+      "runtimeIssues": [
+        "network: Failed to load resource: the server responded with a status of 500 (Internal Server Error) http://127.0.0.1:5173/api/health",
+        "network: Failed to load resource: the server responded with a status of 500 (Internal Server Error) http://127.0.0.1:5173/api/economics/catalog"
+      ]
+    },
+    {
+      "tag": "light-1280x800",
+      "scheme": "light",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "light-1280x800.png",
+      "findings": [
+        {
+          "severity": "minor",
+          "rule": "demasiados-colores-de-texto",
+          "selector": "body",
+          "detail": "13 colores de texto distintos"
+        }
+      ],
+      "census": {
+        "sizes": {
+          "16px": 64,
+          "24px": 1,
+          "14px": 42,
+          "57.6px": 2,
+          "12px": 13,
+          "32px": 1,
+          "26px": 1
+        },
+        "families": {
+          "Figtree": 120,
+          "DM Mono": 4
+        },
+        "radii": {
+          "6px": 4,
+          "16px": 1,
+          "5px": 1,
+          "50%": 1
+        },
+        "colors": 13,
+        "shadows": 0
+      },
+      "runtimeIssues": [
+        "network: Failed to load resource: the server responded with a status of 500 (Internal Server Error) http://127.0.0.1:5173/api/health",
+        "network: Failed to load resource: the server responded with a status of 500 (Internal Server Error) http://127.0.0.1:5173/api/economics/catalog"
+      ]
+    },
+    {
+      "tag": "dark-320x568",
+      "scheme": "dark",
+      "viewport": {
+        "width": 320,
+        "height": 568
+      },
+      "screenshot": "dark-320x568.png",
+      "findings": [],
+      "census": {
+        "sizes": {
+          "16px": 64,
+          "24px": 1,
+          "34px": 2,
+          "12px": 13,
+          "32px": 1,
+          "14px": 38,
+          "26px": 1
+        },
+        "families": {
+          "Figtree": 116,
+          "DM Mono": 4
+        },
+        "radii": {
+          "6px": 1,
+          "16px": 1,
+          "5px": 1,
+          "50%": 1
+        },
+        "colors": 10,
+        "shadows": 0
+      },
+      "runtimeIssues": [
+        "network: Failed to load resource: the server responded with a status of 500 (Internal Server Error) http://127.0.0.1:5173/api/health",
+        "network: Failed to load resource: the server responded with a status of 500 (Internal Server Error) http://127.0.0.1:5173/api/economics/catalog"
+      ]
+    },
+    {
+      "tag": "dark-375x812",
+      "scheme": "dark",
+      "viewport": {
+        "width": 375,
+        "height": 812
+      },
+      "screenshot": "dark-375x812.png",
+      "findings": [],
+      "census": {
+        "sizes": {
+          "16px": 64,
+          "24px": 1,
+          "34px": 2,
+          "12px": 13,
+          "32px": 1,
+          "14px": 38,
+          "26px": 1
+        },
+        "families": {
+          "Figtree": 116,
+          "DM Mono": 4
+        },
+        "radii": {
+          "6px": 1,
+          "16px": 1,
+          "5px": 1,
+          "50%": 1
+        },
+        "colors": 10,
+        "shadows": 0
+      },
+      "runtimeIssues": [
+        "network: Failed to load resource: the server responded with a status of 500 (Internal Server Error) http://127.0.0.1:5173/api/health",
+        "network: Failed to load resource: the server responded with a status of 500 (Internal Server Error) http://127.0.0.1:5173/api/economics/catalog"
+      ]
+    },
+    {
+      "tag": "dark-568x320",
+      "scheme": "dark",
+      "viewport": {
+        "width": 568,
+        "height": 320
+      },
+      "screenshot": "dark-568x320.png",
+      "findings": [],
+      "census": {
+        "sizes": {
+          "16px": 64,
+          "24px": 1,
+          "34px": 2,
+          "12px": 13,
+          "32px": 1,
+          "14px": 38,
+          "26px": 1
+        },
+        "families": {
+          "Figtree": 116,
+          "DM Mono": 4
+        },
+        "radii": {
+          "6px": 1,
+          "16px": 1,
+          "5px": 1,
+          "50%": 1
+        },
+        "colors": 10,
+        "shadows": 0
+      },
+      "runtimeIssues": [
+        "network: Failed to load resource: the server responded with a status of 500 (Internal Server Error) http://127.0.0.1:5173/api/health",
+        "network: Failed to load resource: the server responded with a status of 500 (Internal Server Error) http://127.0.0.1:5173/api/economics/catalog"
+      ]
+    },
+    {
+      "tag": "dark-1280x800",
+      "scheme": "dark",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "dark-1280x800.png",
+      "findings": [],
+      "census": {
+        "sizes": {
+          "16px": 64,
+          "24px": 1,
+          "14px": 42,
+          "57.6px": 2,
+          "12px": 13,
+          "32px": 1,
+          "26px": 1
+        },
+        "families": {
+          "Figtree": 120,
+          "DM Mono": 4
+        },
+        "radii": {
+          "6px": 4,
+          "16px": 1,
+          "5px": 1,
+          "50%": 1
+        },
+        "colors": 12,
+        "shadows": 0
+      },
+      "runtimeIssues": [
+        "network: Failed to load resource: the server responded with a status of 500 (Internal Server Error) http://127.0.0.1:5173/api/health",
+        "network: Failed to load resource: the server responded with a status of 500 (Internal Server Error) http://127.0.0.1:5173/api/economics/catalog"
+      ]
+    }
+  ],
+  "runtimeIssues": []
+}

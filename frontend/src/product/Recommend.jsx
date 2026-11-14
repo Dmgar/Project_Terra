@@ -62,13 +62,7 @@ export default function Recommend() {
       <div className="form-layout">
         <div className="form-panel">
           <div className="kicker">Tu terreno · 7 señales</div>
-          <h2
-            style={{
-              font: "28px var(--display)",
-              fontWeight: 400,
-              margin: "12px 0 26px",
-            }}
-          >
+          <h2 className="form-title">
             Describe las condiciones
           </h2>
           <div className="field-grid">

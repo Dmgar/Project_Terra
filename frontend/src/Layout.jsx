@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 
 import { api, ErrorBoundary, useSlidingIndicator } from "./ui";
-import logo from "./assets/logo-terra-claro.png";
+import logoOscuro from "./assets/logo-terra.png";
 
 // Enlaces del menú principal: el producto va primero y el análisis queda
 // detrás de "Cómo funciona", para que el agricultor llegue a lo útil sin rodeos.
@@ -61,11 +61,11 @@ export default function Layout() {
   useEffect(() => setMenuOpen(false), [pathname]);
 
   return (
-    <div className={`shell ${inAnalysis ? "section-analysis" : "section-product"}`}>
+    <div className="shell section-product">
       <header className={`topbar ${scrolled ? "scrolled" : ""}`}>
         <div className="topbar-inner">
           <Link className="brand" to="/">
-            <img className="brand-logo" src={logo} alt="" />
+            <img className="brand-logo" src={logoOscuro} alt="" />
             <strong>TERRA</strong>
           </Link>
 

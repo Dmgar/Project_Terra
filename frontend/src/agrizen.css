@@ -1,0 +1,322 @@
+/* Producto de Terra: blanco y verde bosque, una sola familia tipográfica.
+   Dirección: corporativo agrícola (referencias: Yara, Indigo Ag). Blanco dominante; el verde solo aparece en
+   bloques estructurales (barra de pie, franja de método) y en el texto. Foto de portada en rectángulo a ancho completo.
+   Alcance deliberado: solo rutas de producto (.section-product). El análisis conserva su propio tema. */
+
+.section-product {
+  color-scheme: light;
+  --ink: #1d3a27;
+  --ink-soft: #3d5646;
+  --muted: #4d6454;
+  --paper: #ffffff;
+  --card: #ffffff;
+  --pale: #e8f2e3;
+  --line: #d4e2cf;
+  --forest: #2b7a3d;
+  --forest-deep: #1f5a2e;
+  --forest-line: #3f8d50;
+  --leaf: #b9dc8a;
+  --moss: #4f8a3a;
+  --moss-dark: #2b6b34;
+  --sun: #b5c931;
+  --water: #376c69;
+  --clay: #90512e;
+  --focus: #995014;
+  /* Escala tipográfica: base 16, razón 1.25 → 14 / 16 / 20 / 25 / 31 / 39 / 49 / 61 */
+  --section-space: clamp(48px, 7vw, 104px);
+  --radius-panel: 12px;
+  --radius-control: 6px;
+  background: var(--paper);
+  color: var(--ink);
+}
+.section-product :is(h1,h2,h3) { text-wrap: balance; }
+.section-product :focus-visible { outline: 3px solid var(--focus) !important; outline-offset: 4px; }
+.section-product :is(button,input,select,.button) { min-height: 44px; }
+.section-product :is(input,select,textarea) { max-width: 100%; }
+
+/* Barra superior blanca con filete verde: deja respirar la foto de la portada. */
+.section-product .topbar { background: #fff; color: var(--ink); border-top: 4px solid var(--forest); border-bottom: 1px solid var(--line); }
+.section-product .topbar-inner { padding-block: 12px; }
+.section-product .brand { color: var(--forest); min-height: 44px; }
+.section-product .brand strong { font-size: 25px; font-weight: 800; letter-spacing: .04em; }
+/* El PNG del logo trae mucho margen transparente: se amplía y se compensa para que la marca se lea. */
+.section-product .brand-logo { width: 64px; height: 64px; margin: -10px -8px -10px -10px; object-fit: contain; aspect-ratio: 1; }
+.section-product .topnav a { color: var(--ink-soft); font-size: 15px; font-weight: 600; min-height: 44px; display: inline-flex; align-items: center; }
+.section-product .topnav a:hover { background: var(--pale); color: var(--forest); }
+.section-product .topnav a.active { color: var(--forest); font-weight: 700; }
+.section-product .topnav::after { background: var(--forest); height: 3px; }
+.section-product .menu-toggle { color: var(--forest); border-color: var(--forest); background: transparent; min-height: 44px; }
+.section-product .topbar :focus-visible { outline-color: var(--focus) !important; }
+
+.section-product .page-title { font-weight: 700; max-width: 22ch; font-size: clamp(34px, 4.5vw, 61px); letter-spacing: 0; line-height: 1.06; }
+.section-product .page-title em { font-style: normal; font-weight: 500; }
+.section-product .kicker { font: 600 14px var(--body); text-transform: none; letter-spacing: 0; color: var(--moss-dark); }
+.section-product .intro { font-size: 16px; }
+.section-product :is(.panel,.form-panel,.opt-form,.policy-panel) { border-radius: var(--radius-panel); }
+.section-product :is(.panel h3,.section-head h2,.opt-stage-title h2,.garden-form h2) { font-weight: 650; }
+.section-product :is(.field input,.opt-field input,.garden-basics input,.manual-line input) { background: #f7faf4; }
+.section-product .button { border-radius: var(--radius-control); font-size: 14px; font-weight: 650; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 16px; }
+.section-product .button.cta { background: var(--forest); color: #fff; border-color: var(--forest); padding: 16px 24px; }
+.section-product .button.cta:hover { background: var(--forest-line); box-shadow: none; }
+.section-product .button.secondary { border-color: var(--muted); }
+.section-product .metric { border: 0; border-radius: 0; border-inline-start: 3px solid var(--line); background: transparent; }
+.section-product .metric-value { font-weight: 650; }
+.section-product :is(.metric-label,.metric-note) { color: var(--muted); }
+.section-product .planner-mode { border-radius: 12px; border-color: var(--line); }
+.section-product .planner-mode h3 { font-weight: 650; }
+.section-product :is(.planner-mode p,.garden-choice b,.garden-choice small,.garden-aside li b,.garden-aside li span,.garden-aside>p,.opt-stage-title p) { font-size: 14px; }
+.section-product .planner-mode:hover { background: var(--pale); }
+
+/* ───────── Portada ─────────
+   Calma antes que efectos: foto real y grande, un solo verde, bordes ondulados y pocos elementos por sección.
+   Las bandas rompen el margen de .main (ya centrado) para llegar de borde a borde. */
+.section-product .main:has(.terra-home) { padding-top: 0; padding-bottom: 0; }
+.terra-home { --bleed: calc(50% - 50vw); --gutter: clamp(16px, 5vw, 72px); --radius-card: 16px; }
+.terra-home :is(h1, h2, h3) { letter-spacing: 0; }
+.terra-home .button { min-height: 48px; padding: 12px 28px; border-radius: 8px; font-size: 16px; font-weight: 700; }
+
+.wave { position: absolute; left: 0; width: 100%; height: clamp(36px, 5.5vw, 80px); display: block; }
+.wave-down { top: -1px; }
+.wave-up { bottom: -1px; }
+
+/* Portada: la foto va sola, sin degradado ni texto encima */
+.hero-photo { position: relative; height: clamp(300px, 44vw, 520px); margin-inline: var(--bleed); }
+.hero-photo img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 70% 62%; }
+.hero-text { display: grid; grid-template-columns: 6fr 5fr; gap: clamp(24px, 5vw, 80px); align-items: end; padding-block: clamp(16px, 2vw, 32px) var(--section-space); }
+.hero-eyebrow { margin: 0 0 12px; color: var(--moss-dark); font-size: 16px; font-weight: 700; }
+.hero h1 { margin: 0; max-width: 16ch; color: var(--forest); font: 800 clamp(34px, 4.6vw, 56px)/1.12 var(--display); }
+.hero-lede { max-width: 44ch; margin: 0 0 24px; color: var(--ink-soft); font-size: 18px; line-height: 1.65; }
+
+/* Qué hacer: lista de lectura a la izquierda y la foto, recortada de otro modo, a la derecha */
+.do { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(32px, 6vw, 96px); align-items: center; padding-bottom: var(--section-space); }
+.do h2, .band h2 { margin: 0 0 24px; color: var(--forest); font-size: clamp(25px, 2.8vw, 39px); line-height: 1.15; font-weight: 800; }
+.actions { margin: 0; padding: 0; list-style: none; border-bottom: 1px solid var(--line); }
+.actions a { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 12px; border-top: 1px solid var(--line); color: var(--ink-soft); font-size: 16px; line-height: 1.5; text-decoration: none; transition: background-color .2s; }
+.actions a:hover { background: var(--pale); }
+.actions b { display: block; margin-bottom: 2px; color: var(--forest); font-size: 20px; font-weight: 800; }
+.actions i { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--pale); color: var(--forest); font: 700 24px/1 var(--display); font-style: normal; transition: background-color .2s, color .2s; }
+.actions a:hover i { background: var(--forest); color: #fff; }
+/* height:auto anula el atributo height="1000" del <img>, que si no fuerza una foto vertical. */
+.do-photo { width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; object-position: 12% 70%; border-radius: var(--radius-card); }
+
+/* Bandas de color: salen del blanco con un borde ondulado, no con una línea recta */
+.band { position: relative; margin-inline: var(--bleed); }
+.band-inner { width: min(100%, 1500px); margin-inline: auto; padding: calc(var(--section-space) + clamp(24px, 4vw, 56px)) var(--gutter) var(--section-space); }
+.band-soft { background: var(--pale); color: var(--ink); }
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(24px, 4vw, 56px); margin: 0; padding: 0; list-style: none; }
+.steps li { border-top: 2px solid var(--forest); padding-top: 16px; }
+.step-n { display: block; margin-bottom: 8px; color: var(--forest); font: 800 31px/1 var(--display); }
+.steps h3 { margin: 0 0 6px; color: var(--ink); font-size: 20px; font-weight: 800; }
+.steps p { max-width: 32ch; margin: 0; color: var(--ink-soft); font-size: 16px; line-height: 1.6; }
+.band-green { background: var(--forest); color: #fff; }
+.band-green h2 { color: #fff; max-width: 16ch; margin: 0; }
+.data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(24px, 6vw, 96px); align-items: center; }
+.band-green p { max-width: 46ch; margin: 0 0 24px; font-size: 18px; line-height: 1.65; }
+/* Más específico que la regla genérica de .button, que pinta de verde todo botón que no sea .cta ni .secondary. */
+.section-product .terra-home .button.light:not(.secondary):not(.cta):not(.garden-download):not(.garden-variation) { background: #fff; color: var(--forest); border-color: #fff; }
+.section-product .terra-home .button.light:not(.secondary):not(.cta):not(.garden-download):not(.garden-variation):hover { background: var(--pale); }
+.band-green :focus-visible { outline-color: #fff !important; }
+
+.section-product .site-foot { font-size: 14px; line-height: 1.6; color: #e1eede; }
+.section-product .site-foot .health { color: #e1eede; }
+
+@media(max-width: 860px) {
+  .hero-text, .do, .data-grid { grid-template-columns: 1fr; }
+  .steps { grid-template-columns: 1fr; }
+  .do-photo { aspect-ratio: 16 / 10; }
+}
+@media(max-width: 600px) {
+  .section-product :is(.stepper) { flex-wrap: wrap; }
+  .section-product .stepper button { flex: 1 1 40%; font-size: 12px !important; }
+  .section-product :is(.result-actions,.opt-actions) { flex-wrap: wrap; gap: 12px; }
+  .section-product .field label { flex-wrap: wrap; gap: 6px; }
+  .section-product .submit-row { flex-wrap: wrap; gap: 16px; }
+}
+@media(pointer: coarse) { .section-product :is(.tab,.preset,.back-link,.garden-edit) { min-height: 44px; } }
+
+/* Tamaños de lectura consistentes en formularios y planificador. */
+.section-product :is(.preset,.field label span,.back-link,.panel-caption,.garden-basics label>span,.garden-basics em,.garden-choice>span,.opt-field,.opt-field em,.top-status,.mode-number,.planner-mode li,.planner-mode strong,.catalog-status,.source-status,.risk-select small) { font-size: 12px; }
+.section-product .button:not(.secondary):not(.cta):not(.garden-download):not(.garden-variation) { background: var(--forest); color: #f8faef; border-color: var(--forest); }
+.section-product .button:not(.secondary):not(.cta):not(.garden-download):not(.garden-variation):hover { background: var(--forest-line); }
+.section-product .garden-download { color: #143d26 !important; }
+.section-product .garden-hero h2 { color: #f8faef; }
+.section-product .hero-link-dark { display: inline-flex; align-items: center; min-height: 44px; }
+.section-product .result-empty strong { font-size: 24px; }
+.section-product :is(.planner-entry-copy h2,.garden-form h2) { font-size: 32px; }
+.section-product .planner-entry-copy p { font-size: 14px; }
+.section-product .planner-mode i { font-size: 24px; }
+.section-product .planner-mode { transition: background-color .2s, border-color .2s; }
+.section-product :is(.stepper button,.stepper button span,.risk-select>span,.opt-aside,.opt-aside b,.opt-aside small,.opt-aside p,.opt-aside a,.aside-warning) { font-size: 12px; }
+.section-product .opt-aside a { display: flex; align-items: center; min-height: 44px; overflow-wrap: anywhere; }
+
+/* ───────── Páginas internas ─────────
+   Mismo lenguaje que la portada: banda verde clara con título y foto, borde ondulado, paneles planos con filete fino.
+   El análisis ya no tiene tema propio: comparte tokens, tipografía y barra con el resto del sitio. */
+.section-product {
+  --gutter: clamp(16px, 5vw, 72px);
+  /* El análisis usaba terracota y azul petróleo; ahora todo el sitio comparte la misma familia verde. */
+  --clay: #4f8a3a;
+  --water: #6aa56e;
+  --sun: #8fb843;
+}
+.section-product .main:has(.page-banner) { padding-top: 0; }
+.page-banner { position: relative; margin: 0 calc(50% - 50vw) clamp(24px, 3vw, 40px); background: var(--pale); }
+.banner-inner { display: grid; grid-template-columns: 7fr 4fr; gap: clamp(24px, 5vw, 80px); align-items: center; width: min(100%, 1500px); margin-inline: auto; padding: clamp(32px, 5vw, 64px) var(--gutter) clamp(64px, 8vw, 112px); }
+.page-banner .page-title { margin: 0 0 16px; max-width: 20ch; color: var(--forest); font: 800 clamp(31px, 3.6vw, 49px)/1.12 var(--display); letter-spacing: 0; }
+.page-banner .page-title em { font-style: normal; font-weight: inherit; }
+.page-banner .intro { max-width: 52ch; margin: 0; color: var(--ink-soft); font-size: 18px; line-height: 1.65; }
+.banner-photo { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 16px; }
+
+/* Subbarra del análisis: banda blanca con filete, no una segunda barra oscura */
+.section-product .subnav { background: #fff; border-bottom: 1px solid var(--line); }
+.section-product .subnav-title { color: var(--muted); font: 600 14px var(--body); }
+.section-product .subnav a { color: var(--ink-soft); font-size: 15px; font-weight: 600; min-height: 44px; display: inline-flex; align-items: center; }
+.section-product .subnav a:hover { color: var(--forest); }
+.section-product .subnav a.active { color: var(--forest); font-weight: 700; }
+.section-product .subnav::after { background: var(--forest); height: 3px; }
+
+/* Superficies: planas, con filete fino y el mismo radio en todo el sitio */
+.section-product :is(.panel, .form-panel, .opt-form, .policy-panel, .result, .planner-mode, .cultivation-guide, .garden-plan-grid article) { background: #fff; border: 1px solid var(--line); border-radius: 16px; box-shadow: none; }
+.section-product :is(.panel, .form-panel) { padding: clamp(20px, 3vw, 32px); }
+.form-title { margin: 8px 0 24px; color: var(--forest); font: 800 25px/1.2 var(--display); }
+.section-product .presets { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 24px; }
+.section-product .preset { padding: 8px 18px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--ink); font-size: 14px; font-weight: 600; }
+.section-product .preset:hover { background: var(--pale); }
+.section-product .preset.active { background: var(--forest); border-color: var(--forest); color: #fff; }
+.section-product :is(.field input, .opt-field input, .garden-basics input, .manual-line input, select) { border: 1px solid var(--line); border-radius: 8px; background: #f7faf4; font: 16px var(--body); }
+.section-product input[type="range"] { accent-color: var(--forest); }
+.section-product :is(.section-head h2, .panel h3, .callout h3) { font-weight: 800; letter-spacing: 0; }
+.section-product .section-head { border-bottom: 1px solid var(--line); }
+.section-product .callout { background: var(--forest); color: #fff; border-radius: 16px; overflow: hidden; }
+.section-product .callout::before, .section-product .callout::after { display: none; }
+.section-product .callout p { color: #e1eede; }
+.section-product .callout .button:not(.secondary):not(.cta):not(.garden-download):not(.garden-variation) { background: #fff; color: var(--forest); border-color: #fff; }
+.section-product .callout .button:not(.secondary):not(.cta):not(.garden-download):not(.garden-variation):hover { background: var(--pale); }
+.section-product .note, .section-product .garden-compatibility-note { background: var(--pale); border: 0; border-inline-start: 3px solid var(--forest); border-radius: 8px; color: var(--ink); }
+
+@media(max-width: 860px) {
+  .banner-inner { grid-template-columns: 1fr; }
+  .banner-photo { aspect-ratio: 16 / 9; max-height: 240px; }
+}
+
+/* Títulos heredados: el CSS anterior los fijaba en peso 400, demasiado fino para Nunito. */
+.section-product :is(h1, h2) { font-weight: 800; letter-spacing: 0; }
+.section-product :is(h3, h4) { font-weight: 700; letter-spacing: 0; }
+.section-product :is(.planner-entry-copy h2, .garden-form h2, .garden-hero h2, .garden-empty h2) { color: inherit; }
+.section-product .planner-entry-copy h2 { color: var(--forest); font-size: 31px; }
+.section-product .optimize-page { max-width: none; }
+.section-product .field label { font-size: 14px; font-weight: 700; }
+.section-product .field label span { font-size: 14px; font-weight: 600; color: var(--muted); }
+
+/* Selector de plan: dos tarjetas iguales, con la acción siempre al pie */
+.section-product .planner-entry { margin-top: 0; }
+.section-product .planner-modes { gap: 24px; }
+.section-product .planner-mode { display: flex; flex-direction: column; align-items: flex-start; min-height: 0; padding: clamp(24px, 3vw, 36px); }
+.section-product .planner-mode h3 { font-size: 28px; line-height: 1.15; }
+.section-product .planner-mode p { font-size: 16px; line-height: 1.6; color: var(--ink-soft); }
+.section-product .planner-mode li { font-size: 14px; }
+.section-product .planner-mode strong { margin-top: auto; padding-top: 16px; color: var(--forest); font-size: 16px; font-weight: 700; }
+.section-product .planner-mode .mode-number { font-size: 14px; font-weight: 700; letter-spacing: 0; color: var(--moss-dark); }
+.section-product .planner-mode i { color: var(--forest); }
+
+/* Planificador de huerta: el CSS de garden.css se carga después y usaba cuerpos de 9–11px, crema y ocre.
+   El prefijo .shell.section-product sube la especificidad para ganar sin !important. */
+.shell.section-product :is(h1, h2) { font-weight: 800; }
+.shell.section-product :is(h3, h4) { font-weight: 700; }
+.shell.section-product .garden-aside { border-left: 3px solid var(--forest); padding: 8px 0 8px 24px; }
+.shell.section-product .garden-aside h3 { font-size: 25px; line-height: 1.2; color: var(--forest); }
+.shell.section-product .garden-aside :is(li b, li span, > p) { font-size: 14px; line-height: 1.5; }
+.shell.section-product .garden-form h2 { font-size: 31px; color: var(--forest); }
+.shell.section-product .garden-form p { font-size: 16px; color: var(--ink-soft); }
+.shell.section-product .garden-basics label > span { font-size: 14px; font-weight: 700; }
+.shell.section-product .garden-basics em { font-size: 13px; }
+.shell.section-product .garden-basics input { font-size: 16px; padding: 12px; }
+.shell.section-product .garden-choice > span { font-size: 14px; font-weight: 700; }
+.shell.section-product .garden-choice button { background: #f7faf4; border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+.shell.section-product .garden-choice button:hover { background: var(--pale); }
+.shell.section-product .garden-choice button.active { background: var(--pale); border-color: var(--forest); box-shadow: inset 0 0 0 1px var(--forest); }
+.shell.section-product .garden-choice b { font-size: 15px; }
+.shell.section-product .garden-choice small { font-size: 13px; }
+.shell.section-product .back-link { margin: 8px 0 20px; color: var(--forest); font: 700 15px var(--body); }
+.shell.section-product .garden-hero { border-radius: 16px; background: var(--forest); }
+.shell.section-product .garden-hero-actions .button { font-size: 14px; }
+.shell.section-product .garden-edit { font: 600 13px var(--body); color: #e1eede; }
+.shell.section-product .garden-plan-grid h3 { font-size: 22px; }
+.shell.section-product .garden-plan-grid strong { font: 800 25px var(--display); color: var(--forest); }
+.shell.section-product :is(.garden-plan-grid p, .garden-plan-grid small, .garden-plan-grid article > span) { font-size: 14px; }
+.shell.section-product .garden-bar { background: var(--pale); border-radius: 3px; }
+.shell.section-product .garden-bar i { border-radius: 3px; }
+.shell.section-product :is(.garden-notes li, .garden-notes p) { font-size: 14px; line-height: 1.6; color: var(--ink-soft); }
+.shell.section-product .garden-notes section { background: var(--pale); border: 0; border-radius: 12px; }
+.shell.section-product .garden-notes h3 { font-size: 20px; }
+.shell.section-product .cultivation-guide { background: var(--pale); border: 0; }
+.shell.section-product .cultivation-steps { background: var(--line); border-radius: 12px; overflow: hidden; }
+.shell.section-product .cultivation-steps article { background: #fff; }
+.shell.section-product .cultivation-steps h3 { font-size: 19px; }
+.shell.section-product .cultivation-steps span { font-size: 13px; color: var(--moss-dark); }
+.shell.section-product .cultivation-steps p { font-size: 14px; line-height: 1.55; }
+
+/* Plan comercial: pasos, perfil de riesgo y panel lateral al mismo lenguaje que la huerta */
+.shell.section-product .stepper { margin: 8px 0 28px; border: 0; border-bottom: 1px solid var(--line); }
+.shell.section-product .stepper button { padding: 14px 22px; border-right: 0; color: var(--muted); font: 600 15px var(--body); }
+.shell.section-product .stepper button span { font: 700 14px var(--body); color: var(--moss-dark); }
+.shell.section-product .stepper button.active { color: var(--forest); font-weight: 800; }
+.shell.section-product .risk-select > span { font: 700 14px var(--body); text-transform: none; letter-spacing: 0; color: var(--ink); }
+.shell.section-product .risk-select button { background: #f7faf4; border: 1px solid var(--line); border-radius: 8px; }
+.shell.section-product .risk-select button:hover { background: var(--pale); }
+.shell.section-product .risk-select button.active { background: var(--pale); border-color: var(--forest); box-shadow: inset 0 0 0 1px var(--forest); }
+.shell.section-product :is(.risk-select b) { font-size: 15px; }
+.shell.section-product :is(.risk-select small) { font-size: 13px; }
+.shell.section-product .opt-aside { border-left: 3px solid var(--forest); padding-left: 24px; }
+.shell.section-product :is(.opt-aside p, .opt-aside small, .opt-aside b, .opt-aside a) { font-size: 14px; line-height: 1.55; }
+.shell.section-product .opt-aside a { color: var(--forest); font-weight: 700; }
+.shell.section-product .aside-warning { background: var(--pale); border: 0; border-radius: 8px; color: var(--ink); }
+.shell.section-product :is(.opt-field, .opt-field em) { font-size: 14px; }
+.shell.section-product .opt-stage-title h2 { font-size: 31px; color: var(--forest); }
+.shell.section-product .opt-stage-title p { font-size: 16px; color: var(--ink-soft); }
+
+/* Análisis: métricas, rótulos y cierre al mismo nivel de lectura que el resto */
+.shell.section-product .subnav { padding-inline: max(var(--gutter), calc((100% - 1500px) / 2 + var(--gutter))); }
+.shell.section-product .metrics { gap: 24px; }
+.shell.section-product .metric { padding: 8px 0 8px 20px; border: 0; border-inline-start: 3px solid var(--forest); background: transparent; }
+.shell.section-product .metric-label { font: 700 14px var(--body); text-transform: none; letter-spacing: 0; color: var(--moss-dark); }
+.shell.section-product .metric-value { font: 800 clamp(31px, 3.2vw, 39px)/1.1 var(--display); color: var(--forest); }
+.shell.section-product .metric-note { font-size: 14px; color: var(--ink-soft); }
+.shell.section-product .section-head { margin-bottom: 20px; padding-bottom: 12px; }
+.shell.section-product .section-head h2 { font-size: 25px; color: var(--forest); }
+.shell.section-product .section-head p { font-size: 15px; color: var(--ink-soft); }
+.shell.section-product :is(.panel-caption, .bar-meta span, .bar-meta span:last-child, .feature-line em, .region-card .region-no, .profile-mini, .tag, .legend, .legend span) { font: 500 14px var(--body); color: var(--ink-soft); }
+.shell.section-product .bar-meta b, .shell.section-product .feature-line b, .shell.section-product .feature-line span { font-size: 15px; }
+.shell.section-product .bar-track { background: var(--pale); border-radius: 4px; }
+.shell.section-product .bar-fill { border-radius: 4px; }
+.shell.section-product .tag { background: var(--pale); color: var(--moss-dark); border-radius: 999px; padding: 4px 12px; }
+.shell.section-product .callout { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 40px; padding: clamp(24px, 4vw, 48px); text-align: left; }
+.shell.section-product .callout h3 { flex: 1 1 100%; margin: 0; color: #fff; font-size: clamp(25px, 2.8vw, 31px); font-weight: 800; }
+.shell.section-product .callout p { flex: 1 1 360px; max-width: 56ch; margin: 0; font-size: 16px; line-height: 1.6; }
+.shell.section-product .callout .button { flex: none; }
+.shell.section-product .feature-line { grid-template-columns: 140px minmax(0, 1fr) 110px; gap: 16px; font-size: 15px; padding-block: 6px; }
+.shell.section-product .feature-line em { text-align: right; white-space: nowrap; }
+.shell.section-product .panel h3 { margin: 0 0 6px; color: var(--forest); font-size: 20px; }
+.shell.section-product .panel h3 + p, .shell.section-product .panel-caption { font-size: 14px; }
+.shell.section-product .note { font-size: 14px; line-height: 1.6; padding: 12px 16px; }
+
+/* Controles del gráfico y pestañas internas */
+.shell.section-product .scatter-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 8px 0 16px; }
+.shell.section-product .scatter-controls select { min-height: 44px; padding: 8px 14px; color: var(--ink); font: 600 15px var(--body); background: #fff; }
+.shell.section-product .point-count { margin-left: auto; color: var(--ink-soft); font-size: 14px; }
+.shell.section-product .tabs { margin: 0 0 24px; border-bottom: 1px solid var(--line); }
+.shell.section-product .tabs button, .shell.section-product .tab { padding: 12px 18px; font: 600 15px var(--body); color: var(--muted); background: none; border: 0; }
+.shell.section-product :is(.tabs button, .tab)[aria-selected="true"], .shell.section-product :is(.tabs button, .tab).active { color: var(--forest); font-weight: 800; }
+.shell.section-product .tabs::after { background: var(--forest); bottom: 0; height: 3px; }
+.shell.section-product .legend { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-top: 12px; }
+
+/* Tarjetas de región: lectura cómoda y selección clara, sin saltos al pasar el cursor */
+.shell.section-product .region-card { padding: 20px 18px; border-radius: 12px; }
+.shell.section-product .region-card:hover { transform: none; background: var(--pale); }
+.shell.section-product .region-card.selected { border-color: var(--forest); box-shadow: inset 0 0 0 1px var(--forest); background: #fff; }
+.shell.section-product .region-card h3 { margin: 4px 0 12px; font-size: 20px; font-weight: 800; color: var(--forest); }
+.shell.section-product .region-card strong { font-size: 25px; font-weight: 800; }
+.shell.section-product .region-card small { font-size: 13px; }
+.shell.section-product .profile-mini { margin-top: 4px; }
+.shell.section-product .profile-mini i, .shell.section-product .profile-mini span { font-size: 13px; }
+.shell.section-product .callout h3, .shell.section-product .panel h2 { font-size: 25px; }

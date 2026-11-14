@@ -1,4 +1,8 @@
 import React, { useLayoutEffect } from "react";
+import { useLocation } from "react-router-dom";
+import tractorAtardecer from "./assets/tractor-atardecer.webp";
+import trigoAmanecer from "./assets/trigo-amanecer.jpeg";
+import surcosLechuga from "./assets/surcos-lechuga.jpeg";
 
 export const FEATURES = [
   "Nitrogen",
@@ -152,13 +156,43 @@ export class ErrorBoundary extends React.Component {
   }
 }
 
-export function Header({ eyebrow, title, description, action }) {
+// Borde ondulado entre secciones. `color` es el de la sección que se mete en la siguiente;
+// "down" cuelga del borde superior de una banda y "up" sube desde el borde inferior de una foto.
+export function Wave({ color, direction }) {
+  const path =
+    direction === "down"
+      ? "M0,0 L1440,0 L1440,38 C1230,88 990,6 720,42 C450,78 210,8 0,52 Z"
+      : "M0,80 L1440,80 L1440,42 C1230,-6 990,74 720,38 C450,2 210,72 0,28 Z";
   return (
-    <>
-      <h1 className="page-title">{title}</h1>
-      {description && <p className="intro">{description}</p>}
-      {action}
-    </>
+    <svg className={`wave wave-${direction}`} viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true" focusable="false" style={{ color }}>
+      <path d={path} fill="currentColor" />
+    </svg>
+  );
+}
+
+// Cada sección del sitio lleva su propia foto en la banda de cabecera.
+function bannerPhoto(pathname) {
+  if (pathname.startsWith("/producto/plan")) return surcosLechuga;
+  if (pathname.startsWith("/analisis")) return tractorAtardecer;
+  return trigoAmanecer;
+}
+
+// Cabecera común de todas las páginas internas: banda verde clara con el título a la izquierda,
+// una foto a la derecha y el borde ondulado que la une con el contenido blanco.
+export function Header({ title, description, action }) {
+  const { pathname } = useLocation();
+  return (
+    <header className="page-banner">
+      <div className="banner-inner">
+        <div className="banner-copy">
+          <h1 className="page-title">{title}</h1>
+          {description && <p className="intro">{description}</p>}
+          {action}
+        </div>
+        <img className="banner-photo" src={bannerPhoto(pathname)} alt="" width="678" height="452" />
+      </div>
+      <Wave color="#ffffff" direction="up" />
+    </header>
   );
 }
 

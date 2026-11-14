@@ -1,0 +1,179 @@
+{
+  "url": "http://127.0.0.1:5173/producto/recomendar",
+  "date": "2026-11-13T23:17:58.879Z",
+  "runs": [
+    {
+      "tag": "light-375x812",
+      "scheme": "light",
+      "viewport": {
+        "width": 375,
+        "height": 812
+      },
+      "screenshot": "light-375x812.png",
+      "findings": [],
+      "census": {
+        "sizes": {
+          "16px": 24,
+          "23px": 1,
+          "34px": 2,
+          "17px": 1,
+          "12px": 34,
+          "28px": 1,
+          "14px": 1,
+          "25px": 1,
+          "13px": 4
+        },
+        "families": {
+          "Figtree": 48,
+          "DM Mono": 21
+        },
+        "radii": {
+          "6px": 1,
+          "3px": 18,
+          "16px": 2,
+          "5px": 1,
+          "50%": 1
+        },
+        "colors": 10,
+        "shadows": 0
+      },
+      "runtimeIssues": [
+        "network: Failed to load resource: the server responded with a status of 500 (Internal Server Error) http://127.0.0.1:5173/api/health"
+      ]
+    },
+    {
+      "tag": "light-1280x800",
+      "scheme": "light",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "light-1280x800.png",
+      "findings": [
+        {
+          "severity": "major",
+          "rule": "escala-tipografica-rota",
+          "selector": "body",
+          "detail": "10 tamaños distintos (escala sana: ≤ 8)"
+        }
+      ],
+      "census": {
+        "sizes": {
+          "16px": 24,
+          "23px": 1,
+          "15px": 4,
+          "57.6px": 2,
+          "17px": 1,
+          "12px": 34,
+          "28px": 1,
+          "14px": 1,
+          "25px": 1,
+          "13px": 4
+        },
+        "families": {
+          "Figtree": 52,
+          "DM Mono": 21
+        },
+        "radii": {
+          "6px": 4,
+          "3px": 18,
+          "16px": 2,
+          "5px": 1,
+          "50%": 1
+        },
+        "colors": 12,
+        "shadows": 0
+      },
+      "runtimeIssues": [
+        "network: Failed to load resource: the server responded with a status of 500 (Internal Server Error) http://127.0.0.1:5173/api/health"
+      ]
+    },
+    {
+      "tag": "dark-375x812",
+      "scheme": "dark",
+      "viewport": {
+        "width": 375,
+        "height": 812
+      },
+      "screenshot": "dark-375x812.png",
+      "findings": [],
+      "census": {
+        "sizes": {
+          "16px": 24,
+          "23px": 1,
+          "34px": 2,
+          "17px": 1,
+          "12px": 34,
+          "28px": 1,
+          "14px": 1,
+          "25px": 1,
+          "13px": 4
+        },
+        "families": {
+          "Figtree": 48,
+          "DM Mono": 21
+        },
+        "radii": {
+          "6px": 1,
+          "3px": 18,
+          "16px": 2,
+          "5px": 1,
+          "50%": 1
+        },
+        "colors": 10,
+        "shadows": 0
+      },
+      "runtimeIssues": [
+        "network: Failed to load resource: the server responded with a status of 500 (Internal Server Error) http://127.0.0.1:5173/api/health"
+      ]
+    },
+    {
+      "tag": "dark-1280x800",
+      "scheme": "dark",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "dark-1280x800.png",
+      "findings": [
+        {
+          "severity": "major",
+          "rule": "escala-tipografica-rota",
+          "selector": "body",
+          "detail": "10 tamaños distintos (escala sana: ≤ 8)"
+        }
+      ],
+      "census": {
+        "sizes": {
+          "16px": 24,
+          "23px": 1,
+          "15px": 4,
+          "57.6px": 2,
+          "17px": 1,
+          "12px": 34,
+          "28px": 1,
+          "14px": 1,
+          "25px": 1,
+          "13px": 4
+        },
+        "families": {
+          "Figtree": 52,
+          "DM Mono": 21
+        },
+        "radii": {
+          "6px": 4,
+          "3px": 18,
+          "16px": 2,
+          "5px": 1,
+          "50%": 1
+        },
+        "colors": 12,
+        "shadows": 0
+      },
+      "runtimeIssues": [
+        "network: Failed to load resource: the server responded with a status of 500 (Internal Server Error) http://127.0.0.1:5173/api/health"
+      ]
+    }
+  ],
+  "runtimeIssues": []
+}

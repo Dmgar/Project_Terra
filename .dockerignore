@@ -28,3 +28,8 @@ frontend/.vite/
 # Logs & temp
 *.log
 scratch/
+
+# Raw datasets not needed at runtime
+data/raw/
+data/crop_data.csv
+data/processed/kmeans_k5_labels.csv

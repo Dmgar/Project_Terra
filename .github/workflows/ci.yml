@@ -5,6 +5,11 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   python-tests:
@@ -26,7 +31,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
 
       - name: Run pytest
         run: |
@@ -36,10 +41,11 @@ jobs:
         run: |
           python -c "
           import warnings, joblib, sklearn
+          from pathlib import Path
           warnings.simplefilter('error', sklearn.exceptions.InconsistentVersionWarning)
-          for m in ['kmeans_k5','scaler','gmm_k5_full']:
-              joblib.load(f'data/models/{m}.joblib')
-          print('OK: No InconsistentVersionWarning')
+          for p in sorted(Path('data/models').glob('*.joblib')):
+              joblib.load(p)
+          print('OK: No InconsistentVersionWarning across all models')
           "
 
   frontend-tests:
@@ -66,7 +72,7 @@ jobs:
         run: npm run build
 
       - name: Run tests
-        run: node --test tests/
+        run: npm run test
 
   lint:
     name: Lint (Python + JS)
@@ -104,10 +110,110 @@ jobs:
             echo "No ESLint config found, skipping"
           fi
 
+  smoke-test:
+    name: Production Smoke Test (Uvicorn + Vercel Entrypoint)
+    needs: [python-tests, frontend-tests, lint]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Python runtime deps
+        run: pip install -r requirements.txt
+
+      - name: Build frontend
+        run: cd frontend && npm ci && npm run build
+
+      - name: Verify Vercel entrypoint (api.index:app)
+        run: python -c "from api.index import app; assert app.title == 'Project Terra API'"
+
+      - name: Live CLI HTTP smoke test against Uvicorn
+        run: |
+          python -m uvicorn api.server:app --host 127.0.0.1 --port 5055 &
+          SERVER_PID=$!
+          trap "kill $SERVER_PID 2>/dev/null || true" EXIT
+
+          python - <<'PY'
+          import json, re, time, urllib.error, urllib.request
+
+          BASE = "http://127.0.0.1:5055"
+          for _ in range(30):
+              try:
+                  with urllib.request.urlopen(f"{BASE}/api/health", timeout=2) as r:
+                      if r.status == 200:
+                          break
+              except Exception:
+                  time.sleep(0.5)
+          else:
+              raise RuntimeError("Uvicorn did not become ready on /api/health")
+
+          # 1. HTML raiz y asset JS compilado (evita pantalla en blanco)
+          html = urllib.request.urlopen(f"{BASE}/", timeout=5).read().decode("utf-8")
+          m = re.search(r'src="(/assets/[^"]+\.js)"', html)
+          assert m, "No se encontro /assets/*.js en index.html"
+          asset_res = urllib.request.urlopen(f"{BASE}{m.group(1)}", timeout=5)
+          assert asset_res.status == 200, f"Asset devolvio {asset_res.status}"
+
+          # 2. Ruta /api/* inexistente debe devolver 404 JSON
+          try:
+              urllib.request.urlopen(f"{BASE}/api/does-not-exist", timeout=5)
+              raise AssertionError("Se esperaba 404 en /api/does-not-exist")
+          except urllib.error.HTTPError as exc:
+              assert exc.code == 404, f"Codigo inesperado: {exc.code}"
+
+          # 3. POST /api/recommend
+          rec_req = urllib.request.Request(
+              f"{BASE}/api/recommend",
+              data=json.dumps({
+                  "Nitrogen": 70, "Phosphorus": 50, "Potassium": 60,
+                  "Temperature": 24, "Humidity": 70, "pH_Value": 6.5, "Rainfall": 130,
+              }).encode(),
+              headers={"Content-Type": "application/json"},
+          )
+          with urllib.request.urlopen(rec_req, timeout=10) as r:
+              rec_body = json.loads(r.read())
+              assert r.status == 200 and rec_body["cluster"] in range(5)
+
+          # 4. GET /api/economics/catalog + POST /api/optimize
+          cat = json.loads(urllib.request.urlopen(f"{BASE}/api/economics/catalog", timeout=5).read())
+          crops = [{"crop_id": c["id"], **c["assumptions"]} for c in cat["crops"][:2]]
+          opt_req = urllib.request.Request(
+              f"{BASE}/api/optimize",
+              data=json.dumps({
+                  "area_ha": 10, "department": "Cundinamarca", "market": "Bogotá",
+                  "budget_cop": 100000000, "water_m3": 100000, "risk_profile": "expected",
+                  "environmental_values": {
+                      "nitrogen": 70, "phosphorus": 50, "potassium": 60,
+                      "temperature": 24, "humidity": 70, "ph": 6.5, "rainfall": 130,
+                  },
+                  "crops": crops,
+              }).encode(),
+              headers={"Content-Type": "application/json"},
+          )
+          with urllib.request.urlopen(opt_req, timeout=10) as r:
+              opt_body = json.loads(r.read())
+              assert r.status == 200 and opt_body["status"] == "optimal"
+
+          print("OK: Production smoke test passed")
+          PY
+
   notify:
     name: Notify (on failure)
     if: failure()
-    needs: [python-tests, frontend-tests, lint]
+    needs: [python-tests, frontend-tests, lint, smoke-test]
     runs-on: ubuntu-latest
     steps:
       - name: Log failure

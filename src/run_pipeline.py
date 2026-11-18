@@ -15,7 +15,7 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 if str(ROOT_DIR) not in sys.path:
     sys.path.append(str(ROOT_DIR))
 
-from src.clustering import (
+from src.clustering import (  # noqa: E402
     compare_models,
     find_optimal_gmm,
     find_optimal_k,

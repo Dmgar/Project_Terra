@@ -78,18 +78,22 @@ export default function Overview() {
         >
           <div className="panel">
             <div className="feature-list">
-              {(data?.featureStats || []).map((f, i) => (
+              {(data?.featureStats || []).map((f) => {
+                const span = (Number(f.max || 0) - Number(f.min || 0)) || 1;
+                const pct = Math.min(100, Math.max(4, ((Number(f.mean || 0) - Number(f.min || 0)) / span) * 100));
+                return (
                 <div className="feature-line" key={f.feature}>
                   <b>{labels[f.feature] || f.feature}</b>
                   <div className="spark">
-                    <i style={{ width: `${35 + (i * 9) % 58}%` }} />
+                    <i style={{ width: `${pct.toFixed(1)}%` }} />
                   </div>
                   <em>
                     {f.mean != null ? Number(f.mean).toFixed(1) : "—"}{" "}
                     {units[f.feature] || ""}
                   </em>
                 </div>
-              ))}
+                );
+              })}
             </div>
             <div className="note">
               El modelo agrupa observaciones por similitud ambiental, no por

@@ -50,6 +50,13 @@
         "dataset": "Crop information and CROPWAT software resources",
         "url": "https://www.fao.org/land-water/resources/tools/software/cropwat/en",
         "role": "water planning context"
+      },
+      {
+        "id": "Terra-dataset-scale",
+        "publisher": "Project Terra",
+        "dataset": "Synthetic sensor_Crop_Dataset input scale (rainfall 20-400 mm, temp, pH)",
+        "url": "https://github.com/DaryelReyes/Project_Terra",
+        "role": "environmental suitability input scale reference"
       }
     ],
     "method": "Cada valor numérico del catálogo es una referencia de planeación editable. No se presenta como observación oficial exacta salvo que se identifiquen expresamente la fuente y la serie.",
@@ -57,7 +64,7 @@
     "assumptions": [
       "Todos los valores económicos y de afinidad son referencias de planeación editables.",
       "Antes de un uso comercial, reemplázalos con una serie local fechada de SIPSA, una observación EVA, un estudio de costos UPRA o una estimación hídrica del terreno.",
-      "La precipitación de Terra usa la escala del dataset en milímetros (20-350), no el total anual requerido por un cultivo."
+      "La precipitación de Terra usa la escala sintética del dataset en milímetros (20-400), no el total anual requerido por un cultivo."
     ]
   },
   "crops": [

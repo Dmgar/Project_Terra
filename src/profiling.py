@@ -4,11 +4,17 @@ validación agronómica y visualizaciones en Project Terra.
 """
 
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import numpy as np
 import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
 from sklearn.decomposition import PCA
+from sklearn.metrics.cluster import contingency_matrix
+
+if TYPE_CHECKING:
+    import plotly.graph_objects as go
 
 
 def cluster_summary(
@@ -54,6 +60,9 @@ def create_radar_chart(
     Returns:
         plotly.graph_objects.Figure
     """
+    import plotly.express as px
+    import plotly.graph_objects as go
+
     means = df.groupby(cluster_col)[feature_cols].mean()
 
     # Normalizar entre 0 y 1 para que el polígono sea proporcional
@@ -131,9 +140,6 @@ def contingency_table(
     return ct
 
 
-from sklearn.metrics.cluster import contingency_matrix
-
-
 def purity_score(y_true: pd.Series | np.ndarray, y_pred: pd.Series | np.ndarray) -> float:
     """
     Calcula la métrica de pureza del clustering respecto a una etiqueta real:
@@ -168,6 +174,8 @@ def plot_pca_clusters(
     Returns:
         Tupla (figura_plotly, objeto_pca)
     """
+    import plotly.express as px
+
     if pca_obj is None:
         pca_obj = PCA(n_components=2, random_state=random_state)
         pca_coords = pca_obj.fit_transform(X_scaled)

@@ -2,6 +2,7 @@
 
 from functools import lru_cache
 from pathlib import Path
+from threading import Lock
 from typing import Annotated
 
 import joblib
@@ -12,17 +13,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
-from sklearn.decomposition import PCA
 
 from .economics_routes import router as economics_router
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 DATA_PATH = ROOT_DIR / "data" / "processed" / "sensor_Crop_Dataset_clustered.csv"
 RAW_DATA_PATH = ROOT_DIR / "data" / "raw" / "sensor_Crop_Dataset.csv"
-MODEL_PATH = ROOT_DIR / "data" / "models" / "kmeans_umap_k5.joblib"
+MODEL_PATH = ROOT_DIR / "data" / "models" / "kmeans_k5.joblib"
 SCALER_PATH = ROOT_DIR / "data" / "models" / "scaler.joblib"
-UMAP_PATH = ROOT_DIR / "data" / "models" / "umap_reducer.joblib"
 FRONTEND_DIST = ROOT_DIR / "frontend" / "dist"
+_CACHE_LOCK = Lock()
 
 FEATURE_COLS = [
   "Nitrogen",
@@ -114,7 +114,7 @@ class UMAPResponse(BaseModel):
   explainedVariance: list[float]
 
 
-app = FastAPI(title="Project Terra API", version="1.0.0", root_path="/api")
+app = FastAPI(title="Project Terra API", version="1.0.0")
 app.add_middleware(
   CORSMiddleware,
   allow_origins=[
@@ -126,7 +126,7 @@ app.add_middleware(
     "http://127.0.0.1:8000",
   ],
   allow_origin_regex=r"https://.*\.vercel\.app",
-  allow_credentials=True,
+  allow_credentials=False,
   allow_methods=["*"],
   allow_headers=["*"],
 )
@@ -147,7 +147,7 @@ def distribution(series: pd.Series) -> list[dict]:
 
 
 @lru_cache(maxsize=1)
-def load_dataset() -> pd.DataFrame:
+def _load_dataset_cached() -> pd.DataFrame:
   path = DATA_PATH if DATA_PATH.exists() else RAW_DATA_PATH
   if not path.exists():
     raise FileNotFoundError(
@@ -165,26 +165,34 @@ def load_dataset() -> pd.DataFrame:
   return frame
 
 
+def load_dataset() -> pd.DataFrame:
+  with _CACHE_LOCK:
+    return _load_dataset_cached()
+
+
 @lru_cache(maxsize=1)
-def load_model():
+def _load_model_cached():
   if not MODEL_PATH.exists() or not SCALER_PATH.exists():
     raise FileNotFoundError("No se encontraron los artefactos del modelo entrenado.")
   return joblib.load(MODEL_PATH), joblib.load(SCALER_PATH)
 
 
-@lru_cache(maxsize=1)
-def load_umap_model():
-  if not UMAP_PATH.exists():
-    raise FileNotFoundError("No se encontró el modelo UMAP.")
-  return joblib.load(UMAP_PATH)
+def load_model():
+  with _CACHE_LOCK:
+    return _load_model_cached()
 
 
 @lru_cache(maxsize=1)
-def load_gmm_model():
+def _load_gmm_model_cached():
   gmm_path = ROOT_DIR / "data" / "models" / "gmm_k5_full.joblib"
   if not gmm_path.exists() or not SCALER_PATH.exists():
     return None, None
   return joblib.load(gmm_path), joblib.load(SCALER_PATH)
+
+
+def load_gmm_model():
+  with _CACHE_LOCK:
+    return _load_gmm_model_cached()
 
 
 def normalize_profile(profile: dict[str, float], frame: pd.DataFrame) -> dict[str, float]:
@@ -284,6 +292,11 @@ def umap_endpoint():
     frame = load_dataset()
   except (FileNotFoundError, ValueError) as exc:
     raise HTTPException(status_code=503, detail=str(exc)) from exc
+  if not {"umap_1", "umap_2"}.issubset(frame.columns):
+    raise HTTPException(
+      status_code=503,
+      detail="Coordenadas UMAP 2D no disponibles en el dataset cargado.",
+    )
   
   rng = np.random.default_rng(42)
   indices = np.sort(rng.choice(len(frame), size=min(2500, len(frame)), replace=False))
@@ -390,39 +403,21 @@ def recommend(payload: RecommendationInput):
   except (FileNotFoundError, ValueError) as exc:
     raise HTTPException(status_code=503, detail=str(exc)) from exc
 
-  umap_reducer = None
-  try:
-    umap_reducer = load_umap_model()
-  except Exception:
-    umap_reducer = None
-
   values = payload.model_dump()
   vector = np.array([[values[key] for key in FEATURE_COLS]])
-  
+
   scaled_vector = scaler.transform(vector)
-  
+
   # Deteccion de anomalias / Outliers mediante la norma Euclidiana de los Z-scores
   # Umbral calibrado empiricamente en el percentil 99.5 del dataset de entrenamiento (||z||_2 = 3.6744)
   z_norm = float(np.linalg.norm(scaled_vector[0]))
   is_outlier = z_norm > 3.6744
-  
-  cluster_id = None
-  if umap_reducer is not None:
-    try:
-      embedded_vector = umap_reducer.transform(scaled_vector)
-      target_dtype = getattr(model, "cluster_centers_", None).dtype if hasattr(model, "cluster_centers_") else np.float32
-      cluster_id = int(model.predict(np.asarray(embedded_vector, dtype=target_dtype))[0])
-    except Exception:
-      cluster_id = None
 
-  if cluster_id is None:
-    centroids = frame.groupby("kmeans_cluster")[FEATURE_COLS].mean()
-    scaled_centroids = scaler.transform(centroids.values)
-    dists = np.linalg.norm(scaled_centroids - scaled_vector, axis=1)
-    cluster_id = int(centroids.index[np.argmin(dists)])
+  # Inferencia canonica directa en el espacio escalado 7D (kmeans_k5.joblib)
+  cluster_id = int(model.predict(scaled_vector)[0])
 
   region = region_payload(frame, cluster_id)
-  
+
   # GMM soft probabilities
   gmm_probs = None
   if gmm_model is not None and gmm_scaler is not None:
@@ -430,15 +425,18 @@ def recommend(payload: RecommendationInput):
       gmm_probs = gmm_model.predict_proba(gmm_scaler.transform(vector))[0].tolist()
     except Exception:
       gmm_probs = None
-    
+
   advice_list = management_advice(values, cluster_id, frame)
   if is_outlier:
-    advice_list.insert(0, "️ ALERTA: Los valores ingresados son extremos o muy atípicos respecto a los datos de entrenamiento. El modelo asignó la ecorregión más parecida, pero ten cautela con la recomendación.")
-  
+    advice_list.insert(
+      0,
+      "ALERTA: Los valores ingresados son extremos o muy atípicos respecto a los datos de entrenamiento. El modelo asignó la ecorregión más parecida, pero ten cautela con la recomendación.",
+    )
+
   response = {
     "cluster": cluster_id,
     "isOutlier": is_outlier,
-    "confidenceLabel": "Anomalía (OOD)" if is_outlier else "Perfil ambiental más cercano",
+    "confidenceLabel": "Fuera de rango típico" if is_outlier else "Perfil ambiental más cercano",
     "sampleCount": region["count"],
     "share": region["share"],
     "crops": region["crops"][:5],
@@ -462,6 +460,8 @@ if FRONTEND_DIST.exists():
 
   @app.get("/{path:path}", include_in_schema=False)
   def frontend(path: str):
+    if path.startswith(("api/", "app/")) or path in ("api", "app"):
+      raise HTTPException(status_code=404, detail="Endpoint no encontrado.")
     dist_root = FRONTEND_DIST.resolve()
     requested = (dist_root / path).resolve()
     if not requested.is_relative_to(dist_root):

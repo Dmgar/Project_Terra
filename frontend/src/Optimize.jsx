@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import GardenPlanner, { ModeChooser } from "./GardenPlanner";
-import { Header } from "./ui";
+import { Header, formatApiDetail } from "./ui";
 import { downloadCommercialPdf, downloadCommercialCsv } from "./commercialPdf";
 
 const ENV_KEYS = [
@@ -37,7 +37,7 @@ async function request(endpoint, options) {
   const response = await fetch(normalizedUrl, options);
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
-    throw new Error(body.detail || `La solicitud no pudo completarse (${response.status}).`);
+    throw new Error(formatApiDetail(body.detail, `La solicitud no pudo completarse (${response.status}).`));
   }
   return response.json();
 }
@@ -67,7 +67,7 @@ function CatalogCard({ crop, onChange, manual, onManual }) {
 }
 
 function ErrorBox({ message }) {
-  return message ? <div className="error optimize-error"><b>No pudimos calcular un plan.</b><br />{message}<br /><span>Revisa que el área, presupuesto, agua y límites de cultivo puedan coexistir.</span></div> : null;
+  return message ? <div className="error optimize-error" role="alert"><b>No pudimos calcular un plan.</b><br />{message}<br /><span>Revisa que el área, presupuesto, agua y límites de cultivo puedan coexistir.</span></div> : null;
 }
 
 function Results({ result, crops, area, form }) {
@@ -85,7 +85,8 @@ function Results({ result, crops, area, form }) {
       <div className="allocation-list">{result.allocation.filter((row) => row.hectares > 0.0001).map((row) => { const share = num(row.hectares) / num(area) * 100; const name = crops.find((crop) => crop.id === row.crop_id)?.name || pretty(row.crop_id.replaceAll("_", " ")); return <div className="allocation-row" key={row.crop_id}><div className="allocation-name"><b>{name}</b><span>{row.hectares.toFixed(2)} ha · {share.toFixed(1)}% · afinidad {(row.suitability_score * 100).toFixed(0)}% · equilibrio {money(row.break_even_price_cop_per_kg)}/kg</span></div><div className="allocation-track"><i style={{ width: `${Math.min(100, share)}%` }} /></div><strong>{money(row.profit_cop)}</strong></div>; })}{result.unallocated_area_ha > 0.0001 && <div className="allocation-row unallocated"><div className="allocation-name"><b>Área sin asignar</b><span>{result.unallocated_area_ha.toFixed(2)} ha</span></div><div className="allocation-track" /><strong>Sin inversión</strong></div>}</div>
     </section>
     <section className="result-section"><div className="section-head"><div><h2>Tres futuros posibles</h2><p>La misma parcela, distinta lectura de precio, rendimiento y costo.</p></div></div>
-      <div className="scenario-table"><div className="scenario-head"><span>Escenario</span><span>Inversión</span><span>Ingresos</span><span>Ganancia</span><span>Margen</span></div>{result.scenarios.map((s) => <div className={`scenario-row ${s.name === result.selected_risk_profile ? "selected" : ""}`} key={s.name}><b>{scenarioLabels[s.name]}</b><span>{money(s.total_investment_cop)}</span><span>{money(s.total_revenue_cop)}</span><strong>{money(s.total_profit_cop)}</strong><span>{s.margin_pct == null ? "—" : `${s.margin_pct.toFixed(1)}%`}</span></div>)}</div>
+      <p className="table-scroll-hint">Desliza horizontalmente para ver todas las columnas →</p>
+      <div style={{ overflowX: "auto" }}><div className="scenario-table"><div className="scenario-head"><span>Escenario</span><span>Inversión</span><span>Ingresos</span><span>Ganancia</span><span>Margen</span></div>{result.scenarios.map((s) => <div className={`scenario-row ${s.name === result.selected_risk_profile ? "selected" : ""}`} key={s.name}><b>{scenarioLabels[s.name]}</b><span>{money(s.total_investment_cop)}</span><span>{money(s.total_revenue_cop)}</span><strong>{money(s.total_profit_cop)}</strong><span>{s.margin_pct == null ? "—" : `${s.margin_pct.toFixed(1)}%`}</span></div>)}</div></div>
     </section>
     <div className="grid-2 result-lower"><section className="panel"><h3>Qué está limitando el plan</h3><p className="panel-caption">Restricciones que el modelo encontró activas.</p>{result.binding_constraints?.length ? <div className="constraint-list">{result.binding_constraints.map((item) => <span key={item}>{constraintLabels[item] || item.replace("max_ha:", "máximo · ").replace("min_ha:", "mínimo · ")}</span>)}</div> : <p className="muted">Ninguna restricción quedó exactamente al límite.</p>}</section>
       {result.manual_comparison && <section className="panel"><h3>Tu plan frente al óptimo</h3><p className="panel-caption">{result.manual_comparison.feasible ? "La asignación manual es factible." : "La asignación manual necesita ajustes."}</p><div className="manual-compare"><b>{money(result.manual_comparison.total_profit_cop)}</b><span>vs. óptimo {money(result.total_profit_cop)}</span><strong className={result.manual_comparison.profit_delta_cop >= 0 ? "positive" : "negative"}>{result.manual_comparison.profit_delta_cop >= 0 ? "+" : ""}{money(result.manual_comparison.profit_delta_cop)}</strong></div>{result.manual_comparison.warnings?.map((w) => <small className="warning-line" key={w}>{w}</small>)}</section>}</div>
@@ -109,13 +110,38 @@ export default function Optimize({ mode }) {
   const [crops, setCrops] = useState([]);
   const [manual, setManual] = useState({});
   const [suitabilityWeight, setSuitabilityWeight] = useState(0.2);
-  useEffect(() => { request("/api/economics/catalog").then((data) => { setCatalog(data); setCrops(data.crops || []); setSuitabilityWeight(data.optimization_policy?.suitability_tiebreak_weight ?? 0.2); }).catch((e) => setError(e.message)).finally(() => setLoading(false)); }, []);
+  useEffect(() => {
+    if (mode !== "commercial") {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    request("/api/economics/catalog")
+      .then((data) => {
+        setCatalog(data);
+        setCrops(data.crops || []);
+        setSuitabilityWeight(data.optimization_policy?.suitability_tiebreak_weight ?? 0.2);
+      })
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, [mode]);
   const provenance = useMemo(() => catalog?.provenance, [catalog]);
-  const updateCrop = (id, key, value) => setCrops((items) => items.map((crop) => crop.id === id ? { ...crop, assumptions: { ...crop.assumptions, [key]: num(value) } } : crop));
+  const updateCrop = (id, key, value) => setCrops((items) => items.map((crop) => crop.id === id ? { ...crop, assumptions: { ...crop.assumptions, [key]: value === "" ? "" : num(value) } } : crop));
+  const stage1Valid = num(form.area_ha) > 0 && num(form.budget_cop) > 0 && num(form.water_m3) > 0 && form.department.trim().length > 0 && form.market.trim().length > 0;
   const run = () => {
     setRunning(true); setError("");
     const manualValues = Object.fromEntries(Object.entries(manual).filter(([, value]) => value !== "" && num(value) > 0));
-    const payload = { ...form, area_ha: num(form.area_ha), budget_cop: num(form.budget_cop), water_m3: num(form.water_m3), suitability_tiebreak_weight: num(suitabilityWeight), environmental_values: environment, crops: crops.map((c) => ({ crop_id: c.id, ...c.assumptions })), ...(Object.keys(manualValues).length ? { manual_hectares: manualValues } : {}) };
+    const numericEnv = Object.fromEntries(Object.entries(environment).map(([k, v]) => [k, num(v)]));
+    const numericCrops = crops.map((c) => ({
+      crop_id: c.id,
+      price_cop_per_kg: num(c.assumptions.price_cop_per_kg),
+      yield_t_per_ha: num(c.assumptions.yield_t_per_ha),
+      cost_cop_per_ha: num(c.assumptions.cost_cop_per_ha),
+      water_m3_per_ha: num(c.assumptions.water_m3_per_ha),
+      min_ha: num(c.assumptions.min_ha),
+      max_ha: num(c.assumptions.max_ha),
+    }));
+    const payload = { ...form, department: form.department.trim(), market: form.market.trim(), area_ha: num(form.area_ha), budget_cop: num(form.budget_cop), water_m3: num(form.water_m3), suitability_tiebreak_weight: num(suitabilityWeight), environmental_values: numericEnv, crops: numericCrops, ...(Object.keys(manualValues).length ? { manual_hectares: manualValues } : {}) };
     request("/api/optimize", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }).then((data) => { setResult(data); setStage(4); window.scrollTo({ top: 0, behavior: "smooth" }); }).catch((e) => setError(e.message)).finally(() => setRunning(false));
   };
   const stageTitle = ["", "Tu parcela", "Tu ambiente", "Supuestos económicos", "Resultado"][stage];
@@ -126,11 +152,11 @@ export default function Optimize({ mode }) {
     <div className="stepper">{["Tu parcela", "Ambiente", "Supuestos", "Resultado"].map((label, i) => <button key={label} className={stage === i + 1 ? "active" : stage > i + 1 ? "done" : ""} onClick={() => stage > i + 1 && setStage(i + 1)}><span>0{i + 1}</span>{label}</button>)}</div>
     {loading ? <div className="panel loading opt-loading">Leyendo catálogo económico…</div> : error && !catalog ? <ErrorBox message={error} /> : stage === 4 && result ? <Results result={result} crops={crops} area={form.area_ha} form={form} /> : <div className="opt-workspace"><div className="opt-form">
         <div className="opt-stage-title"><span className="kicker">Etapa 0{stage}</span><h2>{stageTitle}</h2><p>{stage === 1 ? "Sin supuestos ocultos. Cuéntanos qué parcela quieres ordenar." : stage === 2 ? "El ambiente orienta la afinidad; no cambia la economía." : "Todo valor viene del catálogo y puede editarse antes de calcular."}</p></div>
-      {stage === 1 && <><div className="opt-grid"><Input label="Área disponible" suffix="ha" value={form.area_ha} onChange={(v) => setForm({ ...form, area_ha: v })} /><Input label="Presupuesto total" suffix="COP" value={form.budget_cop} onChange={(v) => setForm({ ...form, budget_cop: v })} /><Input label="Agua disponible" suffix="m³" value={form.water_m3} onChange={(v) => setForm({ ...form, water_m3: v })} /><Input label="Departamento" type="text" value={form.department} onChange={(v) => setForm({ ...form, department: v })} /><Input label="Mercado / comprador" type="text" value={form.market} onChange={(v) => setForm({ ...form, market: v })} /></div><div className="risk-select"><span>Perfil de riesgo</span>{[["conservative", "Conservador", "Protege margen"], ["expected", "Esperado", "Punto de partida"], ["favorable", "Favorable", "Mayor exposición"]].map(([value, label, note]) => <button key={value} className={form.risk_profile === value ? "active" : ""} onClick={() => setForm({ ...form, risk_profile: value })}><b>{label}</b><small>{note}</small></button>)}</div></>}
-      {stage === 2 && <><div className="presets opt-presets">{Object.keys(ENV_PRESETS).map((name) => <button key={name} className="preset" onClick={() => setEnvironment(ENV_PRESETS[name])}>{name}</button>)}</div><div className="env-grid">{ENV_KEYS.map(([key, label, unit]) => <Input key={key} label={label} suffix={unit} value={environment[key]} onChange={(v) => setEnvironment({ ...environment, [key]: num(v) })} />)}</div><div className="source-status">Perfil editable · 7 señales existentes de Terra · valores ingresados por ti</div></>}
-      {stage === 3 && <><div className="catalog-status"><span><i className="dot" /> {catalog?.country || "Colombia"} · {catalog?.currency || "COP"}</span><span>Versión {catalog?.version || "—"} · {catalog?.reference_period || "referencia"}</span></div><div className="policy-panel"><div><b>Objetivo económico</b><span>{catalog?.optimization_policy?.objective}</span></div><Input label="Peso de afinidad para desempates" suffix="0–1" value={suitabilityWeight} onChange={setSuitabilityWeight} /><details><summary>Ver supuestos de escenarios</summary>{Object.entries(catalog?.optimization_policy?.scenario_multipliers || {}).map(([name, factors]) => <p key={name}><b>{name}</b> · precio ×{factors.price} · rendimiento ×{factors.yield} · costo ×{factors.cost}</p>)}</details></div><div className="crop-grid">{crops.map((crop) => <CatalogCard key={crop.id} crop={crop} manual={manual[crop.id] || ""} onManual={(v) => setManual({ ...manual, [crop.id]: v })} onChange={(key, value) => updateCrop(crop.id, key, value)} />)}</div></>}
+      {stage === 1 && <><div className="opt-grid"><Input label="Área disponible" suffix="ha" value={form.area_ha} onChange={(v) => setForm({ ...form, area_ha: v })} /><Input label="Presupuesto total" suffix="COP" value={form.budget_cop} onChange={(v) => setForm({ ...form, budget_cop: v })} /><Input label="Agua disponible" suffix="m³" value={form.water_m3} onChange={(v) => setForm({ ...form, water_m3: v })} /><Input label="Departamento (etiqueta del reporte)" type="text" value={form.department} onChange={(v) => setForm({ ...form, department: v })} /><Input label="Mercado / comprador (base: Bogotá)" type="text" value={form.market} onChange={(v) => setForm({ ...form, market: v })} /></div><div className="risk-select"><span>Perfil de riesgo</span>{[["conservative", "Conservador", "Protege margen"], ["expected", "Esperado", "Punto de partida"], ["favorable", "Favorable", "Mayor exposición"]].map(([value, label, note]) => <button type="button" key={value} className={form.risk_profile === value ? "active" : ""} onClick={() => setForm({ ...form, risk_profile: value })}><b>{label}</b><small>{note}</small></button>)}</div></>}
+      {stage === 2 && <><div className="presets opt-presets">{Object.keys(ENV_PRESETS).map((name) => <button type="button" key={name} className="preset" onClick={() => setEnvironment(ENV_PRESETS[name])}>{name}</button>)}</div><div className="env-grid">{ENV_KEYS.map(([key, label, unit]) => <Input key={key} label={label} suffix={unit} value={environment[key]} onChange={(v) => setEnvironment({ ...environment, [key]: v === "" ? "" : num(v) })} />)}</div><div className="source-status">Perfil editable · 7 señales de Terra (precipitación en escala sintética 20–400 mm, no lluvia anual)</div></>}
+      {stage === 3 && <><div className="catalog-status"><span><i className="dot" /> {catalog?.country || "Colombia"} · {catalog?.currency || "COP"}</span><span>Versión {catalog?.version || "—"} · {catalog?.reference_period || "referencia"}</span></div><div className="policy-panel"><div><b>Objetivo económico</b><span>{catalog?.optimization_policy?.objective}</span></div><Input label="Peso de afinidad (cede hasta 20% × peso)" suffix="0–1" value={suitabilityWeight} onChange={(v) => setSuitabilityWeight(v === "" ? "" : v)} /><details><summary>Ver supuestos de escenarios</summary>{Object.entries(catalog?.optimization_policy?.scenario_multipliers || {}).map(([name, factors]) => <p key={name}><b>{name}</b> · precio ×{factors.price} · rendimiento ×{factors.yield} · costo ×{factors.cost}</p>)}</details></div><details open><summary style={{ cursor: "pointer", fontWeight: 700, marginBottom: 12 }}>Supuestos editables por cultivo ({crops.length} cultivos)</summary><div className="crop-grid">{crops.map((crop) => <CatalogCard key={crop.id} crop={crop} manual={manual[crop.id] || ""} onManual={(v) => setManual({ ...manual, [crop.id]: v })} onChange={(key, value) => updateCrop(crop.id, key, value)} />)}</div></details></>}
       {error && <ErrorBox message={error} />}
-      <div className="opt-actions">{stage > 1 && <button className="button secondary" onClick={() => setStage(stage - 1)}>← Atrás</button>}<span />{stage < 3 && <button className="button" onClick={() => { setStage(stage + 1); }} disabled={stage === 1 && (!form.area_ha || !form.department || !form.market || !form.budget_cop || !form.water_m3)}>Continuar →</button>}{stage === 3 && <button className="button" onClick={run} disabled={running}>{running ? "Calculando plan…" : "Calcular plan rentable →"}</button>}</div>
+      <div className="opt-actions">{stage > 1 && <button type="button" className="button secondary" onClick={() => setStage(stage - 1)}>← Atrás</button>}<span />{stage < 3 && <button type="button" className="button" onClick={() => { setStage(stage + 1); }} disabled={stage === 1 && !stage1Valid}>Continuar →</button>}{stage === 3 && <button type="button" className="button" onClick={run} disabled={running}>{running ? "Calculando plan…" : "Calcular plan rentable →"}</button>}</div>
     </div><aside className="opt-aside"><span className="kicker">Fuente y estado</span><h3>{provenance?.snapshot_id || "Catálogo económico"}</h3><p>{provenance?.coverage || "Colombia · referencia nacional para planeación."}</p><div className="aside-rule" /><b>{crops.length || "—"} cultivos disponibles</b><small>Todos los valores quedan visibles y son editables.</small>{catalog?.provenance?.sources?.slice(0, 2).map((source) => <a key={source.id} href={source.url} target="_blank" rel="noreferrer">{source.id} ↗</a>)}<div className="aside-warning">No es asesoría financiera ni agronómica. Es una herramienta para explorar escenarios.</div></aside></div>}
   </div></>;
 }

@@ -1,13 +1,15 @@
 # Project Terra
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python)
+![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688?logo=fastapi)
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react)
 ![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-Machine_Learning-orange?logo=scikit-learn)
+![CI](https://img.shields.io/github/actions/workflow/status/DaryelReyes/Project_Terra/ci.yml?branch=main&label=CI)
 ![License](https://img.shields.io/badge/License-MIT-green)
-![Status](https://img.shields.io/badge/Status-In_Progress-yellow)
 
-> Análisis exploratorio y clustering de zonas agrícolas para la recomendación inteligente de cultivos.
+> Benchmark metodológico de clustering ambiental y planificador agrícola determinístico (hogar y comercial).
 
-**Project Terra** explora si es posible descubrir "ecorregiones funcionales" agrícolas a partir de variables de suelo y clima (N, P, K, pH, temperatura, humedad y precipitación), sin depender de fronteras políticas ni reglas empíricas. Usando técnicas de aprendizaje no supervisado (K-Means, Clustering Jerárquico, UMAP, PCA), el proyecto agrupa zonas de muestreo en perfiles ambientales homogéneos y valida su coherencia agronómica contrastando los clústeres contra el cultivo real reportado en cada registro.
+**Project Terra** evalúa de forma reproducible si es posible descubrir "ecorregiones funcionales" agrícolas a partir de variables de suelo y clima (N, P, K, pH, temperatura, humedad y precipitación). El módulo de clustering no supervisado (K-Means 7D, GMM, Clustering Jerárquico y proyección UMAP 2D) funciona como un **benchmark exploratorio** —donde la hipótesis de separabilidad agronómica natural fue refutada empíricamente sobre el dataset sintético actual— acoplado a un **planificador agrícola determinístico** (`Mi huerta` para hogares y Programación Lineal `HiGHS` para parcelas comerciales).
 
 Proyecto del curso **Analítica y Minería de Datos** — Escuela de Transformación Digital, Universidad Tecnológica de Bolívar (UTB).
 
@@ -23,118 +25,121 @@ Proyecto del curso **Analítica y Minería de Datos** — Escuela de Transformac
 
 **Objetivos específicos:**
 - Realizar un EDA exhaustivo (distribuciones, atípicos, correlaciones multivariantes, relaciones no lineales).
-- Preprocesar y estandarizar variables (StandardScaler / RobustScaler).
-- Reducir dimensionalidad con UMAP y PCA para aislar la estructura local no lineal, optimizando la visualización interactiva y el clustering.
-- Segmentar con K-Means y Clustering Jerárquico Aglomerativo, determinando K óptimo (Método del Codo, Silueta, Davies-Bouldin).
-- Caracterizar cada clúster (estadísticos descriptivos, radar charts / boxplots paralelos).
-- Validar coherencia agronómica contra `label` (cultivo real) y, si aplica, rendimiento (ANOVA / Kruskal-Wallis).
+- Preprocesar y estandarizar variables (`StandardScaler` en producción y análisis).
+- Evaluar PCA y UMAP para verificar si existe estructura lineal o no lineal y habilitar la exploración 2D interactiva.
+- Segmentar con K-Means 7D, GMM y Clustering Jerárquico Aglomerativo, adoptando $K=5$ como elección operativa de interpretabilidad.
+- Caracterizar cada clúster mediante estadísticos descriptivos y gráficos de radar SVG tanto en notebooks como en la interfaz web.
+- Distinguir validación externa contra `Crop` (Pureza, ARI, NMI, pruebas de permutación) del diagnóstico geométrico post-hoc entre variables de entrada (Kruskal-Wallis).
 
 ## Dataset
 
-Dataset tipo *Crop Recommendation* con variables predictoras N, P, K, temperatura, humedad, pH y precipitación, más `label` (cultivo) como variable de validación post-hoc.
+Dataset sintético tipo *Crop Recommendation* (`20,000 × 10`) con 7 variables ambientales predictoras más etiquetas categóricas de referencia (`Crop`, `Soil_Type`, `Variety`):
 
-| Variable | Descripción | Unidad Típica |
+| Variable | Descripción | Unidad / Escala |
 | :--- | :--- | :--- |
-| **N** | Ratio de contenido de Nitrógeno en el suelo | ppm / razón |
-| **P** | Ratio de contenido de Fósforo en el suelo | ppm / razón |
-| **K** | Ratio de contenido de Potasio en el suelo | ppm / razón |
+| **Nitrogen** | Contenido de Nitrógeno en el suelo | mg/kg (ppm) |
+| **Phosphorus** | Contenido de Fósforo en el suelo | mg/kg (ppm) |
+| **Potassium** | Contenido de Potasio en el suelo | mg/kg (ppm) |
 | **Temperature** | Temperatura ambiente | °C |
 | **Humidity** | Humedad relativa | % |
-| **pH** | Valor de pH del suelo | 0-14 |
-| **Rainfall** | Precipitación acumulada | mm |
-| **Label** | Tipo de cultivo recomendado (Validación) | Categórica |
+| **pH_Value** | Valor de pH del suelo | 0–14 |
+| **Rainfall** | Precipitación (escala sintética del dataset) | mm (20–400) |
+| **Crop** | Cultivo de referencia (validación externa) | Categórica (6 clases) |
+| **Soil_Type** | Tipo de suelo | Categórica |
+| **Variety** | Variedad de cultivo *(no usar en clustering: fuga determinista 3:1 hacia `Crop`)* | Categórica |
 
 Fuente: [Crops NPK Data Set — Kaggle](https://www.kaggle.com/datasets/javakhan/crops-npk-data-set)
 
-> El CSV original no se versiona en este repo (ver `.gitignore`). Descarga
-> `sensor_Crop_Dataset (1).csv`, renómbralo como `sensor_Crop_Dataset.csv` y
-> colócalo en `data/raw/`.
+> **Nota de versionamiento:** `data/processed/sensor_Crop_Dataset_clustered.csv` y los modelos en `data/models/` **sí están versionados en Git**, por lo que la aplicación web y la API funcionan sin descargar Kaggle. El CSV crudo (`data/raw/sensor_Crop_Dataset.csv`, gitignored) solo es necesario si deseas re-ejecutar `src/run_pipeline.py` desde cero.
 
 ## Estructura del repositorio
 
-```
-project-terra/
-├── api/                # API FastAPI para datos, regiones y predicciones
-├── docs/               # Documentación (Changelog, Roadmap)
-├── frontend/           # Producto web React + Vite
-├── app/                # Interfaz Streamlit heredada
+```text
+Project_Terra/
+├── .github/workflows/  # Pipeline CI (pytest, ruff, build/tests frontend)
+├── api/                # API FastAPI (análisis, recomendación 7D, motor LP HiGHS)
 ├── data/
-│   ├── raw/            # Dataset original (sensor_Crop_Dataset.csv)
-│   ├── processed/      # Dataset escalado y enriquecido con clústeres
-│   └── models/         # Modelos serializados (KMeans, StandardScaler, GMM)
-├── notebooks/          # 01 EDA, 02 Preprocesamiento/PCA, 03 Clustering+Modelo, 04 Profiling, 05 Informe/Dashboard, 03_b UMAP/t-SNE
-├── src/                # Módulos reutilizables (clustering.py, profiling.py, run_pipeline.py)
+│   ├── economics/      # Catálogo económico colombiano editable (DANE/UPRA/FAO)
+│   ├── models/         # Modelos canónicos 7D (kmeans_k5, scaler, gmm_k5_full)
+│   ├── processed/      # Dataset enriquecido con clústeres 7D y coords UMAP 2D
+│   └── raw/            # Dataset original gitignored (solo para re-entrenamiento)
+├── docs/               # Changelog, Roadmap, Design Review y propuesta de manuscrito
+├── frontend/           # SPA React 18 + Vite 6 + Vitest/node:test + PDF/CSV
+├── notebooks/          # 01 EDA, 02 PCA, 03 Clustering, 03_b UMAP/t-SNE, 04 Profiling, 05 Dashboard
+├── scripts/            # Utilidades de proyección UMAP 2D y figuras
+├── src/                # Módulos reproducibles (clustering.py, profiling.py, run_pipeline.py)
+├── tests/              # Suite de pruebas Python (pytest)
+├── Dockerfile          # Build multi-etapa Node + Python Uvicorn
+├── vercel.json         # Despliegue serverless
 ├── requirements.txt
-├── LICENSE
 └── README.md
 ```
 
 ## Documentación y Seguimiento
 
-Para llevar un control detallado del avance, lo que se hizo y lo que se realizará a futuro, consulta la carpeta [`docs/`](docs/):
+Para llevar un control detallado del avance y decisiones técnicas, consulta [`docs/`](docs/):
 
+- [**Índice de Documentación**](docs/README.md): Guía general de documentación técnica.
 - [**Changelog**](docs/CHANGELOG.md): Registro histórico de fases completadas y características implementadas.
 - [**Roadmap**](docs/ROADMAP.md): Lista de tareas pendientes y próximos pasos planificados.
+- [**Revisión de Diseño**](docs/design-review/README.md): Hallazgos y ajustes de interfaz.
 
 ## Cómo empezar
 
 ```bash
-git clone https://github.com/Dmgar/Project_Terra.git
-cd project_terra
+git clone https://github.com/DaryelReyes/Project_Terra.git
+cd Project_Terra
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 ```
 
-### Ejecutar el producto web
+### Ejecutar el producto web y pruebas
 
 ```bash
-cd frontend && npm install && npm run build
+# Compilar frontend y servir todo con FastAPI/Uvicorn
+cd frontend && npm ci && npm run build
 cd .. && python -m uvicorn api.server:app --host 0.0.0.0 --port 5000
-```
 
-Descarga el dataset desde Kaggle y colócalo en `data/raw/sensor_Crop_Dataset.csv`.
+# En desarrollo (frontend con hot-reload en :5173 conectado al backend en :5000)
+# cd frontend && npm run dev
+
+# Ejecutar pruebas
+python -m pytest -v
+cd frontend && node --test tests/*.test.js
+```
 
 ## Metodología (fases)
 
 ```mermaid
 flowchart TD
-    A[Data Ingestion<br>Kaggle CSV] --> B[EDA & Preprocessing<br>Standard/Robust Scaler]
-    B --> C[Modelado No Supervisado<br>K-Means sobre UMAP]
+    A[Data Ingestion<br>CSV 20k x 10] --> B[EDA & Preprocessing<br>StandardScaler 7D]
+    B --> C[Modelado Canónico<br>K-Means K=5 & GMM en 7D]
     C --> D[Visualización Proyectada<br>UMAP 2D Interactivo]
-    D --> E[Análisis Diferencial & Validación<br>Radar Charts / Kruskal-Wallis]
-    E --> F[Producto web React + FastAPI<br>Recomendación interactiva + OOD]
+    C --> E[Análisis Diferencial & Validación<br>Radar SVG / Kruskal-Wallis / Pureza]
+    E --> F[Producto web React + FastAPI<br>Mi huerta + Plan Comercial LP + Recomendador 7D]
 ```
 
 - [x] 1. **Ingeniería de datos y EDA avanzado** — limpieza, correlaciones, pairplots, PCA preliminar. *(Completado, [`01_eda_crops_npk.ipynb`](notebooks/01_eda_crops_npk.ipynb))*
-- [x] 2. **Determinación del número de clústeres (K)** — codo (inercia), silueta y Davies-Bouldin. *(Completado, [`03_clustering_model.ipynb`](notebooks/03_clustering_model.ipynb): ninguna métrica marca un K claramente óptimo — silueta baja en todo el rango (0.09–0.11) y Davies-Bouldin decrece de forma monótona; se fijó K=5 por interpretabilidad, tan arbitrario como cualquier otro K en ese rango)*
-- [x] 3. **Ejecución del clustering multivariado** — K-Means y Jerárquico sobre features escalados (PCA solo para visualización). *(Completado, [`03_clustering_model.ipynb`](notebooks/03_clustering_model.ipynb) + [`src/run_pipeline.py`](src/run_pipeline.py): K-Means (K=5) y Jerárquico Aglomerativo entrenados; modelo y scaler serializados en `data/models/`)*
-- [x] 4. **Análisis diferencial y validación** — perfil/firma ambiental (radar charts), análisis de `Soil_Type`, pureza y Kruskal-Wallis. *(Completado, [`04_cluster_profiling.ipynb`](notebooks/04_cluster_profiling.ipynb): con K=5 los clústeres se explican sobre todo por Humedad, pH, Precipitación y Potasio (Kruskal-Wallis H > 8,000), no por Nitrógeno/Fósforo; pureza global respecto al cultivo real = 17.50% y `Soil_Type` tampoco correlaciona — coherencia agronómica débil)*
-- [x] 5. **Producto de inteligencia agronómica** — interfaz React responsive conectada a una API FastAPI, con análisis de ecorregiones proyectadas en UMAP, recomendación interactiva basada en K-Means y detección matemática de anomalías (OOD) por normas Z-score. La interfaz Streamlit original se conserva en `app/` como referencia histórica.
-- [x] 6. **Planeación económica de la parcela** — optimizador de distribución por hectáreas con restricciones de área, presupuesto y agua; escenarios conservador, esperado y favorable; comparación manual y referencias editables de DANE SIPSA, UPRA/EVA y FAO CROPWAT.
+- [x] 2. **Determinación del número de clústeres (K)** — codo (inercia), silueta (`0.0986`) y Davies-Bouldin (`2.1490`). *(Completado, [`03_clustering_model.ipynb`](notebooks/03_clustering_model.ipynb): ninguna métrica marca un K claramente óptimo; se fijó K=5 por interpretabilidad operativa)*
+- [x] 3. **Ejecución del clustering multivariado** — K-Means (K=5), GMM y Jerárquico sobre los 7 features escalados (`StandardScaler`); UMAP 2D reservado exclusivamente para proyección visual. *(Completado, [`src/run_pipeline.py`](src/run_pipeline.py) + [`scripts/export_umap.py`](scripts/export_umap.py))*
+- [x] 4. **Análisis diferencial y validación** — firma ambiental (radar SVG/Plotly), análisis de `Soil_Type`, pureza (`17.50%`) y diagnóstico geométrico Kruskal-Wallis (`H > 8,000` en Humedad, pH, Precipitación y Potasio sobre la partición 7D). *(Completado, [`04_cluster_profiling.ipynb`](notebooks/04_cluster_profiling.ipynb))*
+- [x] 5. **Producto web dual (`Mi huerta` + Recomendador)** — interfaz React responsive conectada a FastAPI, incluyendo **`Mi huerta`** (`/producto/plan/huerta`, asistente doméstico de 5 preguntas con PDF de 2 páginas sin dependencias), explorador UMAP 2D, perfiles radiales SVG, probabilidades GMM y detección de perfiles fuera de rango típico (`||z||_2 > 3.6744`).
+- [x] 6. **Planeación económica de la parcela (`/producto/plan/comercial`)** — optimizador LP (`HiGHS`) en dos etapas con restricciones de área, presupuesto y agua; escenarios conservador, esperado y favorable; comparación manual, exportación PDF/CSV y referencias editables de DANE SIPSA, UPRA/EVA y FAO CROPWAT.
 
-> **Hallazgo clave**: con las variables disponibles (N, P, K, temperatura, humedad, pH, precipitación), el dataset no muestra una estructura de clústeres fuerte ni agronómicamente coherente para ningún K probado — ver conclusiones de `03_clustering_model.ipynb`, `04_cluster_profiling.ipynb` y `05_dashboard.ipynb` para el detalle y las alternativas propuestas (usar solo las variables con mayor poder discriminante, incorporar `Soil_Type`/`Variety`, etc.).
+> **Hallazgo clave**: con las variables disponibles del dataset sintético uniforme, no existe una estructura de clústeres fuerte ni agronómicamente coherente para ningún K probado (`|r| < 0.05`, pureza `17.50%`). Se advierte expresamente **no usar `Variety`** como predictor por fuga determinista 3:1 hacia `Crop`.
 
 ## Metodología económica
 
-El **Plan rentable** usa programación lineal para maximizar la utilidad neta
-esperada (`precio × rendimiento × área − costo × área`). Respeta el área,
-presupuesto, agua disponible y los límites mínimos/máximos configurados para
-cada cultivo. La afinidad ambiental aplica únicamente una penalización de
-ordenamiento de hasta 20 %; nunca se convierte en precio, costo o rendimiento.
+El **Plan rentable** usa programación lineal en dos etapas (`HiGHS`) para maximizar la utilidad neta esperada (`precio × rendimiento × área − costo × área`) respetando área, presupuesto, agua disponible y límites por cultivo. En la Etapa 2, el parámetro `suitability_tiebreak_weight` (`0–1`) permite ceder hasta un **20 % × peso** de la ganancia máxima (si `peso = 0`, el desempate es estrictamente lexicográfico $\epsilon = 0$) para priorizar cultivos con mayor afinidad edafoclimática; nunca altera precios, costos ni rendimientos.
 
-El catálogo incluido es una referencia versionada y disponible sin conexión.
-Todos sus valores son visibles y editables. DANE SIPSA aporta contexto de
-precios mayoristas, UPRA/EVA aporta contexto de producción y rendimiento, las
-fichas UPRA aportan contexto de costos, y FAO-56/CROPWAT aporta la metodología
-hídrica. Las cifras no son cotizaciones en tiempo real ni garantías de utilidad.
+El catálogo incluido es una referencia versionada y disponible sin conexión. Todos sus valores son visibles y editables. DANE SIPSA aporta contexto de precios mayoristas (base Bogotá), UPRA/EVA aporta contexto de producción y rendimiento, las fichas UPRA aportan contexto de costos, y FAO-56/CROPWAT aporta la metodología hídrica. Las cifras no son cotizaciones en tiempo real ni garantías de utilidad.
 
-## Trabajo Futuro: Contrastive Learning
+## Trabajo Futuro: Datos Reales y Contrastive Learning
 
-Actualmente el clustering se basa en **UMAP + K-Means**. Como próximo hito de investigación, planeamos contrastar este enfoque con **Contrastive Learning (Aprendizaje Contrastivo)** para datos tabulares:
-1. **Data Augmentation:** Usaremos técnicas de enmascaramiento (masking) y adición de ruido Gaussiano para generar vistas correlacionadas de los perfiles de suelo.
-2. **Arquitectura:** Un *Encoder* MLP (Multi-Layer Perceptron) acoplado a un *Projection Head* entrenado con la función de pérdida InfoNCE (estilo SimCLR).
-3. **Clustering sobre Embeddings:** Aplicaremos K-Means sobre el espacio latente aprendido por el encoder para evaluar si las representaciones contrastivas logran separar con mayor pureza agronómica las ecorregiones funcionales.
+La limitación actual no radica en el algoritmo de clustering sino en la ausencia de señal agronómica del dataset sintético uniforme ($I(X;Y) \approx 0$). Por ello, la hoja de ruta técnica se ordena en dos hitos secuenciales:
+1. **Fase previa obligatoria — Ingesta de datos agroclimáticos reales georreferenciados:** integrar series reales (SoilGrids, IDEAM/WorldClim, EVA/AGROSAVIA) con covarianzas naturales entre clima, suelo y rendimiento.
+2. **Contrastive Learning tabular (condicionado a datos reales):** una vez disponibles datos reales, evaluar un *Encoder* MLP con pérdida InfoNCE y augmentations tabulares (p. ej. corrupción aleatoria tipo SCARF) frente a K-Means 7D y GMM.
 
 ## Entregables esperados
 

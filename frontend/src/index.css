@@ -225,7 +225,7 @@ button {
 }
 
 .dot.offline {
-  background: var(--clay);
+  background: var(--terra-alert, #b84a39);
 }
 
 /* Carrusel de inicio: ocupa todo el ancho de la ventana */

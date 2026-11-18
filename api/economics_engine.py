@@ -97,7 +97,7 @@ def _binding_constraints(
     if np.isclose(water_used, request.water_m3, rtol=1e-7, atol=1e-3):
         names.append("water")
     for index, crop in enumerate(crops):
-        if np.isclose(allocation[index], crop.min_ha, atol=1e-6):
+        if crop.min_ha > 0 and np.isclose(allocation[index], crop.min_ha, atol=1e-6):
             names.append(f"min_ha:{crop.crop_id}")
         if np.isclose(allocation[index], crop.max_ha, atol=1e-6):
             names.append(f"max_ha:{crop.crop_id}")
@@ -133,12 +133,18 @@ def _scenario(
         )
 
     # Etapa 2: Maximizar la compatibilidad biofísica (afinidad edafoclimática) sum(S_i * x_i)
-    # sujeto a preservar la ganancia económica óptima con tolerancia epsilon.
+    # sujeto a preservar al menos (1 - 0.20 * suitability_tiebreak_weight) de la ganancia óptima.
     optimal_raw_profit = float(np.dot(raw_profit_per_ha, raw_result.x))
+    max_sacrifice = 0.20 * float(request.suitability_tiebreak_weight)
+    min_profit_floor = (
+        optimal_raw_profit * (1.0 - max_sacrifice)
+        if optimal_raw_profit >= 0
+        else optimal_raw_profit - abs(optimal_raw_profit) * max_sacrifice
+    )
     result = linprog(
         c=-suitability,
         A_ub=np.vstack((base_constraints, -raw_profit_per_ha)),
-        b_ub=np.append(base_bounds, -optimal_raw_profit),
+        b_ub=np.append(base_bounds, -min_profit_floor),
         bounds=[(crop.min_ha, crop.max_ha) for crop in crops],
         method="highs",
     )

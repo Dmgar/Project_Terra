@@ -2,8 +2,6 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from app import utils
-
 
 @pytest.fixture
 def separated_points():
@@ -26,17 +24,3 @@ def agronomy_frame():
             "Crop": ["rice", "rice", "maize", "beans"],
         }
     )
-
-
-@pytest.fixture
-def app_data_dir(tmp_path, monkeypatch):
-    raw_dir = tmp_path / "data" / "raw"
-    processed_dir = tmp_path / "data" / "processed"
-    raw_dir.mkdir(parents=True)
-    processed_dir.mkdir(parents=True)
-    monkeypatch.setattr(utils, "ROOT_DIR", tmp_path)
-    utils.load_dataset.clear()
-    utils.get_model_and_scaler.clear()
-    yield tmp_path
-    utils.load_dataset.clear()
-    utils.get_model_and_scaler.clear()

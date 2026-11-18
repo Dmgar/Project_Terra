@@ -63,9 +63,10 @@ def test_known_optimum_and_all_resource_constraints():
 
 
 def test_scenarios_order_and_environment_is_not_economic_data():
-    baseline = optimize_plan(request())
+    baseline = optimize_plan(request(suitability_tiebreak_weight=0.0))
     changed_environment = optimize_plan(
         request(
+            suitability_tiebreak_weight=0.0,
             environmental_values={
                 "nitrogen": 180,
                 "phosphorus": 150,
@@ -74,7 +75,7 @@ def test_scenarios_order_and_environment_is_not_economic_data():
                 "humidity": 10,
                 "ph": 9.4,
                 "rainfall": 350,
-            }
+            },
         )
     )
     profits = [item.total_profit_cop for item in baseline.scenarios]

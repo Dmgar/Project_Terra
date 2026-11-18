@@ -50,8 +50,8 @@ function Scatter({ points = [] }) {
   }, [points]);
   // 0,03–0,97 deja un margen para que los puntos del borde no queden pegados a los ejes.
   const unit = (value, { min, range }) => 0.03 + 0.94 * (((Number(value) || 0) - min) / range);
-  const xScale = (x) => 55 + unit(x, extent.x) / zoom * 600 + pan.x;
-  const yScale = (y) => 322 - unit(y, extent.y) / zoom * 285 + pan.y;
+  const xScale = (x) => 55 + unit(x, extent.x) * zoom * 600 + pan.x;
+  const yScale = (y) => 322 - unit(y, extent.y) * zoom * 285 + pan.y;
 
   const handleWheel = (e) => {
     e.preventDefault();
@@ -146,6 +146,23 @@ function Scatter({ points = [] }) {
           ))}
         </select>
         <button
+          type="button"
+          className="button secondary"
+          onClick={() => setZoom((z) => Math.min(5, +(z * 1.2).toFixed(2)))}
+          aria-label="Acercar"
+        >
+          +
+        </button>
+        <button
+          type="button"
+          className="button secondary"
+          onClick={() => setZoom((z) => Math.max(0.5, +(z / 1.2).toFixed(2)))}
+          aria-label="Alejar"
+        >
+          −
+        </button>
+        <button
+          type="button"
           className="button secondary"
           onClick={resetView}
           aria-label="Restablecer vista"
@@ -161,7 +178,7 @@ function Scatter({ points = [] }) {
         <svg
           viewBox="0 0 700 380"
           role="img"
-          aria-label="Gráfico de dispersión de componentes principales interactivo"
+          aria-label="Gráfico de dispersión UMAP 2D interactivo"
           onWheel={handleWheel}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
@@ -189,20 +206,23 @@ function Scatter({ points = [] }) {
               data-cluster={p.cluster}
             />
           ))}
-          {hoveredPoint && (
-            <g className="tooltip" filter="url(#tooltip-shadow)">
+          {hoveredPoint && (() => {
+            const tipX = Math.min(Math.max(xScale(hoveredPoint.x) + 15, 60), 450);
+            const tipY = Math.max(yScale(hoveredPoint.y) - 70, 12);
+            return (
+            <g className="tooltip" filter="url(#tooltip-shadow)" style={{ pointerEvents: "none" }}>
               <rect
-                x={Math.min(Math.max(xScale(hoveredPoint.x) + 15, 60), 450)}
-                y={Math.max(yScale(hoveredPoint.y) - 70, 30)}
+                x={tipX}
+                y={tipY}
                 width="220"
-                height="72"
+                height="74"
                 rx="6"
                 fill="#173b35"
                 opacity="0.98"
               />
               <text
-                x={Math.min(Math.max(xScale(hoveredPoint.x) + 20, 65), 455)}
-                y={Math.max(yScale(hoveredPoint.y) - 58, 38)}
+                x={tipX + 10}
+                y={tipY + 18}
                 fill="#f7f4e9"
                 fontSize="12"
                 fontWeight="bold"
@@ -211,8 +231,8 @@ function Scatter({ points = [] }) {
                 {displayDatasetLabel(hoveredPoint.crop)}
               </text>
               <text
-                x={Math.min(Math.max(xScale(hoveredPoint.x) + 20, 65), 455)}
-                y={Math.max(yScale(hoveredPoint.y) - 42, 44)}
+                x={tipX + 10}
+                y={tipY + 34}
                 fill="#c3d8b6"
                 fontSize="10"
                 fontFamily="var(--body)"
@@ -220,8 +240,8 @@ function Scatter({ points = [] }) {
                 Suelo: {displayDatasetLabel(hoveredPoint.soil)}
               </text>
               <text
-                x={Math.min(Math.max(xScale(hoveredPoint.x) + 20, 65), 455)}
-                y={Math.max(yScale(hoveredPoint.y) - 26, 50)}
+                x={tipX + 10}
+                y={tipY + 49}
                 fill="#c3d8b6"
                 fontSize="10"
                 fontFamily="var(--body)"
@@ -229,17 +249,18 @@ function Scatter({ points = [] }) {
                 Ecorregión: {hoveredPoint.cluster}
               </text>
               <text
-                x={Math.min(Math.max(xScale(hoveredPoint.x) + 20, 65), 455)}
-                y={Math.max(yScale(hoveredPoint.y) - 10, 56)}
+                x={tipX + 10}
+                y={tipY + 64}
                 fill="#a8c39c"
                 fontSize="10"
                 fontFamily="var(--mono)"
               >
-                UMAP 1: {Number(hoveredPoint.x).toFixed(2)}, UMAP 2:{' '}
+                UMAP 1: {Number(hoveredPoint.x).toFixed(2)}, UMAP 2:{" "}
                 {Number(hoveredPoint.y).toFixed(2)}
               </text>
             </g>
-          )}
+            );
+          })()}
         </svg>
       </div>
 
@@ -343,9 +364,13 @@ export default function Analysis() {
               {/* La leyenda ya la dibuja <Scatter>; estaba repetida aquí. */}
               <Scatter points={data?.points} />
               <div className="note">
-                UMAP proyecta el agrupamiento en dos dimensiones preservando la estructura 
-                no lineal y local. La proyección sirve para inspección visual, mientras que 
-                el modelo de K-Means opera directamente sobre las dimensiones embebidas.
+                UMAP proyecta las 7 variables ambientales en dos dimensiones para inspección visual,
+                mientras que el modelo K-Means (K=5) opera sobre el espacio escalado 7D.
+              </div>
+              <div className="note" style={{ marginTop: 12 }}>
+                <strong>Límites del conjunto de datos:</strong> Los 20.000 registros provienen de un
+                dataset sintético uniforme sin correlación agronómica fuerte (Silhouette ≈ 0,10;
+                pureza de cultivo ≈ 17,5 %). Úsalo como referencia exploratoria, no como diagnóstico agronómico definitivo.
               </div>
             </div>
           </div>
@@ -359,13 +384,16 @@ export default function Analysis() {
                 Media y extensión observada en unidades originales.
               </p>
               <div className="feature-list">
-                {(overview?.featureStats || []).map((f, i) => (
+                {(overview?.featureStats || []).map((f, i) => {
+                  const span = (Number(f.max || 0) - Number(f.min || 0)) || 1;
+                  const pct = Math.min(100, Math.max(4, ((Number(f.mean || 0) - Number(f.min || 0)) / span) * 100));
+                  return (
                   <div className="feature-line" key={f.feature}>
                     <b>{labels[f.feature] || f.feature}</b>
                     <div className="spark">
                       <i
                         style={{
-                          width: `${40 + (i * 8) % 50}%`,
+                          width: `${pct.toFixed(1)}%`,
                           background: i % 2 ? "#6b9fa0" : "#b96b4b",
                         }}
                       />
@@ -375,7 +403,8 @@ export default function Analysis() {
                       {Number(f.max || 0).toFixed(1)}
                     </em>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
             <div className="panel">

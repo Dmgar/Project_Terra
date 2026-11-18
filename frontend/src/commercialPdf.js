@@ -180,16 +180,17 @@ export function createCommercialPdf(result, crops, form, date = new Date()) {
     first.rect(x, 200, 126, 80, COLORS.card);
     first.rect(x, 200, 126, 2, index === 1 ? COLORS.clay : COLORS.moss);
     first.text(x + 10, 221, stat.label, "bold", 7.5, COLORS.muted);
-    first.text(x + 10, 250, stat.value, "serif", index === 1 ? 16 : 19, COLORS.ink);
-    first.text(x + 10, 268, stat.note, "sans", 8, COLORS.soft);
+    const valSize = String(stat.value).length > 11 ? 13 : index === 1 ? 16 : 18;
+    first.text(x + 10, 250, stat.value, "serif", valSize, COLORS.ink);
+    first.text(x + 10, 268, String(stat.note).slice(0, 24), "sans", 7.5, COLORS.soft);
   });
 
   // Tabla de asignación
   first.text(40, 315, "Asignación recomendada", "serif", 20, COLORS.ink);
   first.text(40, 330, `Hectáreas por cultivo — ${allocated.toFixed(2)} ha de ${decimal(totalArea)} ha`, "sans", 9, COLORS.muted);
 
-  const headers = ["CULTIVO", "HECTÁREAS", "% PARCELA", "AFINIDAD", "PUNTO EQ.", "GANANCIA"];
-  const colX = [40, 160, 260, 340, 430, 500];
+  const headers = ["CULTIVO", "HECTÁREAS", "% PARC.", "AFIN.", "PUNTO EQ.", "GANANCIA"];
+  const colX = [40, 155, 225, 285, 340, 445];
   const rowHeight = 22;
   const startY = 350;
 
@@ -199,28 +200,29 @@ export function createCommercialPdf(result, crops, form, date = new Date()) {
   rows.forEach((row, index) => {
     const y = startY + 18 + index * rowHeight;
     const share = totalArea > 0 ? (row.hectares / totalArea * 100).toFixed(1) : "0";
-    const label = cropLabel(row.crop_id, crops);
+    const label = cropLabel(row.crop_id, crops).slice(0, 16);
     const bg = index % 2 ? COLORS.paper : COLORS.card;
     first.rect(40, y, 515, rowHeight, bg);
     first.rect(40, y, 3, rowHeight, index % 2 ? COLORS.moss : COLORS.clay);
     drawCropArtwork(first, row.crop_id, 48, y + (rowHeight - 16) / 2, 16);
-    first.text(72, y + 10, label, "serif", 10, COLORS.ink);
-    first.text(colX[1] + 4, y + 10, `${row.hectares.toFixed(2)} ha`, "bold", 9, COLORS.ink);
-    first.text(colX[2] + 4, y + 10, `${share}%`, "sans", 9, COLORS.soft);
-    first.text(colX[3] + 4, y + 10, `${Math.round((row.suitability_score || 0) * 100)}%`, "sans", 9, COLORS.soft);
-    first.text(colX[4] + 4, y + 10, money(row.break_even_price_cop_per_kg), "sans", 8, COLORS.muted);
-    first.text(colX[5] + 4, y + 10, money(row.profit_cop), "bold", 9, COLORS.ink);
+    first.text(70, y + 10, label, "serif", 10, COLORS.ink);
+    first.text(colX[1] + 2, y + 10, `${row.hectares.toFixed(2)} ha`, "bold", 9, COLORS.ink);
+    first.text(colX[2] + 2, y + 10, `${share}%`, "sans", 9, COLORS.soft);
+    first.text(colX[3] + 2, y + 10, `${Math.round((row.suitability_score || 0) * 100)}%`, "sans", 9, COLORS.soft);
+    first.text(colX[4] + 2, y + 10, money(row.break_even_price_cop_per_kg), "sans", 8, COLORS.muted);
+    first.text(colX[5] + 2, y + 10, money(row.profit_cop), "bold", 8.5, COLORS.ink);
   });
 
-  if (result.unallocated_area_ha > 0.0001) {
+  const hasUnallocated = result.unallocated_area_ha > 0.0001;
+  if (hasUnallocated) {
     const y = startY + 18 + rows.length * rowHeight;
     first.rect(40, y, 515, rowHeight, COLORS.pale);
-    first.text(72, y + 10, "Área sin asignar", "sans", 10, COLORS.muted);
-    first.text(colX[1] + 4, y + 10, `${result.unallocated_area_ha.toFixed(2)} ha`, "sans", 9, COLORS.muted);
+    first.text(70, y + 10, "Área sin asignar", "sans", 10, COLORS.muted);
+    first.text(colX[1] + 2, y + 10, `${result.unallocated_area_ha.toFixed(2)} ha`, "sans", 9, COLORS.muted);
   }
 
   // Restricciones vinculantes
-  const constraintY = startY + 18 + rows.length * rowHeight + 30;
+  const constraintY = startY + 18 + (rows.length + (hasUnallocated ? 1 : 0)) * rowHeight + 28;
   first.text(40, constraintY, "Restricciones activas", "serif", 16, COLORS.ink);
   const binding = result.binding_constraints?.length ? result.binding_constraints : ["Ninguna"];
   binding.forEach((item, i) => {
@@ -242,7 +244,7 @@ export function createCommercialPdf(result, crops, form, date = new Date()) {
   const scenarioLabels = { conservative: "Conservador", expected: "Esperado", favorable: "Favorable" };
   const scenarioY = 190;
   const scenHeaders = ["ESCENARIO", "INVERSIÓN", "INGRESOS", "GANANCIA", "MARGEN"];
-  const scenColX = [40, 150, 260, 380, 490];
+  const scenColX = [40, 165, 270, 385, 495];
   scenHeaders.forEach((h, i) => second.text(scenColX[i], scenarioY, h, "bold", 8, COLORS.soft));
 
   result.scenarios?.forEach((s, index) => {
@@ -250,36 +252,41 @@ export function createCommercialPdf(result, crops, form, date = new Date()) {
     const isSelected = s.name === result.selected_risk_profile;
     second.rect(40, y, 515, 26, isSelected ? COLORS.pale : (index % 2 ? COLORS.paper : COLORS.card));
     if (isSelected) second.rect(40, y, 3, 26, COLORS.clay);
-    second.text(scenColX[0] + 4, y + 15, scenarioLabels[s.name] + (isSelected ? " ← seleccionado" : ""), isSelected ? "bold" : "serif", 10, COLORS.ink);
+    second.text(scenColX[0] + 4, y + 15, scenarioLabels[s.name] + (isSelected ? " (sel.)" : ""), isSelected ? "bold" : "serif", 10, COLORS.ink);
     second.text(scenColX[1] + 4, y + 15, money(s.total_investment_cop), "sans", 9, COLORS.soft);
     second.text(scenColX[2] + 4, y + 15, money(s.total_revenue_cop), "sans", 9, COLORS.soft);
-    second.text(scenColX[3] + 4, y + 15, money(s.total_profit_cop), "bold", 10, COLORS.ink);
+    second.text(scenColX[3] + 4, y + 15, money(s.total_profit_cop), "bold", 9.5, COLORS.ink);
     second.text(scenColX[4] + 4, y + 15, pct(s.margin_pct), "sans", 9, COLORS.muted);
   });
 
   // Comparación manual si existe
+  let cursorY = scenarioY + 22 + (result.scenarios?.length || 0) * 30 + 26;
   if (result.manual_comparison) {
     const mc = result.manual_comparison;
-    const mcY = scenarioY + 22 + (result.scenarios?.length || 0) * 30 + 30;
-    second.text(40, mcY, "Tu plan frente al óptimo", "serif", 16, COLORS.ink);
-    second.rect(40, mcY + 20, 515, 55, COLORS.card);
-    second.text(50, mcY + 35, `Manual: ${money(mc.total_profit_cop)}`, "sans", 10, COLORS.soft);
-    second.text(50, mcY + 55, `Óptimo: ${money(result.total_profit_cop)}`, "sans", 10, COLORS.soft);
+    second.text(40, cursorY, "Tu plan frente al óptimo", "serif", 16, COLORS.ink);
+    second.rect(40, cursorY + 18, 515, 50, COLORS.card);
+    second.text(50, cursorY + 34, `Manual: ${money(mc.total_profit_cop)}`, "sans", 10, COLORS.soft);
+    second.text(50, cursorY + 52, `Óptimo: ${money(result.total_profit_cop)}`, "sans", 10, COLORS.soft);
     const deltaColor = mc.profit_delta_cop >= 0 ? COLORS.moss : COLORS.clay;
-    second.text(300, mcY + 35, `Diferencia: ${mc.profit_delta_cop >= 0 ? "+" : ""}${money(mc.profit_delta_cop)}`, "bold", 11, deltaColor);
-    mc.warnings?.forEach((w, i) => second.text(50, mcY + 75 + i * 14, `⚠ ${w}`, "sans", 8, COLORS.clay));
+    second.text(300, cursorY + 34, `Diferencia: ${mc.profit_delta_cop >= 0 ? "+" : ""}${money(mc.profit_delta_cop)}`, "bold", 10.5, deltaColor);
+    cursorY += 78;
+    mc.warnings?.forEach((w) => {
+      second.text(50, cursorY, `AVISO: ${String(w).slice(0, 88)}`, "sans", 8, COLORS.clay);
+      cursorY += 14;
+    });
+    cursorY += 14;
   }
 
   // Trazabilidad
-  const provY = (result.manual_comparison ? scenarioY + 22 + (result.scenarios?.length || 0) * 30 + 110 : scenarioY + 22 + (result.scenarios?.length || 0) * 30 + 40);
-  second.text(40, provY, "Trazabilidad del cálculo", "serif", 16, COLORS.ink);
-  second.rect(40, provY + 20, 515, 70, COLORS.pale);
   const prov = result.provenance || {};
-  second.text(50, provY + 38, `Catálogo: ${prov.snapshot_id || "—"}`, "sans", 9, COLORS.ink);
-  second.text(50, provY + 52, `Versión: ${prov.version || "—"} · ${prov.reference_period || "—"}`, "sans", 9, COLORS.soft);
-  second.text(50, provY + 66, `Método: ${prov.method || "Supuestos editables para planeación"}`, "sans", 9, COLORS.muted);
-  (prov.sources || []).slice(0, 4).forEach((src, i) => {
-    second.text(300, provY + 38 + i * 14, `${src.id}: ${src.url || "—"}`, "sans", 7.5, COLORS.muted);
+  const sources = (prov.sources || []).slice(0, 4);
+  const provHeight = 64 + sources.length * 13;
+  second.text(40, cursorY, "Trazabilidad del cálculo", "serif", 16, COLORS.ink);
+  second.rect(40, cursorY + 18, 515, provHeight, COLORS.pale);
+  second.text(50, cursorY + 34, `Catálogo: ${prov.snapshot_id || "—"} (${prov.version || "—"})`, "sans", 9, COLORS.ink);
+  second.text(50, cursorY + 48, `Método: ${String(prov.method || "Supuestos editables para planeación").slice(0, 85)}`, "sans", 8.5, COLORS.muted);
+  sources.forEach((src, i) => {
+    second.text(50, cursorY + 64 + i * 13, `${src.id}: ${String(src.url || "—").slice(0, 76)}`, "sans", 7.5, COLORS.muted);
   });
 
   // Aviso legal
@@ -306,15 +313,23 @@ export function downloadCommercialPdf(result, crops, form) {
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
-export function downloadCommercialCsv(result, crops, form) {
+function csvCell(value) {
+  let str = String(value ?? "");
+  if (/^[=+\-@\t\r]/.test(str)) str = `'${str}`;
+  if (/[",\n\r]/.test(str)) return `"${str.replaceAll('"', '""')}"`;
+  return str;
+}
+
+export function buildCommercialCsv(result, crops, form) {
+  const totalArea = Number(form?.area_ha) || 0;
   const lines = [];
   lines.push("crop_id,crop_name,hectares,share_pct,price_cop_per_kg,yield_t_per_ha,cost_cop_per_ha,water_m3_per_ha,suitability_score,break_even_price_cop_per_kg,investment_cop,revenue_cop,profit_cop,water_m3");
   (result.allocation || []).filter((r) => r.hectares > 0.0001).forEach((row) => {
     const label = cropLabel(row.crop_id, crops);
-    const share = form.area_ha ? (row.hectares / form.area_ha * 100).toFixed(1) : "0";
+    const share = totalArea > 0 ? (row.hectares / totalArea * 100).toFixed(1) : "0.0";
     lines.push([
-      row.crop_id,
-      `"${label}"`,
+      csvCell(row.crop_id),
+      csvCell(label),
       row.hectares.toFixed(2),
       share,
       row.price_cop_per_kg.toFixed(2),
@@ -330,9 +345,20 @@ export function downloadCommercialCsv(result, crops, form) {
     ].join(","));
   });
   if (result.unallocated_area_ha > 0.0001) {
-    lines.push(`unallocated,"Área sin asignar",${result.unallocated_area_ha.toFixed(2)},${(result.unallocated_area_ha / form.area_ha * 100).toFixed(1)},,,,,,,,,`);
+    const unallocShare = totalArea > 0 ? (result.unallocated_area_ha / totalArea * 100).toFixed(1) : "0.0";
+    lines.push([
+      "unallocated",
+      csvCell("Área sin asignar"),
+      result.unallocated_area_ha.toFixed(2),
+      unallocShare,
+      "", "", "", "", "", "", "", "", "", "",
+    ].join(","));
   }
-  const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
+  return lines.join("\n");
+}
+
+export function downloadCommercialCsv(result, crops, form) {
+  const blob = new Blob([buildCommercialCsv(result, crops, form)], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;

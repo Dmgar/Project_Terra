@@ -28,7 +28,7 @@ export default function Home() {
             alt="Tractor junto a un campo de cultivo al atardecer"
             width="1200"
             height="1000"
-            fetchpriority="high"
+            fetchPriority="high"
           />
           <Wave color="#ffffff" direction="up" />
         </div>
@@ -91,7 +91,7 @@ export default function Home() {
           <h2 id="data-title">La recomendación empieza bajo tus pies.</h2>
           <div>
             <p>
-              Terra compara tu parcela con 20.000 registros de campo y siete variables de suelo y clima: temperatura,
+              Terra compara tu parcela con 20.000 registros exploratorios de referencia y siete variables de suelo y clima: temperatura,
               humedad, precipitación, pH, nitrógeno, fósforo y potasio.
             </p>
             <Link className="button light" to="/analisis/resumen">

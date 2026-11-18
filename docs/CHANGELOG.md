@@ -2,6 +2,13 @@
 
 Todas las actualizaciones, cambios notables y fases completadas del proyecto se documentan en este archivo. Nos permite tener un registro claro de la evolución técnica y analítica del proyecto.
 
+## [Fase 7] - Auditoría Integral y Consolidación (2026-11-18)
+- **Corregido (Backend & Estáticos):** Eliminado `root_path="/api"` en `api/server.py` para servir `/assets/*` correctamente con Uvicorn; catch-all SPA devuelve `404` JSON en rutas `/api/*` y `/app/*` inexistentes.
+- **Unificado (ML 7D):** Inferencia canónica directa sobre `kmeans_k5.joblib` + `scaler.joblib` (7D), eliminando `umap_reducer.joblib` (roto en Python 3.13 / Numba) y `gmm_k5_diag.joblib`; `sensor_Crop_Dataset_clustered.csv` realineado a K-Means 7D manteniendo `umap_1`/`umap_2` para visualización.
+- **Corregido (Economía LP):** Activada tolerancia acotada `20% * suitability_tiebreak_weight` en Etapa 2 de `economics_engine.py`, excluidos `min_ha == 0` de `binding_constraints`, y `str_strip_whitespace=True` en `OptimizationRequest`.
+- **Corregido (Frontend & Público General):** Reparado zoom invertido y tooltip del scatter UMAP, barras reales en `Overview`/`Analysis`/`Regions`, gráfico de radar SVG + `gmmProbabilities` en `Recommend.jsx`/`Regions.jsx`, token de error `--terra-alert` para `.dot.offline`, actualización funcional y cobertura por personas en `Mi huerta`, formateo de errores `422`, y PDF/CSV comercial (14 columnas RFC 4180 anti-fórmulas).
+- **Eliminado (Legado):** Retirada la carpeta `app/` heredada de Streamlit y los 4 scripts duplicados en la raíz.
+
 ## [Fase 6] - Planeación económica de la parcela
 - **Agregado:** Optimizador de distribución por hectáreas mediante programación lineal. Contempla restricciones de área, presupuesto y agua.
 - **Agregado:** Visualización de escenarios (conservador, esperado y favorable).

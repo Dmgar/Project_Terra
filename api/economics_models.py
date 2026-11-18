@@ -18,7 +18,12 @@ NonNegative = Annotated[float, Field(ge=0, allow_inf_nan=False)]
 class EnvironmentalValues(BaseModel):
     """The seven environmental inputs; they are never economic variables."""
 
-    model_config = ConfigDict(extra="forbid", populate_by_name=True, allow_inf_nan=False)
+    model_config = ConfigDict(
+        extra="forbid",
+        populate_by_name=True,
+        allow_inf_nan=False,
+        str_strip_whitespace=True,
+    )
 
     nitrogen: Annotated[float, Field(ge=0, le=180, alias="Nitrogen")] = Field(
         validation_alias=AliasChoices("nitrogen", "Nitrogen", "n", "N")
@@ -46,7 +51,12 @@ class EnvironmentalValues(BaseModel):
 class CropAssumption(BaseModel):
     """User-editable agronomic and economic assumptions for one crop."""
 
-    model_config = ConfigDict(extra="forbid", populate_by_name=True, allow_inf_nan=False)
+    model_config = ConfigDict(
+        extra="forbid",
+        populate_by_name=True,
+        allow_inf_nan=False,
+        str_strip_whitespace=True,
+    )
 
     crop_id: str = Field(
         min_length=1,
@@ -97,7 +107,12 @@ class OptimizationRequest(BaseModel):
     the caller instead of being silently replaced by a catalog value.
     """
 
-    model_config = ConfigDict(extra="forbid", populate_by_name=True, allow_inf_nan=False)
+    model_config = ConfigDict(
+        extra="forbid",
+        populate_by_name=True,
+        allow_inf_nan=False,
+        str_strip_whitespace=True,
+    )
 
     country: Literal["Colombia"] = "Colombia"
     currency: Literal["COP"] = "COP"

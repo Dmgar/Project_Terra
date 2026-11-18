@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { FEATURES, labels, units, defaults, presets, ranges, displayDatasetLabel, api, Header } from "../ui";
+import { FEATURES, labels, units, defaults, presets, ranges, displayDatasetLabel, describeRegion, api, Header } from "../ui";
+import { RadarChart } from "../RadarChart.jsx";
 
 export default function Recommend() {
   // Desde "Regiones" se puede llegar con el perfil de una región ya cargado.
@@ -65,6 +66,9 @@ export default function Recommend() {
           <h2 className="form-title">
             Describe las condiciones
           </h2>
+          <p className="panel-caption" style={{ marginBottom: 14 }}>
+            ¿No tienes análisis de laboratorio para N, P, K? Selecciona arriba un escenario de ejemplo como punto de partida.
+          </p>
           <div className="field-grid">
             {FEATURES.map((k) => (
               <div className="field" key={k}>
@@ -105,17 +109,17 @@ export default function Recommend() {
               {loading ? "Buscando…" : "Ver mi recomendación →"}
             </button>
           </div>
-          {error && <div className="error" style={{ marginTop: 18 }}>{error}</div>}
+          {error && <div className="error" role="alert" style={{ marginTop: 18 }}>{error}</div>}
         </div>
         <div>
           {result ? (
             <div className="result">
               <span className="eyebrow">Ecorregión funcional coincidente</span>
-              <h2>Región {result.cluster}</h2>
+              <h2>{describeRegion(result.cluster, result.centroidProfile)}</h2>
               <div className="confidence">
                 <b>{result.confidenceLabel}</b>
                 <span>
-                  {result.sampleCount?.toLocaleString()} observaciones comparables ·
+                  {result.sampleCount?.toLocaleString()} observaciones comparables ·{" "}
                   {Number(result.share || 0).toFixed(1)}% de la muestra
                 </span>
               </div>
@@ -129,7 +133,28 @@ export default function Recommend() {
                     <span>{Number(c.share || c.value || 0).toFixed(1)}%</span>
                   </div>
                 ))}
+                <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 8 }}>
+                  Nota: En los datos exploratorios actuales los cultivos suelen distribuirse de forma parecida (~16–19 %). Usa este perfil como guía inicial y combínalo con el planificador económico.
+                </p>
               </div>
+              <RadarChart
+                centroidProfile={result.normalizedCentroid}
+                userProfile={result.normalizedUser}
+                centroidLabel={`Región ${result.cluster}`}
+                userLabel="Tu parcela"
+              />
+              {Array.isArray(result.gmmProbabilities) && result.gmmProbabilities.length > 0 && (
+                <div className="note" style={{ marginTop: 16 }}>
+                  <strong>Afinidad probabilística (GMM)</strong>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 14px", marginTop: 6, fontSize: 12 }}>
+                    {result.gmmProbabilities.map((g) => (
+                      <span key={g.cluster}>
+                        Región {g.cluster}: {(Number(g.probability) * 100).toFixed(1)}%
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
               <p style={{ marginTop: 18 }}>
                 <Link className="hero-link-dark" to="/analisis/regiones">
                   ¿Por qué esta región? Ver cómo se formó →

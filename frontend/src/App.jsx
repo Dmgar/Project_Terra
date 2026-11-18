@@ -1,8 +1,7 @@
 import React, { Suspense, lazy } from "react";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from "react-router-dom";
 
 import "./legacy.css";
-import "./index.css";
 import "./agrizen.css";
 import Layout from "./Layout";
 import { Header, ErrorBoundary } from "./ui";
@@ -31,9 +30,9 @@ function NotFound() {
         description="La página que buscas no está disponible. Usa el menú superior para volver al inicio."
       />
       <div className="callout" style={{ textAlign: "center", maxWidth: 400, margin: "40px auto" }}>
-        <a className="button" href="/">
+        <Link className="button" to="/">
           Volver al inicio →
-        </a>
+        </Link>
       </div>
     </>
   );

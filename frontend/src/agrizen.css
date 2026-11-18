@@ -156,9 +156,17 @@
   --gutter: clamp(16px, 5vw, 72px);
   /* El análisis usaba terracota y azul petróleo; ahora todo el sitio comparte la misma familia verde. */
   --clay: #4f8a3a;
+  --terra-alert: #b84a39;
   --water: #6aa56e;
   --sun: #8fb843;
 }
+.radar-wrap { margin-top: 18px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.radar-svg { width: 100%; max-width: 280px; height: auto; display: block; }
+.radar-legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--ink-soft); }
+.radar-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.radar-legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+.table-scroll-hint { display: none; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+@media (max-width: 600px) { .table-scroll-hint { display: block; } }
 .section-product .main:has(.page-banner) { padding-top: 0; }
 .page-banner { position: relative; margin: 0 calc(50% - 50vw) clamp(24px, 3vw, 40px); background: var(--pale); }
 .banner-inner { display: grid; grid-template-columns: 7fr 4fr; gap: clamp(24px, 5vw, 80px); align-items: center; width: min(100%, 1500px); margin-inline: auto; padding: clamp(32px, 5vw, 64px) var(--gutter) clamp(64px, 8vw, 112px); }

@@ -44,6 +44,43 @@ export const defaults = {
   Rainfall: 130,
 };
 
+export function describeRegion(id, profile) {
+  if (!profile) return `Región ${id}`;
+  const traits = [];
+  if (profile.Humidity >= 65) traits.push("Húmedo");
+  else if (profile.Humidity <= 48) traits.push("Seco");
+  else traits.push("Humedad media");
+
+  if (profile.pH_Value < 6.1) traits.push("pH ácido");
+  else if (profile.pH_Value > 6.9) traits.push("pH alcalino");
+  else traits.push("pH neutro");
+
+  if (profile.Rainfall >= 230) traits.push("lluvia alta");
+  else if (profile.Rainfall <= 170) traits.push("lluvia baja");
+
+  return `Región ${id} · ${traits.join(", ")}`;
+}
+
+export function formatApiDetail(detail, fallback = "No se pudo procesar la solicitud.") {
+  if (!detail) return fallback;
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    const msgs = detail
+      .map((item) => {
+        if (typeof item === "string") return item;
+        if (item && typeof item === "object") {
+          const field = Array.isArray(item.loc) ? item.loc.slice(1).join(".") : "";
+          return field ? `${field}: ${item.msg || "valor inválido"}` : item.msg || JSON.stringify(item);
+        }
+        return String(item);
+      })
+      .filter(Boolean);
+    return msgs.length ? msgs.join(" · ") : fallback;
+  }
+  if (typeof detail === "object") return detail.msg || detail.message || fallback;
+  return String(detail);
+}
+
 export const presets = {
   Balanced: { ...defaults },
   "Wet tropical": {
@@ -141,7 +178,7 @@ export class ErrorBoundary extends React.Component {
           <button className="button secondary" onClick={() => window.location.reload()}>
             Recargar página
           </button>
-          {process.env.NODE_ENV === "development" && (
+          {import.meta.env.DEV && (
             <details style={{ marginTop: 20, textAlign: "left" }}>
               <summary>Detalles del error</summary>
               <pre style={{ overflow: "auto", maxHeight: 300 }}>
@@ -179,12 +216,13 @@ function bannerPhoto(pathname) {
 
 // Cabecera común de todas las páginas internas: banda verde clara con el título a la izquierda,
 // una foto a la derecha y el borde ondulado que la une con el contenido blanco.
-export function Header({ title, description, action }) {
+export function Header({ eyebrow, title, description, action }) {
   const { pathname } = useLocation();
   return (
     <header className="page-banner">
       <div className="banner-inner">
         <div className="banner-copy">
+          {eyebrow && <div className="eyebrow">{eyebrow}</div>}
           <h1 className="page-title">{title}</h1>
           {description && <p className="intro">{description}</p>}
           {action}

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { labels, units, displayDatasetLabel, api, Header, State } from "../ui";
+import { labels, units, displayDatasetLabel, describeRegion, api, Header, State } from "../ui";
+import { RadarChart } from "../RadarChart.jsx";
 
 export default function Regions() {
   const [data, setData] = useState(null);
@@ -93,26 +94,36 @@ export default function Regions() {
               </p>
             </div>
             <div className="panel">
-              <h3>Firma ambiental</h3>
+              <h3>{describeRegion(region.id, region.profile)}</h3>
               <p className="panel-caption">
-                Valores medios de esta región en unidades nativas.
+                Valores medios de esta región en unidades nativas y perfil normalizado.
               </p>
               <div className="feature-list">
-                {Object.entries(region.profile || {}).map(([k, v]) => (
+                {Object.entries(region.profile || {}).map(([k, v]) => {
+                  const normPct = Math.min(
+                    100,
+                    Math.max(4, Number(region.normalizedProfile?.[k] ?? 0) * 100)
+                  );
+                  return (
                   <div className="feature-line" key={k}>
                     <b>{labels[k] || k}</b>
                     <div className="spark">
                       <i
                         style={{
-                          width: `${Math.min(100, Math.max(8, Number(v) / 3))}%`,
+                          width: `${normPct.toFixed(1)}%`,
                           background: "#719b68",
                         }}
                       />
                     </div>
                     <em>{Number(v).toFixed(1)} {units[k] || ""}</em>
                   </div>
-                ))}
+                  );
+                })}
               </div>
+              <RadarChart
+                centroidProfile={region.normalizedProfile}
+                centroidLabel={describeRegion(region.id, region.profile)}
+              />
             </div>
           </div>
         )}

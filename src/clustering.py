@@ -110,8 +110,8 @@ def compute_hierarchical_linkage(
         Matriz de linkage de scipy.
     """
     if sample_size and len(X) > sample_size:
-        np.random.seed(random_state)
-        indices = np.random.choice(len(X), size=sample_size, replace=False)
+        rng = np.random.default_rng(random_state)
+        indices = rng.choice(len(X), size=sample_size, replace=False)
         X_sample = X[indices]
     else:
         X_sample = X
@@ -123,6 +123,7 @@ def run_hierarchical(
     X: np.ndarray,
     k: int,
     linkage_method: str = "ward",
+    max_samples: int = 25000,
 ) -> tuple[np.ndarray, AgglomerativeClustering]:
     """
     Ajusta un modelo de Clustering Jerárquico Aglomerativo.
@@ -131,10 +132,15 @@ def run_hierarchical(
         X: Matriz de características.
         k: Número de clústeres.
         linkage_method: Criterio de enlace ('ward', etc.).
+        max_samples: Límite de seguridad para evitar consumo de memoria O(N^2).
 
     Returns:
         Tupla (labels, modelo_ajustado)
     """
+    if len(X) > max_samples:
+        raise ValueError(
+            f"AgglomerativeClustering requiere O(N^2) memoria; {len(X)} filas excede max_samples={max_samples}."
+        )
     model = AgglomerativeClustering(n_clusters=k, linkage=linkage_method)
     labels = model.fit_predict(X)
     return labels, model
@@ -410,7 +416,7 @@ def run_hdbscan(
         Tupla (labels, modelo_hdbscan)
         NOTA: HDBSCAN asigna -1 a los puntos considerados ruido (outliers).
     """
-    model = HDBSCAN(min_cluster_size=min_cluster_size, min_samples=min_samples)
+    model = HDBSCAN(min_cluster_size=min_cluster_size, min_samples=min_samples, copy=True)
     labels = model.fit_predict(X)
     return labels, model
 
@@ -442,12 +448,14 @@ def select_features_kruskal(
     selected = []
     pvals = {}
     for col in X.select_dtypes(include=[np.number]).columns:
-        groups = [X[col][y == cls].values for cls in y.unique()]
-        if len(groups) < 2:
-            continue
-        # Filtrar grupos vacíos
-        groups = [g for g in groups if len(g) > 1]
-        if len(groups) < 2:
+        groups = []
+        for cls in y.unique():
+            vals = X[col][y == cls].to_numpy(dtype=float)
+            vals = vals[~np.isnan(vals)]
+            if len(vals) > 1:
+                groups.append(vals)
+        if len(groups) < 2 or np.unique(np.concatenate(groups)).size < 2:
+            pvals[col] = 1.0
             continue
         try:
             _, p = kruskal(*groups)

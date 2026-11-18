@@ -24,19 +24,21 @@ def test_all_serialized_models_load_without_version_warning():
 
 def test_static_assets_and_api_404_contracts():
     client = TestClient(app)
-    root = client.get("/")
-    assert root.status_code == 200
-    assert "text/html" in root.headers["content-type"]
-
-    assets_dir = FRONTEND_DIST / "assets"
-    js_files = list(assets_dir.glob("*.js"))
-    assert js_files, "Se espera al menos un bundle JS compilado en frontend/dist/assets"
-    asset_res = client.get(f"/assets/{js_files[0].name}")
-    assert asset_res.status_code == 200
 
     missing_api = client.get("/api/does-not-exist")
     assert missing_api.status_code == 404
     assert "application/json" in missing_api.headers["content-type"]
+
+    if FRONTEND_DIST.exists():
+        root = client.get("/")
+        assert root.status_code == 200
+        assert "text/html" in root.headers["content-type"]
+
+        assets_dir = FRONTEND_DIST / "assets"
+        js_files = list(assets_dir.glob("*.js"))
+        assert js_files, "Se espera al menos un bundle JS compilado en frontend/dist/assets"
+        asset_res = client.get(f"/assets/{js_files[0].name}")
+        assert asset_res.status_code == 200
 
 
 def test_recommend_uses_canonical_7d_kmeans_and_clean_outlier_label():

@@ -21,6 +21,9 @@ data/crop_data.csv
 frontend/node_modules/
 frontend/dist/
 
+# Presentación local (no se versiona)
+presentacion/
+
 # -------------------------------------------------------------
 # Paper, Manuscript & Research Publication Files
 # -------------------------------------------------------------

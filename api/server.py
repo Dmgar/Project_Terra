@@ -432,7 +432,8 @@ def recommend(payload: RecommendationInput):
   if gmm_model is not None and gmm_scaler is not None:
     try:
       gmm_probs = gmm_model.predict_proba(gmm_scaler.transform(vector))[0].tolist()
-    except Exception:
+    except (ValueError, TypeError, AttributeError):
+      # Probabilidades opcionales: si el GMM no es compatible con el vector, se omiten.
       gmm_probs = None
 
   advice_list = management_advice(values, cluster_id, frame)

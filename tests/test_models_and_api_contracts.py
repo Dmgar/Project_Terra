@@ -67,14 +67,14 @@ def test_recommend_uses_canonical_7d_kmeans_and_clean_outlier_label():
 
 
 def test_suitability_tiebreak_weight_has_effect_and_zero_min_ha_not_binding():
-    base_kwargs = dict(
-        area_ha=10,
-        department="Cundinamarca",
-        market="Bogotá",
-        budget_cop=100_000_000,
-        water_m3=100_000,
-        risk_profile="expected",
-        environmental_values={
+    base_kwargs = {
+        "area_ha": 10,
+        "department": "Cundinamarca",
+        "market": "Bogotá",
+        "budget_cop": 100_000_000,
+        "water_m3": 100_000,
+        "risk_profile": "expected",
+        "environmental_values": {
             "nitrogen": 180,
             "phosphorus": 150,
             "potassium": 210,
@@ -83,7 +83,7 @@ def test_suitability_tiebreak_weight_has_effect_and_zero_min_ha_not_binding():
             "ph": 9.4,
             "rainfall": 350,
         },
-        crops=[
+        "crops": [
             {
                 "crop_id": "maiz",
                 "price_cop_per_kg": 1450,
@@ -103,7 +103,7 @@ def test_suitability_tiebreak_weight_has_effect_and_zero_min_ha_not_binding():
                 "max_ha": 10,
             },
         ],
-    )
+    }
     strict = optimize_plan(OptimizationRequest(**base_kwargs, suitability_tiebreak_weight=0.0))
     flexible = optimize_plan(OptimizationRequest(**base_kwargs, suitability_tiebreak_weight=1.0))
 

@@ -58,7 +58,7 @@ Project_Terra/
 │   └── raw/            # Dataset original gitignored (solo para re-entrenamiento)
 ├── docs/               # Changelog, Roadmap, Design Review y propuesta de manuscrito
 ├── frontend/           # SPA React 18 + Vite 6 + Vitest/node:test + PDF/CSV
-├── notebooks/          # 01 EDA, 02 PCA, 03 Clustering, 03_b UMAP/t-SNE, 04 Profiling, 05 Dashboard
+├── notebooks/          # 01-05 Benchmark sintético histórico + 06 Datos Reales Colombia & SCARF (ejecutado)
 ├── scripts/            # Utilidades de proyección UMAP 2D y figuras
 ├── src/                # Módulos reproducibles (clustering.py, profiling.py, run_pipeline.py)
 ├── tests/              # Suite de pruebas Python (pytest)

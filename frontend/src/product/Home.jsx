@@ -17,7 +17,7 @@ const ACTIONS = [
 
 const STEPS = [
   { title: "Describe tu parcela", text: "Siete señales: nitrógeno, fósforo, potasio, temperatura, humedad, pH y lluvia." },
-  { title: "Terra la ubica", text: "Busca la ecorregión con condiciones más parecidas entre 20.000 registros de referencia." },
+  { title: "Terra la ubica", text: "Busca la ecorregión con condiciones más parecidas entre 12.784 muestras reales de Colombia." },
   { title: "Recibe un plan", text: "Qué sembrar, cuánto espacio dar a cada cultivo y qué esperar de la cosecha." },
 ];
 
@@ -144,7 +144,7 @@ export default function Home() {
         <h2 id="close-title" data-reveal>
           La recomendación empieza bajo tus pies.
         </h2>
-        <p data-reveal="0.08">Terra compara tu parcela con 20.000 registros de referencia y siete variables de suelo y clima.</p>
+        <p data-reveal="0.08">Terra compara tu parcela con 12.784 muestras reales de Colombia y siete variables de suelo y clima.</p>
         <div className="home-actions" data-reveal="0.16">
           <Link className="button cta" to="/producto/recomendar">
             Describir mi parcela

@@ -29,7 +29,7 @@ export default function Overview() {
           </>
         }
         description="Siete señales de suelo y clima agrupadas en cinco ecorregiones. Pasa por cada una para ver su parcela en la finca."
-        action={<RegionStrip regions={regions} caption="Ancho de cada franja = su peso en los 20.000 registros." />}
+        action={<RegionStrip regions={regions} caption="Ancho de cada franja = su peso en las 12.784 muestras reales de Colombia." />}
       />
       <State loading={!data && !error} error={error}>
         <dl className="stat-row">

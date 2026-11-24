@@ -1,10 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { labels, units, displayDatasetLabel, describeRegion, api, Header, State } from "../ui";
+
+import { labels, units, displayDatasetLabel, describeRegion, api, Header, State, Icon } from "../ui";
 import { RadarChart } from "../RadarChart.jsx";
+import { REGION_COLORS } from "../scene/fieldLayout";
+import { focusRegion } from "../scene/sceneStore";
+import { Meter, RangeBar, RegionStrip } from "./charts";
+
+const pct = (value) => `${Number(value || 0).toLocaleString("es-CO", { maximumFractionDigits: 1 })} %`;
 
 export default function Regions() {
   const [data, setData] = useState(null);
+  const [stats, setStats] = useState(null);
   const [error, setError] = useState("");
   const [selected, setSelected] = useState(0);
 
@@ -12,118 +19,89 @@ export default function Regions() {
     api("/api/regions")
       .then(setData)
       .catch((e) => setError(e.message));
+    // Los rangos del conjunto completo sirven de regla para situar la firma de cada ecorregión.
+    api("/api/overview")
+      .then((overview) => setStats(Object.fromEntries(overview.featureStats.map((s) => [s.feature, s]))))
+      .catch(() => setStats(null));
   }, []);
 
-  const region = data?.regions?.[selected];
+  // Al llegar, la cabecera muestra la parcela de la ecorregión elegida por defecto.
+  useEffect(() => {
+    if (data) focusRegion(selected);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data]);
+
+  const region = data?.regions?.find((r) => r.id === selected);
+  const color = REGION_COLORS[selected];
 
   return (
     <>
       <Header
-        eyebrow="Regiones"
         title={
           <>
             Cinco formas de<br />
             <em>comportarse.</em>
           </>
         }
-        description="Las ecorregiones funcionales son perfiles, no etiquetas: combinaciones recurrentes de nutrientes, clima y agua."
+        description="Cada ecorregión es una combinación recurrente de nutrientes, clima y agua. Elige una para ver su parcela en la finca."
+        action={<RegionStrip regions={data?.regions} selected={selected} onSelect={setSelected} />}
       />
       <State loading={!data && !error} error={error}>
-        <div className="region-grid">
-          {(data?.regions || []).map((r, i) => (
-            <button
-              className={`region-card ${selected === i ? "selected" : ""}`}
-              key={r.id}
-              onClick={() => setSelected(i)}
-              aria-pressed={selected === i}
-            >
-              <h3>Región {r.id}</h3>
-              <strong>{Number(r.share || 0).toFixed(1)}%</strong>
-              <small>{r.count?.toLocaleString()} observaciones</small>
-              <div className="profile-bars">
-                {Object.entries(r.normalizedProfile || {}).slice(0, 4).map(
-                  ([k, v]) => (
-                    <span className="profile-mini" key={k}>
-                      {(labels[k] || k).slice(0, 3)}
-                      <i
-                        style={{ width: `${Math.max(10, Number(v) * 50)}px` }}
-                      />
-                    </span>
-                  )
-                )}
-              </div>
-            </button>
-          ))}
-        </div>
-
         {region && (
-          <div className="detail grid-2">
-            <div className="panel">
-              <span className="kicker">Región {region.id} / perfil</span>
-              <h2
-                style={{
-                  font: "34px var(--display)",
-                  fontWeight: 400,
-                  margin: "13px 0",
-                }}
-              >
-                Territorio con predominio de{" "}
-                {displayDatasetLabel(region.topCrop || "cultivo mixto")}
+          // La clave reinicia la transición de entrada al cambiar de ecorregión.
+          <div key={region.id} className="region-detail" style={{ "--region": color }}>
+            <div className="panel region-summary">
+              <h2>
+                <i className="stop-dot" aria-hidden="true" />
+                Ecorregión {region.id}
               </h2>
+              <p className="result-traits">{describeRegion(region.id, region.profile).split(" · ")[1]}</p>
               <p className="intro">
-                Este grupo contiene {region.count?.toLocaleString()} observaciones
-                ({Number(region.share || 0).toFixed(1)}% de la muestra). Su cultivo
-                más frecuente es{" "}
-                <b>{displayDatasetLabel(region.topCrop || "cultivo mixto")}</b>.
+                Reúne {region.count?.toLocaleString("es-CO")} observaciones, el {pct(region.share)} de la muestra. Sus
+                cultivos están casi empatados: la define su ambiente, no un cultivo.
               </p>
-              <div style={{ marginTop: 18 }}>
-                {(region.crops || []).slice(0, 6).map((x) => (
-                  <span className="tag" key={x.name || x}>
-                    {displayDatasetLabel(x.name || x)}
-                  </span>
-                ))}
-              </div>
-              <p style={{ marginTop: 22 }}>
-                <Link
-                  className="button"
-                  to="/producto/recomendar"
-                  state={{ values: region.profile }}
-                >
-                  Planear con esta región →
-                </Link>
-              </p>
+              <h3>Cultivos registrados</h3>
+              {(region.crops || []).map((crop, i) => (
+                <Meter
+                  key={crop.name}
+                  label={displayDatasetLabel(crop.name)}
+                  detail={pct(crop.share)}
+                  value={crop.share / Math.max(...region.crops.map((c) => c.share))}
+                  color={color}
+                  delay={i * 50}
+                />
+              ))}
+              <Link className="button cta" to="/producto/recomendar" state={{ values: region.profile }}>
+                Probar este perfil en Recomendar <Icon />
+              </Link>
             </div>
             <div className="panel">
-              <h3>{describeRegion(region.id, region.profile)}</h3>
+              <h3>Firma ambiental</h3>
               <p className="panel-caption">
-                Valores medios de esta región en unidades nativas y perfil normalizado.
+                Dónde cae la media de esta ecorregión dentro del rango de todos los registros.
               </p>
-              <div className="feature-list">
-                {Object.entries(region.profile || {}).map(([k, v]) => {
-                  const normPct = Math.min(
-                    100,
-                    Math.max(4, Number(region.normalizedProfile?.[k] ?? 0) * 100)
-                  );
-                  return (
-                  <div className="feature-line" key={k}>
-                    <b>{labels[k] || k}</b>
-                    <div className="spark">
-                      <i
-                        style={{
-                          width: `${normPct.toFixed(1)}%`,
-                          background: "#719b68",
-                        }}
-                      />
-                    </div>
-                    <em>{Number(v).toFixed(1)} {units[k] || ""}</em>
-                  </div>
-                  );
-                })}
+              <div className="range-legend" aria-hidden="true">
+                <span><i className="swatch-band" /> media ± 1 desviación del conjunto</span>
+                <span><i className="swatch-marker" style={{ background: color }} /> esta ecorregión</span>
               </div>
-              <RadarChart
-                centroidProfile={region.normalizedProfile}
-                centroidLabel={describeRegion(region.id, region.profile)}
-              />
+              {Object.entries(region.profile || {}).map(([feature, value], i) =>
+                stats?.[feature] ? (
+                  <RangeBar
+                    key={feature}
+                    stat={stats[feature]}
+                    label={labels[feature] || feature}
+                    unit={units[feature] || ""}
+                    marker={value}
+                    markerColor={color}
+                    delay={i * 60}
+                  />
+                ) : (
+                  <p className="feature-line" key={feature}>
+                    <b>{labels[feature] || feature}</b> {Number(value).toFixed(1)} {units[feature] || ""}
+                  </p>
+                )
+              )}
+              <RadarChart centroidProfile={region.normalizedProfile} centroidLabel={describeRegion(region.id, region.profile)} />
             </div>
           </div>
         )}
@@ -131,4 +109,3 @@ export default function Regions() {
     </>
   );
 }
-

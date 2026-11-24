@@ -3,14 +3,17 @@ import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from "react
 
 import "./legacy.css";
 import "./agrizen.css";
+import "./world.css";
 import Layout from "./Layout";
-import { Header, ErrorBoundary } from "./ui";
+import { Header, ErrorBoundary, Icon } from "./ui";
 import Home from "./product/Home";
-import Recommend from "./product/Recommend";
-import Overview from "./analysis/Overview";
-import Analysis from "./analysis/Analysis";
-import Regions from "./analysis/Regions";
 
+// Solo la portada va en el paquete inicial: el resto de pantallas se descarga al navegar a ellas,
+// así el primer arranque parsea menos JavaScript y la escena empieza antes.
+const Recommend = lazy(() => import("./product/Recommend"));
+const Overview = lazy(() => import("./analysis/Overview"));
+const Analysis = lazy(() => import("./analysis/Analysis"));
+const Regions = lazy(() => import("./analysis/Regions"));
 const Optimize = lazy(() => import("./Optimize"));
 
 function LoadingFallback() {
@@ -31,7 +34,7 @@ function NotFound() {
       />
       <div className="callout" style={{ textAlign: "center", maxWidth: 400, margin: "40px auto" }}>
         <Link className="button" to="/">
-          Volver al inicio →
+          Volver al inicio <Icon />
         </Link>
       </div>
     </>

@@ -1,103 +1,157 @@
-import React from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import tractorAtardecer from "../assets/tractor-atardecer.webp";
-import surcosLechuga from "../assets/surcos-lechuga.jpeg";
-import { Wave } from "../ui";
+
+import { displayDatasetLabel, Icon } from "../ui";
+import { scrollToElement, useReveal } from "../motion";
+import IntroSequence from "../scene/IntroSequence";
+import { REGION_COLORS, parcelStill } from "../scene/fieldLayout";
+import { useSceneValue } from "../scene/sceneStore";
+import { Meter, RegionStrip } from "../analysis/charts";
 
 // Lo que se puede hacer en Terra, en el orden en que suele necesitarse.
 const ACTIONS = [
-  { to: "/producto/plan", title: "Preparar mi plan", text: "Organiza cultivos, espacio y estimaciones de cosecha." },
-  { to: "/producto/recomendar", title: "Consultar cultivos", text: "Compara tu suelo con los datos de referencia." },
-  { to: "/analisis/resumen", title: "Conocer el análisis", text: "Explora los datos detrás de cada recomendación." },
+  { to: "/producto/recomendar", title: "Consultar cultivos", text: "Compara tu suelo con los datos de referencia y mira en qué ecorregión cae." },
+  { to: "/producto/plan", title: "Preparar mi plan", text: "Organiza cultivos, espacio y estimaciones de cosecha para tu huerta o tu finca." },
+  { to: "/analisis/resumen", title: "Conocer el análisis", text: "Explora los datos y el modelo detrás de cada recomendación." },
 ];
 
 const STEPS = [
-  { n: "1", title: "Describe tu parcela", text: "Suelo, clima y el espacio con el que cuentas." },
-  { n: "2", title: "Terra la compara", text: "Busca condiciones parecidas en los datos de referencia." },
-  { n: "3", title: "Recibe un plan", text: "Qué sembrar, cuánto espacio dar a cada cultivo y qué esperar." },
+  { title: "Describe tu parcela", text: "Siete señales: nitrógeno, fósforo, potasio, temperatura, humedad, pH y lluvia." },
+  { title: "Terra la ubica", text: "Busca la ecorregión con condiciones más parecidas entre 20.000 registros de referencia." },
+  { title: "Recibe un plan", text: "Qué sembrar, cuánto espacio dar a cada cultivo y qué esperar de la cosecha." },
 ];
 
-export default function Home() {
+const percent = (value) => `${Number(value).toLocaleString("es-CO", { maximumFractionDigits: 1 })} %`;
+
+// Explorador: eliges una ecorregión y ves su parcela en el render junto a sus datos reales.
+function RegionExplorer({ selected, onSelect }) {
+  const regions = useSceneValue((state) => state.regions);
+  const ordered = regions ? [...regions].sort((a, b) => a.id - b.id) : [];
+  const region = ordered.find((r) => r.id === selected) || ordered[0];
+  if (!region) {
+    return <p className="explorer-offline">No pudimos leer las ecorregiones ahora mismo. Vuelve a intentarlo en un momento.</p>;
+  }
+  const color = REGION_COLORS[region.id];
+  const maxShare = Math.max(...(region.crops || []).map((c) => c.share), 1);
   return (
-    <div className="terra-home">
-      {/* Foto a ancho completo, sin texto encima: la imagen se ve tal cual y el borde ondulado la une con el blanco */}
-      <section className="hero" aria-labelledby="home-title">
-        <div className="hero-photo">
-          <img
-            src={tractorAtardecer}
-            alt="Tractor junto a un campo de cultivo al atardecer"
-            width="1200"
-            height="1000"
-            fetchPriority="high"
-          />
-          <Wave color="#ffffff" direction="up" />
+    <div className="explorer" style={{ "--region": color }}>
+      <RegionStrip regions={ordered} selected={region.id} onSelect={onSelect} />
+      <div className="explorer-body">
+        <figure className="explorer-photo">
+          {/* La clave reinicia el fundido al cambiar de parcela. */}
+          <img key={region.id} src={parcelStill(region.id)} alt={`Parcela de la Ecorregión ${region.id} en la finca renderizada`} width="1152" height="648" loading="lazy" />
+          <figcaption>
+            <i aria-hidden="true" /> Parcela de la Ecorregión {region.id} en la finca
+          </figcaption>
+        </figure>
+        <div key={region.id} className="explorer-data">
+          <h3>Ecorregión {region.id}</h3>
+          <p>
+            {percent(region.share)} de los registros ({Number(region.count).toLocaleString("es-CO")} muestras). Sus cultivos
+            están casi empatados: la define su suelo y su clima, no un cultivo.
+          </p>
+          {(region.crops || []).slice(0, 4).map((crop, i) => (
+            <Meter key={crop.name} label={displayDatasetLabel(crop.name)} detail={percent(crop.share)} value={crop.share / maxShare} color={color} delay={i * 70} />
+          ))}
+          <Link className="button ghost" to="/analisis/regiones">
+            Ver su firma ambiental <Icon />
+          </Link>
         </div>
-        <div className="hero-text">
-          <div>
-            <p className="hero-eyebrow">Tu tierra. Tu próxima cosecha.</p>
-            <h1 id="home-title">Cada suelo tiene una posibilidad.</h1>
-          </div>
-          <div>
-            <p className="hero-lede">
-              Encuentra qué sembrar y prepara un plan para tu parcela. Terra conecta las condiciones de tu suelo con
-              decisiones de cultivo.
-            </p>
-            <Link className="button cta" to="/producto/plan">
-              Planear mi siembra
-            </Link>
-          </div>
+      </div>
+    </div>
+  );
+}
+
+export default function Home() {
+  const rootRef = useRef(null);
+  const explorerRef = useRef(null);
+  const stepsRef = useRef(null);
+  const [selected, setSelected] = useState(0);
+  const regionsLoaded = useSceneValue((state) => Boolean(state.regions));
+  useReveal(rootRef, [regionsLoaded]);
+
+  // Tocar una parcela en la entrada lleva al explorador con esa ecorregión elegida.
+  const pickParcel = useCallback((id) => {
+    setSelected(id);
+    scrollToElement(explorerRef.current);
+  }, []);
+
+  // El paso a paso dibuja su línea y entra escalonado cuando aparece en pantalla.
+  useEffect(() => {
+    const element = stepsRef.current;
+    if (!element) return undefined;
+    const observer = new IntersectionObserver(([entry]) => entry.isIntersecting && element.classList.add("is-in"), { threshold: 0.4 });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div className="terra-home" ref={rootRef}>
+      <IntroSequence onPickParcel={pickParcel} />
+
+      <section className="home-section home-explorer" ref={explorerRef} aria-labelledby="explorer-title">
+        <div className="section-intro">
+          <h2 id="explorer-title" data-reveal>
+            Cinco ecorregiones, cinco parcelas.
+          </h2>
+          <p data-reveal="0.08">
+            Cada parcela de la finca representa un grupo real del modelo. Elige una para ver cuántos registros reúne y
+            qué cultivos aparecen en ella.
+          </p>
+        </div>
+        <div data-reveal="0.12">
+          <RegionExplorer selected={selected} onSelect={setSelected} />
         </div>
       </section>
 
-      <section className="do" aria-labelledby="do-title">
-        <div className="do-copy">
-          <h2 id="do-title">¿Qué quieres hacer hoy?</h2>
-          <ul className="actions">
-            {ACTIONS.map(({ to, title, text }) => (
-              <li key={to}>
-                <Link to={to}>
-                  <span>
-                    <b>{title}</b>
-                    {text}
-                  </span>
-                  <i aria-hidden="true">›</i>
-                </Link>
-              </li>
-            ))}
-          </ul>
+      <section className="home-section home-act" aria-labelledby="act-title">
+        <div className="section-intro">
+          <h2 id="act-title" data-reveal>
+            ¿Qué quieres hacer hoy?
+          </h2>
         </div>
-        <img className="do-photo" src={surcosLechuga} alt="Surcos de lechuga en un valle, con montañas al fondo" width="678" height="452" loading="lazy" />
+        <ul className="action-grid">
+          {ACTIONS.map(({ to, title, text }, index) => (
+            <li key={to} data-reveal={index * 0.08}>
+              <Link to={to}>
+                <b>{title}</b>
+                <span>{text}</span>
+                <Icon />
+              </Link>
+            </li>
+          ))}
+        </ul>
       </section>
 
-      <section className="band band-soft" aria-labelledby="how-title">
-        <Wave color="#ffffff" direction="down" />
-        <div className="band-inner">
-          <h2 id="how-title">Cómo funciona</h2>
-          <ol className="steps">
-            {STEPS.map(({ n, title, text }) => (
-              <li key={n}>
-                <span className="step-n">{n}</span>
-                <h3>{title}</h3>
-                <p>{text}</p>
-              </li>
-            ))}
-          </ol>
+      <section className="home-section home-how" aria-labelledby="how-title">
+        <div className="section-intro">
+          <h2 id="how-title" data-reveal>
+            Cómo funciona
+          </h2>
         </div>
+        <ol className="steps" ref={stepsRef}>
+          {STEPS.map(({ title, text }, index) => (
+            <li key={title} style={{ "--i": index }}>
+              <span className="step-n">{index + 1}</span>
+              <h3>{title}</h3>
+              <p>{text}</p>
+            </li>
+          ))}
+        </ol>
       </section>
 
-      <section className="band band-green" aria-labelledby="data-title">
-        <Wave color="#e8f2e3" direction="down" />
-        <div className="band-inner data-grid">
-          <h2 id="data-title">La recomendación empieza bajo tus pies.</h2>
-          <div>
-            <p>
-              Terra compara tu parcela con 20.000 registros exploratorios de referencia y siete variables de suelo y clima: temperatura,
-              humedad, precipitación, pH, nitrógeno, fósforo y potasio.
-            </p>
-            <Link className="button light" to="/analisis/resumen">
-              Conocer el análisis
-            </Link>
-          </div>
+      <section className="home-close" aria-labelledby="close-title">
+        <h2 id="close-title" data-reveal>
+          La recomendación empieza bajo tus pies.
+        </h2>
+        <p data-reveal="0.08">Terra compara tu parcela con 20.000 registros de referencia y siete variables de suelo y clima.</p>
+        <div className="home-actions" data-reveal="0.16">
+          <Link className="button cta" to="/producto/recomendar">
+            Describir mi parcela
+          </Link>
+          <Link className="button ghost" to="/analisis/resumen">
+            Conocer el análisis
+          </Link>
         </div>
       </section>
     </div>

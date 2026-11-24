@@ -1,7 +1,11 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { FEATURES, labels, units, defaults, presets, ranges, displayDatasetLabel, describeRegion, api, Header } from "../ui";
+import { FEATURES, labels, units, defaults, presets, ranges, displayDatasetLabel, describeRegion, api, Header, Icon } from "../ui";
 import { RadarChart } from "../RadarChart.jsx";
+import { REGION_COLORS } from "../scene/fieldLayout";
+import { focusRegion } from "../scene/sceneStore";
+import { scrollToTop } from "../motion";
+import { Meter } from "../analysis/charts";
 
 export default function Recommend() {
   // Desde "Regiones" se puede llegar con el perfil de una región ya cargado.
@@ -26,7 +30,11 @@ export default function Recommend() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(values),
     })
-      .then(setResult)
+      .then((data) => {
+        setResult(data);
+        // La cabecera pasa a la parcela de la ecorregión que resultó.
+        focusRegion(data.cluster, `Parcela de la Ecorregión ${data.cluster}: la más parecida a la tuya`);
+      })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   };
@@ -34,7 +42,6 @@ export default function Recommend() {
   return (
     <>
       <Header
-        eyebrow="Recomendación"
         title={
           <>
             Una segunda lectura<br />
@@ -62,11 +69,10 @@ export default function Recommend() {
       </div>
       <div className="form-layout">
         <div className="form-panel">
-          <div className="kicker">Tu terreno · 7 señales</div>
           <h2 className="form-title">
             Describe las condiciones
           </h2>
-          <p className="panel-caption" style={{ marginBottom: 14 }}>
+          <p className="panel-caption form-caption">
             ¿No tienes análisis de laboratorio para N, P, K? Selecciona arriba un escenario de ejemplo como punto de partida.
           </p>
           <div className="field-grid">
@@ -104,18 +110,28 @@ export default function Recommend() {
             ))}
           </div>
           <div className="submit-row">
-            <span className="kicker">Listo para descubrir tu resultado</span>
+            <span className="submit-hint">Siete señales listas para comparar</span>
             <button className="button" onClick={run} disabled={loading}>
-              {loading ? "Buscando…" : "Ver mi recomendación →"}
+              {loading ? (
+                "Buscando…"
+              ) : (
+                <>
+                  Ver mi recomendación <Icon />
+                </>
+              )}
             </button>
           </div>
           {error && <div className="error" role="alert" style={{ marginTop: 18 }}>{error}</div>}
         </div>
         <div>
           {result ? (
-            <div className="result">
-              <span className="eyebrow">Ecorregión funcional coincidente</span>
-              <h2>{describeRegion(result.cluster, result.centroidProfile)}</h2>
+            <div className="result" style={{ "--region": REGION_COLORS[result.cluster] }}>
+              <h2 className="result-region" style={{ "--region": REGION_COLORS[result.cluster] }}>
+                <i aria-hidden="true" />
+                Ecorregión {result.cluster}
+              </h2>
+              {/* Rasgos de la ecorregión según su perfil medio (describeRegion: húmedo/seco, pH, lluvia). */}
+              <p className="result-traits">{describeRegion(result.cluster, result.centroidProfile).split(" · ")[1]}</p>
               <div className="confidence">
                 <b>{result.confidenceLabel}</b>
                 <span>
@@ -124,17 +140,20 @@ export default function Recommend() {
                 </span>
               </div>
               <div className="crop-result">
-                <h3 style={{ margin: "0 0 8px", fontSize: 13 }}>
-                  Afinidad de cultivos observada
-                </h3>
-                {(result.crops || []).map((c, i) => (
-                  <div className="crop-item" key={c.name || c.crop || i}>
-                    <b>{displayDatasetLabel(c.name || c.crop)}</b>
-                    <span>{Number(c.share || c.value || 0).toFixed(1)}%</span>
-                  </div>
+                <h3>Cultivos en esta ecorregión</h3>
+                {(result.crops || []).map((c, i, all) => (
+                  <Meter
+                    key={c.name || c.crop || i}
+                    label={displayDatasetLabel(c.name || c.crop)}
+                    detail={`${Number(c.share || 0).toLocaleString("es-CO", { maximumFractionDigits: 1 })} %`}
+                    value={(c.share || 0) / Math.max(...all.map((x) => x.share || 0), 1)}
+                    color={REGION_COLORS[result.cluster]}
+                    delay={i * 60}
+                  />
                 ))}
-                <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 8 }}>
-                  Nota: En los datos exploratorios actuales los cultivos suelen distribuirse de forma parecida (~16–19 %). Usa este perfil como guía inicial y combínalo con el planificador económico.
+                <p className="result-note">
+                  En los datos exploratorios actuales los cultivos suelen distribuirse de forma parecida (~16–19 %). Usa este
+                  perfil como guía inicial y combínalo con el planificador económico.
                 </p>
               </div>
               <RadarChart
@@ -144,9 +163,9 @@ export default function Recommend() {
                 userLabel="Tu parcela"
               />
               {Array.isArray(result.gmmProbabilities) && result.gmmProbabilities.length > 0 && (
-                <div className="note" style={{ marginTop: 16 }}>
+                <div className="note">
                   <strong>Afinidad probabilística (GMM)</strong>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 14px", marginTop: 6, fontSize: 12 }}>
+                  <div className="gmm-list">
                     {result.gmmProbabilities.map((g) => (
                       <span key={g.cluster}>
                         Región {g.cluster}: {(Number(g.probability) * 100).toFixed(1)}%
@@ -155,9 +174,15 @@ export default function Recommend() {
                   </div>
                 </div>
               )}
+              <p className="result-scene">
+                Arriba ves la parcela de la Ecorregión {result.cluster} en la finca.{" "}
+                <button type="button" className="button ghost" onClick={scrollToTop}>
+                  Ver la parcela
+                </button>
+              </p>
               <p style={{ marginTop: 18 }}>
                 <Link className="hero-link-dark" to="/analisis/regiones">
-                  ¿Por qué esta región? Ver cómo se formó →
+                  ¿Por qué esta región? Ver cómo se formó <Icon />
                 </Link>
               </p>
               {Array.isArray(result.advice) && result.advice.length > 0 && (

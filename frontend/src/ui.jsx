@@ -1,8 +1,7 @@
 import React, { useLayoutEffect } from "react";
 import { useLocation } from "react-router-dom";
-import tractorAtardecer from "./assets/tractor-atardecer.webp";
-import trigoAmanecer from "./assets/trigo-amanecer.jpeg";
-import surcosLechuga from "./assets/surcos-lechuga.jpeg";
+import { parcelStill, routeStill } from "./scene/fieldLayout";
+import { useSceneValue } from "./scene/sceneStore";
 
 export const FEATURES = [
   "Nitrogen",
@@ -193,44 +192,55 @@ export class ErrorBoundary extends React.Component {
   }
 }
 
-// Borde ondulado entre secciones. `color` es el de la sección que se mete en la siguiente;
-// "down" cuelga del borde superior de una banda y "up" sube desde el borde inferior de una foto.
-export function Wave({ color, direction }) {
-  const path =
-    direction === "down"
-      ? "M0,0 L1440,0 L1440,38 C1230,88 990,6 720,42 C450,78 210,8 0,52 Z"
-      : "M0,80 L1440,80 L1440,42 C1230,-6 990,74 720,38 C450,2 210,72 0,28 Z";
-  return (
-    <svg className={`wave wave-${direction}`} viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true" focusable="false" style={{ color }}>
-      <path d={path} fill="currentColor" />
-    </svg>
-  );
-}
-
-// Cada sección del sitio lleva su propia foto en la banda de cabecera.
-function bannerPhoto(pathname) {
-  if (pathname.startsWith("/producto/plan")) return surcosLechuga;
-  if (pathname.startsWith("/analisis")) return tractorAtardecer;
-  return trigoAmanecer;
-}
-
-// Cabecera común de todas las páginas internas: banda verde clara con el título a la izquierda,
-// una foto a la derecha y el borde ondulado que la une con el contenido blanco.
-export function Header({ eyebrow, title, description, action }) {
+// Cabecera común de las páginas internas: el texto a la izquierda y, a la derecha, una imagen del
+// mismo render de la finca (el punto del recorrido de este módulo). Si la página enfoca una
+// ecorregión (un gráfico, un resultado), la imagen pasa a su parcela con un fundido.
+export function Header({ title, description, action }) {
   const { pathname } = useLocation();
+  const highlight = useSceneValue((state) => state.highlight);
+  const sceneCaption = useSceneValue((state) => state.caption);
+  const route = routeStill(pathname);
+  const src = highlight != null ? parcelStill(highlight) : route.src;
+  const caption = (highlight != null && sceneCaption) || route.caption;
+
   return (
     <header className="page-banner">
       <div className="banner-inner">
         <div className="banner-copy">
-          {eyebrow && <div className="eyebrow">{eyebrow}</div>}
           <h1 className="page-title">{title}</h1>
           {description && <p className="intro">{description}</p>}
           {action}
         </div>
-        <img className="banner-photo" src={bannerPhoto(pathname)} alt="" width="678" height="452" />
+        <figure className="banner-figure">
+          <img key={src} className="banner-photo" src={src} alt="" width="1152" height="648" />
+          <figcaption className="banner-caption" aria-live="polite">
+            <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+              <path d="M8 14.5s5-4.6 5-8.5a5 5 0 0 0-10 0c0 3.9 5 8.5 5 8.5Z" fill="none" stroke="currentColor" strokeWidth="1.5" />
+              <circle cx="8" cy="6" r="1.8" fill="currentColor" />
+            </svg>
+            {caption}
+          </figcaption>
+        </figure>
       </div>
-      <Wave color="#ffffff" direction="up" />
     </header>
+  );
+}
+
+// Iconos de trazo único para acciones (sustituyen a las flechas Unicode, que cambian de forma
+// según la fuente). Heredan el color del texto y escalan con el tamaño de letra.
+const ICON_PATHS = {
+  right: "M4 10h11M11 5.5 15.5 10 11 14.5",
+  left: "M16 10H5M9 5.5 4.5 10 9 14.5",
+  down: "M10 4v11M5.5 11 10 15.5 14.5 11",
+  external: "M7 5h8v8M15 5 5 15",
+  refresh: "M15.5 8A6 6 0 1 0 16 11M15.5 3.5V8H11",
+};
+
+export function Icon({ name = "right" }) {
+  return (
+    <svg className="icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+      <path d={ICON_PATHS[name]} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }
 
@@ -267,38 +277,6 @@ export function State({ loading, error, empty, children }) {
   if (empty)
     return <div className="panel result-empty">Aún no hay observaciones disponibles.</div>;
   return children;
-}
-
-export function Metric({ label, value, note }) {
-  return (
-    <div className="metric">
-      <div className="metric-label">{label}</div>
-      <div className="metric-value">{value}</div>
-      {note && <div className="metric-note">{note}</div>}
-    </div>
-  );
-}
-
-export function Bars({ items = [], accent = "" }) {
-  const max = Math.max(...items.map((x) => x.value || 0), 1);
-  return (
-    <div>
-      {items.slice(0, 8).map((x, i) => (
-        <div className="bar-row" key={x.name}>
-          <div className="bar-meta">
-            <b>{displayDatasetLabel(x.name)}</b>
-            <span>{x.share != null ? `${Number(x.share).toFixed(1)}%` : x.value}</span>
-          </div>
-          <div className="bar-track">
-            <div
-              className={`bar-fill ${accent}`}
-              style={{ width: `${Math.max(4, (x.value || 0) / max * 100)}%` }}
-            />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
 }
 
 // Mide la pestaña activa dentro de `ref` y publica su posición como --ind-x/--ind-w.

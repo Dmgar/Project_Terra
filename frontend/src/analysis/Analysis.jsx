@@ -1,16 +1,16 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { displayDatasetLabel, labels, api, Header, State, Bars, useSlidingIndicator } from "../ui";
+import { displayDatasetLabel, labels, units, api, Header, State, useSlidingIndicator } from "../ui";
+import { REGION_COLORS } from "../scene/fieldLayout";
+import { focusRegion, useSceneValue } from "../scene/sceneStore";
+import { Meter, RangeBar, RegionStrip } from "./charts";
 
 function Scatter({ points = [] }) {
-  const colors = [
-    "#b96b4b",
-    "#719b68",
-    "#6b9fa0",
-    "#d79b51",
-    "#7f78a5",
-  ];
+  const colors = REGION_COLORS;
 
   const [hoveredPoint, setHoveredPoint] = useState(null);
+  // Ecorregión enfocada (por la leyenda o por el punto bajo el cursor): las demás se atenúan
+  // y la cabecera muestra su parcela.
+  const [focus, setFocus] = useState(null);
   const [filterCrop, setFilterCrop] = useState("");
   const [filterSoil, setFilterSoil] = useState("");
   const [zoom, setZoom] = useState(1);
@@ -98,6 +98,11 @@ function Scatter({ points = [] }) {
       });
       if (minDist < 1600) {
         setHoveredPoint(nearest);
+        const cluster = Number(nearest.cluster);
+        if (cluster !== focusRef.current) {
+          focusRef.current = cluster;
+          focusRegion(cluster);
+        }
       } else {
         setHoveredPoint(null);
       }
@@ -111,7 +116,33 @@ function Scatter({ points = [] }) {
   const handleMouseLeave = () => {
     setHoveredPoint(null);
     setIsPanning(false);
+    focusRef.current = null;
   };
+  const focusRef = useRef(null);
+
+  // La capa de puntos solo se recalcula si cambian los datos, el encuadre o el foco: el hover
+  // (que cambia en cada movimiento del ratón) ya no repinta los 2.500 círculos.
+  const pointsLayer = useMemo(
+    () =>
+      filteredPoints.map((p, i) => {
+        const cluster = Number(p.cluster);
+        const dimmed = focus != null && cluster !== focus;
+        return (
+          <circle
+            key={i}
+            className="umap-point"
+            cx={xScale(p.x)}
+            cy={yScale(p.y)}
+            r={dimmed ? 2.4 : 3.2}
+            fill={colors[cluster % 5] || colors[i % 5]}
+            opacity={dimmed ? 0.1 : focus != null ? 0.9 : 0.62}
+            style={{ "--c": cluster }}
+          />
+        );
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [filteredPoints, zoom, pan, focus, extent]
+  );
 
   const resetView = () => {
     setZoom(1);
@@ -178,7 +209,7 @@ function Scatter({ points = [] }) {
         <svg
           viewBox="0 0 700 380"
           role="img"
-          aria-label="Gráfico de dispersión UMAP 2D interactivo"
+          aria-label="Proyección UMAP interactiva: cada punto es una observación, coloreada por ecorregión"
           onWheel={handleWheel}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
@@ -186,96 +217,49 @@ function Scatter({ points = [] }) {
           onMouseLeave={handleMouseLeave}
           style={{ cursor: isPanning ? "grabbing" : "grab", touchAction: "none" }}
         >
-          <defs>
-            <filter id="tooltip-shadow">
-              <feDropShadow dx="2" dy="2" stdDeviation="3" floodOpacity="0.15" />
-            </filter>
-          </defs>
           <path d="M52 330H665M52 330V24" stroke="#cfd8ce" fill="none" />
           <path d="M52 252H665M52 174H665M52 96H665" stroke="#dfe5dc" />
-          {filteredPoints.map((p, i) => (
-            <circle
-              key={i}
-              cx={xScale(p.x)}
-              cy={yScale(p.y)}
-              r="3.2"
-              fill={colors[Number(p.cluster) % 5] || colors[i % 5]}
-              opacity=".6"
-              data-crop={p.crop}
-              data-soil={p.soil}
-              data-cluster={p.cluster}
-            />
-          ))}
-          {hoveredPoint && (() => {
-            const tipX = Math.min(Math.max(xScale(hoveredPoint.x) + 15, 60), 450);
-            const tipY = Math.max(yScale(hoveredPoint.y) - 70, 12);
-            return (
-            <g className="tooltip" filter="url(#tooltip-shadow)" style={{ pointerEvents: "none" }}>
-              <rect
-                x={tipX}
-                y={tipY}
-                width="220"
-                height="74"
-                rx="6"
-                fill="#173b35"
-                opacity="0.98"
-              />
-              <text
-                x={tipX + 10}
-                y={tipY + 18}
-                fill="#f7f4e9"
-                fontSize="12"
-                fontWeight="bold"
-                fontFamily="var(--body)"
-              >
-                {displayDatasetLabel(hoveredPoint.crop)}
-              </text>
-              <text
-                x={tipX + 10}
-                y={tipY + 34}
-                fill="#c3d8b6"
-                fontSize="10"
-                fontFamily="var(--body)"
-              >
-                Suelo: {displayDatasetLabel(hoveredPoint.soil)}
-              </text>
-              <text
-                x={tipX + 10}
-                y={tipY + 49}
-                fill="#c3d8b6"
-                fontSize="10"
-                fontFamily="var(--body)"
-              >
-                Ecorregión: {hoveredPoint.cluster}
-              </text>
-              <text
-                x={tipX + 10}
-                y={tipY + 64}
-                fill="#a8c39c"
-                fontSize="10"
-                fontFamily="var(--mono)"
-              >
-                UMAP 1: {Number(hoveredPoint.x).toFixed(2)}, UMAP 2:{" "}
-                {Number(hoveredPoint.y).toFixed(2)}
-              </text>
-            </g>
-            );
-          })()}
+          <g className="umap-points">{pointsLayer}</g>
         </svg>
+        {/* Tooltip en HTML, fuera del SVG: moverlo no obliga a repintar los 2.500 puntos. */}
+        {hoveredPoint && (
+          <div
+            className="umap-tooltip"
+            style={{
+              left: `${(xScale(hoveredPoint.x) / 700) * 100}%`,
+              top: `${(yScale(hoveredPoint.y) / 380) * 100}%`,
+              "--region": colors[Number(hoveredPoint.cluster) % 5],
+            }}
+          >
+            <b>{displayDatasetLabel(hoveredPoint.crop)}</b>
+            <span>Suelo {displayDatasetLabel(hoveredPoint.soil).toLowerCase()}</span>
+            <span className="umap-tooltip-region">Ecorregión {hoveredPoint.cluster}</span>
+          </div>
+        )}
       </div>
 
-      <div className="legend">
-        {[
-          ["#b96b4b", "Ecorregión 0"],
-          ["#719b68", "Ecorregión 1"],
-          ["#6b9fa0", "Ecorregión 2"],
-          ["#d79b51", "Ecorregión 3"],
-          ["#7f78a5", "Ecorregión 4"],
-        ].map((x) => (
-          <span key={x[1]}>
-            <i style={{ background: x[0] }} />
-            {x[1]}
-          </span>
+      <div className="legend" role="group" aria-label="Enfocar una ecorregión">
+        {REGION_COLORS.map((color, id) => (
+          <button
+            key={id}
+            type="button"
+            className={`legend-item ${focus === id ? "is-active" : ""}`}
+            aria-pressed={focus === id}
+            onMouseEnter={() => {
+              setFocus(id);
+              focusRegion(id);
+            }}
+            onMouseLeave={() => setFocus(null)}
+            onFocus={() => {
+              setFocus(id);
+              focusRegion(id);
+            }}
+            onBlur={() => setFocus(null)}
+            onClick={() => setFocus((current) => (current === id ? null : id))}
+          >
+            <i style={{ background: color }} />
+            Ecorregión {id}
+          </button>
         ))}
       </div>
     </div>
@@ -288,7 +272,9 @@ export default function Analysis() {
   const [error, setError] = useState("");
   const [tab, setTab] = useState("umap");
   const tabsRef = useRef(null);
-  useSlidingIndicator(tabsRef, tab);
+  const regions = useSceneValue((state) => state.regions);
+  // Las pestañas aparecen cuando llegan los datos: el indicador se vuelve a medir entonces.
+  useSlidingIndicator(tabsRef, `${tab}-${Boolean(data)}`);
 
   useEffect(() => {
     Promise.all([api("/api/umap"), api("/api/overview")])
@@ -308,14 +294,14 @@ export default function Analysis() {
   return (
     <>
       <Header
-        eyebrow="Análisis"
         title={
           <>
             Mide las<br />
             <em>diferencias.</em>
           </>
         }
-        description="Explora las distribuciones y proyecciones que sostienen las cinco ecorregiones funcionales de Terra."
+        description="La proyección UMAP y las variables que sostienen las cinco ecorregiones. Lo que enfoques aquí, la finca lo muestra."
+        action={<RegionStrip regions={regions} />}
       />
       <State loading={!data && !error} error={error}>
         <div ref={tabsRef} className="tabs" role="tablist" aria-label="Vistas de análisis">
@@ -364,13 +350,13 @@ export default function Analysis() {
               {/* La leyenda ya la dibuja <Scatter>; estaba repetida aquí. */}
               <Scatter points={data?.points} />
               <div className="note">
-                UMAP proyecta las 7 variables ambientales en dos dimensiones para inspección visual,
-                mientras que el modelo K-Means (K=5) opera sobre el espacio escalado 7D.
+                UMAP proyecta las 7 variables ambientales en dos dimensiones para inspección visual, mientras que el modelo
+                K-Means (K=5) opera sobre el espacio escalado 7D.
               </div>
-              <div className="note" style={{ marginTop: 12 }}>
-                <strong>Límites del conjunto de datos:</strong> Los 20.000 registros provienen de un
-                dataset sintético uniforme sin correlación agronómica fuerte (Silhouette ≈ 0,10;
-                pureza de cultivo ≈ 17,5 %). Úsalo como referencia exploratoria, no como diagnóstico agronómico definitivo.
+              <div className="note">
+                <strong>Límites del conjunto de datos:</strong> Los 20.000 registros provienen de un dataset sintético
+                uniforme sin correlación agronómica fuerte (Silhouette ≈ 0,10; pureza de cultivo ≈ 17,5 %). Úsalo como
+                referencia exploratoria, no como diagnóstico agronómico definitivo.
               </div>
             </div>
           </div>
@@ -383,36 +369,25 @@ export default function Analysis() {
               <p className="panel-caption">
                 Media y extensión observada en unidades originales.
               </p>
-              <div className="feature-list">
-                {(overview?.featureStats || []).map((f, i) => {
-                  const span = (Number(f.max || 0) - Number(f.min || 0)) || 1;
-                  const pct = Math.min(100, Math.max(4, ((Number(f.mean || 0) - Number(f.min || 0)) / span) * 100));
-                  return (
-                  <div className="feature-line" key={f.feature}>
-                    <b>{labels[f.feature] || f.feature}</b>
-                    <div className="spark">
-                      <i
-                        style={{
-                          width: `${pct.toFixed(1)}%`,
-                          background: i % 2 ? "#6b9fa0" : "#b96b4b",
-                        }}
-                      />
-                    </div>
-                    <em>
-                      {Number(f.min || 0).toFixed(1)}—{" "}
-                      {Number(f.max || 0).toFixed(1)}
-                    </em>
-                  </div>
-                  );
-                })}
-              </div>
+              {(overview?.featureStats || []).map((f, i) => (
+                <RangeBar key={f.feature} stat={f} label={labels[f.feature] || f.feature} unit={units[f.feature] || ""} delay={i * 60} />
+              ))}
             </div>
             <div className="panel">
               <h3>Distribución de cultivos</h3>
               <p className="panel-caption">
                 Las etiquetas de referencia junto a las señales del modelo.
               </p>
-              <Bars items={overview?.cropDistribution} accent="sun" />
+              {(overview?.cropDistribution || []).map((x, i) => (
+                <Meter
+                  key={x.name}
+                  label={displayDatasetLabel(x.name)}
+                  detail={`${Number(x.share).toLocaleString("es-CO", { maximumFractionDigits: 1 })} %`}
+                  value={x.share / Math.max(...overview.cropDistribution.map((c) => c.share))}
+                  color="var(--field-forest)"
+                  delay={i * 60}
+                />
+              ))}
             </div>
           </div>
         )}
@@ -421,9 +396,21 @@ export default function Analysis() {
           <div className="panel">
             <h3>Distribución de ecorregiones</h3>
             <p className="panel-caption">
-              Proporción de la muestra observada en cada grupo funcional.
+              Proporción de la muestra en cada ecorregión. Pasa por una para verla en la finca.
             </p>
-            <Bars items={overview?.clusterDistribution} accent="alt" />
+            {[...(overview?.clusterDistribution || [])]
+              .sort((x, y) => Number(x.name) - Number(y.name))
+              .map((x, i, all) => (
+                <div key={x.name} className="meter-link" onMouseEnter={() => focusRegion(Number(x.name))}>
+                  <Meter
+                    label={`Ecorregión ${x.name}`}
+                    detail={`${Number(x.share).toLocaleString("es-CO", { maximumFractionDigits: 1 })} % · ${Number(x.value).toLocaleString("es-CO")} muestras`}
+                    value={x.share / Math.max(...all.map((c) => c.share))}
+                    color={REGION_COLORS[Number(x.name)]}
+                    delay={i * 60}
+                  />
+                </div>
+              ))}
           </div>
         )}
         </div>

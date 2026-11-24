@@ -1,7 +1,9 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { Suspense, useEffect, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 
 import { api, ErrorBoundary, useSlidingIndicator } from "./ui";
+import { useSmoothScroll } from "./motion";
+import { setScene } from "./scene/sceneStore";
 import logoOscuro from "./assets/logo-terra.png";
 
 // Enlaces del menú principal: el producto va primero y el análisis queda
@@ -43,6 +45,19 @@ export default function Layout() {
   }, [position]);
   useSlidingIndicator(topnavRef, pathname);
   useSlidingIndicator(subnavRef, pathname);
+  useSmoothScroll(pathname);
+
+  // Las ecorregiones se leen una vez para toda la app (portada, cabeceras, gráficos).
+  useEffect(() => {
+    api("/api/regions")
+      .then((data) => setScene({ regions: data.regions }))
+      .catch(() => setScene({ regions: null }));
+  }, []);
+
+  // Cada página empieza sin ecorregión enfocada: la cabecera muestra la imagen de su módulo.
+  useEffect(() => {
+    setScene({ highlight: null, caption: null });
+  }, [pathname]);
 
   useEffect(() => {
     api("/api/health")
@@ -61,7 +76,7 @@ export default function Layout() {
   useEffect(() => setMenuOpen(false), [pathname]);
 
   return (
-    <div className="shell section-product">
+    <div className={`shell section-product ${pathname === "/" ? "is-home" : ""}`}>
       <header className={`topbar ${scrolled ? "scrolled" : ""}`}>
         <div className="topbar-inner">
           <Link className="brand" to="/">
@@ -112,7 +127,10 @@ export default function Layout() {
           className={`page ${pathname === "/" ? "" : `page-${direction}`}`}
         >
           <ErrorBoundary>
-            <Outlet />
+            {/* Las páginas llegan en diferido; mientras, la finca sigue a la vista. */}
+            <Suspense fallback={<div className="page-loading" aria-busy="true" />}>
+              <Outlet />
+            </Suspense>
           </ErrorBoundary>
         </div>
       </main>
@@ -129,6 +147,21 @@ export default function Layout() {
         <span>
           Estimaciones basadas en datos de referencia. No son una garantía de
           cosecha ni de ganancia.
+        </span>
+        <span className="credit">
+          Finca renderizada en Blender. Tractor «Tractor» de{" "}
+          <a href="https://sketchfab.com/3d-models/tractor-278fc1e0516c401eba358d3aa2e55635" target="_blank" rel="noreferrer">
+            le0tard
+          </a>{" "}
+          (
+          <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">
+            CC BY 4.0
+          </a>
+          ); cielo, texturas y árboles de{" "}
+          <a href="https://polyhaven.com" target="_blank" rel="noreferrer">
+            Poly Haven
+          </a>{" "}
+          (CC0).
         </span>
       </footer>
     </div>

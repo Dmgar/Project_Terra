@@ -1,6 +1,7 @@
 """FastAPI service for Project Terra's data product."""
 
 from functools import lru_cache
+import json
 from pathlib import Path
 from threading import Lock
 from typing import Annotated
@@ -21,6 +22,8 @@ DATA_PATH = ROOT_DIR / "data" / "processed" / "sensor_Crop_Dataset_clustered.csv
 RAW_DATA_PATH = ROOT_DIR / "data" / "raw" / "sensor_Crop_Dataset.csv"
 MODEL_PATH = ROOT_DIR / "data" / "models" / "kmeans_k5.joblib"
 SCALER_PATH = ROOT_DIR / "data" / "models" / "scaler.joblib"
+MODEL_METADATA_PATH = ROOT_DIR / "data" / "models" / "model_metadata.json"
+DEFAULT_OOD_THRESHOLD = 3.6744
 FRONTEND_DIST = ROOT_DIR / "frontend" / "dist"
 _CACHE_LOCK = Lock()
 
@@ -202,6 +205,24 @@ def _load_gmm_model_cached():
 def load_gmm_model():
   with _CACHE_LOCK:
     return _load_gmm_model_cached()
+
+
+@lru_cache(maxsize=1)
+def _load_ood_threshold_cached() -> float:
+  if MODEL_METADATA_PATH.exists():
+    try:
+      meta = json.loads(MODEL_METADATA_PATH.read_text(encoding="utf-8"))
+      val = meta.get("ood_z_norm_p995")
+      if isinstance(val, (int, float)) and val > 0:
+        return float(val)
+    except (OSError, json.JSONDecodeError, TypeError, ValueError):
+      pass
+  return DEFAULT_OOD_THRESHOLD
+
+
+def load_ood_threshold() -> float:
+  with _CACHE_LOCK:
+    return _load_ood_threshold_cached()
 
 
 def normalize_profile(profile: dict[str, float], frame: pd.DataFrame) -> dict[str, float]:
@@ -418,9 +439,9 @@ def recommend(payload: RecommendationInput):
   scaled_vector = scaler.transform(vector)
 
   # Deteccion de anomalias / Outliers mediante la norma Euclidiana de los Z-scores
-  # Umbral calibrado empiricamente en el percentil 99.5 del dataset de entrenamiento (||z||_2 = 3.6744)
+  # Umbral calibrado empiricamente en el percentil 99.5 del dataset de entrenamiento
   z_norm = float(np.linalg.norm(scaled_vector[0]))
-  is_outlier = z_norm > 3.6744
+  is_outlier = z_norm > load_ood_threshold()
 
   # Inferencia canonica directa en el espacio escalado 7D (kmeans_k5.joblib)
   cluster_id = int(model.predict(scaled_vector)[0])

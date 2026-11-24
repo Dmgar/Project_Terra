@@ -60,6 +60,9 @@ docs/PAPER_MANUSCRIPT_PROPOSAL.md
 scripts/*
 !scripts/export_umap.py
 !scripts/post-merge.sh
+!scripts/ingest_real_colombia.py
+!scripts/benchmark_real_vs_synthetic.py
+!scripts/promote_real_model.py
 audit_export_final.py
 unify_terra_canonical_partition.py
 verify_canonical_audit.py

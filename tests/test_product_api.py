@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 
@@ -29,8 +30,10 @@ def test_product_data_endpoints_use_real_dataset():
     regions = client.get("/api/regions")
     pca = client.get("/api/pca")
 
+    expected_samples = len(pd.read_csv(DATA_PATH if Path(DATA_PATH).exists() else RAW_DATA_PATH))
     assert overview.status_code == 200
-    assert overview.json()["metrics"]["samples"] == 20_000
+    assert overview.json()["metrics"]["samples"] == expected_samples
+    assert expected_samples >= 10_000
     assert regions.status_code == 200
     assert len(regions.json()["regions"]) == 5
     assert pca.status_code == 200

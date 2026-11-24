@@ -1,0 +1,34 @@
+{
+  "promoted_at_utc": "2026-11-24T15:30:24.860232+00:00",
+  "dataset_origin": "Real Colombian Agroclimatic Dataset (AGROSAVIA + UPRA EVA + DANE DIVIPOLA + NASA POWER)",
+  "sources": {
+    "soil_lab": "datos.gov.co/ch4u-f3i5 (AGROSAVIA)",
+    "wheat_municipalities": "datos.gov.co/uejq-wxrr (UPRA EVA 2019-2025)",
+    "georeference": "datos.gov.co/gdxc-w37w (DANE DIVIPOLA)",
+    "climatology": "NASA POWER Climatology API (community=AG: T2M, RH2M, PRECTOTCORR)"
+  },
+  "n_samples": 12784,
+  "n_municipalities": 678,
+  "k_regions": 5,
+  "features": [
+    "Nitrogen",
+    "Phosphorus",
+    "Potassium",
+    "Temperature",
+    "Humidity",
+    "pH_Value",
+    "Rainfall"
+  ],
+  "selected_pipeline": "StandardScaler (7D) + K-Means (K=5) + GMM (K=5, full)",
+  "selection_rationale": "Outperformed synthetic baseline (Silhouette 0.2402 vs 0.0986, Purity 55.71% vs 17.50%, ARI 0.2698 vs 0.0000) and beat SCARF contrastive embeddings (Silhouette 0.2006, ARI 0.0859) and PowerTransformer (Silhouette 0.1893, ARI 0.2064) on internal geometry and ARI while preserving exact Z-score geometry for OOD calibration.",
+  "ood_z_norm_p995": 7.5694,
+  "metrics": {
+    "silhouette": 0.2402,
+    "davies_bouldin": 1.3536,
+    "calinski_harabasz": 3289.4,
+    "purity_vs_crop": 0.5571,
+    "ari_vs_crop": 0.2698,
+    "nmi_vs_crop": 0.2453
+  },
+  "benchmark_reference": "docs/real_data_benchmark.json"
+}

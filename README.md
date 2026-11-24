@@ -7,9 +7,9 @@
 ![CI](https://img.shields.io/github/actions/workflow/status/DaryelReyes/Project_Terra/ci.yml?branch=main&label=CI)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
-> Benchmark metodológico de clustering ambiental y planificador agrícola determinístico (hogar y comercial).
+> Clustering ambiental sobre datos agroclimáticos reales de Colombia (AGROSAVIA + UPRA EVA + DANE DIVIPOLA + NASA POWER) y planificador agrícola determinístico (hogar y comercial).
 
-**Project Terra** evalúa de forma reproducible si es posible descubrir "ecorregiones funcionales" agrícolas a partir de variables de suelo y clima (N, P, K, pH, temperatura, humedad y precipitación). El módulo de clustering no supervisado (K-Means 7D, GMM, Clustering Jerárquico y proyección UMAP 2D) funciona como un **benchmark exploratorio** —donde la hipótesis de separabilidad agronómica natural fue refutada empíricamente sobre el dataset sintético actual— acoplado a un **planificador agrícola determinístico** (`Mi huerta` para hogares y Programación Lineal `HiGHS` para parcelas comerciales).
+**Project Terra** segmenta condiciones agroclimáticas reales de Colombia (N/MO, P, K, pH, temperatura, humedad y precipitación) en **5 ecorregiones funcionales** mediante clustering no supervisado 7D (`StandardScaler` + K-Means $K=5$ + GMM + proyección UMAP 2D), tras un benchmark reproducible que refutó la separabilidad del dataset sintético original y demostró un salto masivo de señal al integrar datos reales georreferenciados (ver [`docs/real_data_benchmark.json`](docs/real_data_benchmark.json)). El modelo se acopla a un **planificador agrícola determinístico** (`Mi huerta` para hogares y Programación Lineal `HiGHS` para parcelas comerciales).
 
 Proyecto del curso **Analítica y Minería de Datos** — Escuela de Transformación Digital, Universidad Tecnológica de Bolívar (UTB).
 
@@ -33,24 +33,17 @@ Proyecto del curso **Analítica y Minería de Datos** — Escuela de Transformac
 
 ## Dataset
 
-Dataset sintético tipo *Crop Recommendation* (`20,000 × 10`) con 7 variables ambientales predictoras más etiquetas categóricas de referencia (`Crop`, `Soil_Type`, `Variety`):
+### Dataset en producción (Fase 8 — Datos Reales de Colombia)
+Dataset agroclimático real georreferenciado (**12,784 registros × 678 municipios de Colombia**), generado de forma reproducible con [`scripts/ingest_real_colombia.py`](scripts/ingest_real_colombia.py) y promovido con [`scripts/promote_real_model.py`](scripts/promote_real_model.py):
 
-| Variable | Descripción | Unidad / Escala |
-| :--- | :--- | :--- |
-| **Nitrogen** | Contenido de Nitrógeno en el suelo | mg/kg (ppm) |
-| **Phosphorus** | Contenido de Fósforo en el suelo | mg/kg (ppm) |
-| **Potassium** | Contenido de Potasio en el suelo | mg/kg (ppm) |
-| **Temperature** | Temperatura ambiente | °C |
-| **Humidity** | Humedad relativa | % |
-| **pH_Value** | Valor de pH del suelo | 0–14 |
-| **Rainfall** | Precipitación (escala sintética del dataset) | mm (20–400) |
-| **Crop** | Cultivo de referencia (validación externa) | Categórica (6 clases) |
-| **Soil_Type** | Tipo de suelo | Categórica |
-| **Variety** | Variedad de cultivo *(no usar en clustering: fuga determinista 3:1 hacia `Crop`)* | Categórica |
+- **Suelos de laboratorio reales:** **AGROSAVIA** — *Resultados de Análisis de Laboratorio Suelos en Colombia* (`datos.gov.co/ch4u-f3i5`: pH, Fósforo Bray II, Potasio intercambiable convertido a mg/kg, Materia Orgánica como proxy de N disponible, CICE, CE y drenaje).
+- **Enriquecimiento de trigo:** municipios trigueros verificados en **UPRA EVA 2019–2025** (`datos.gov.co/uejq-wxrr`).
+- **Georreferenciación:** **DANE DIVIPOLA** (`datos.gov.co/gdxc-w37w`, 99.8 % de emparejamiento municipal).
+- **Clima real:** **NASA POWER Climatology API** (`community=AG`: `T2M` °C, `RH2M` %, `PRECTOTCORR` mm/mes).
 
-Fuente: [Crops NPK Data Set — Kaggle](https://www.kaggle.com/datasets/javakhan/crops-npk-data-set)
+Conserva exactamente las **7 variables predictoras** (`Nitrogen`, `Phosphorus`, `Potassium`, `Temperature`, `Humidity`, `pH_Value`, `Rainfall`), los **6 cultivos** (`Sugarcane`, `Rice`, `Maize`, `Potato`, `Tomato`, `Wheat`) y los **6 tipos de suelo** (`Loamy`, `Clay`, `Sandy`, `Silt`, `Peaty`, `Saline`).
 
-> **Nota de versionamiento:** `data/processed/sensor_Crop_Dataset_clustered.csv` y los modelos en `data/models/` **sí están versionados en Git**, por lo que la aplicación web y la API funcionan sin descargar Kaggle. El CSV crudo (`data/raw/sensor_Crop_Dataset.csv`, gitignored) solo es necesario si deseas re-ejecutar `src/run_pipeline.py` desde cero.
+> **Nota de versionamiento:** `data/processed/sensor_Crop_Dataset_clustered.csv`, `data/models/model_metadata.json` y los modelos `.joblib` en `data/models/` están versionados en Git, por lo que la aplicación web y la API funcionan sin descargas externas. Para regenerar el dataset intermedio (`data/processed/colombia_agroclimatic_real.csv`, gitignored) desde las APIs abiertas, ejecuta `scripts/ingest_real_colombia.py`. El dataset sintético original de Kaggle (`20,000 × 10`, [`Crops NPK Data Set`](https://www.kaggle.com/datasets/javakhan/crops-npk-data-set)) se documenta únicamente como baseline histórico en [`docs/real_data_benchmark.json`](docs/real_data_benchmark.json) (y nunca usa `Variety` por fuga determinista 3:1 hacia `Crop`).
 
 ## Estructura del repositorio
 
@@ -135,11 +128,18 @@ El **Plan rentable** usa programación lineal en dos etapas (`HiGHS`) para maxim
 
 El catálogo incluido es una referencia versionada y disponible sin conexión. Todos sus valores son visibles y editables. DANE SIPSA aporta contexto de precios mayoristas (base Bogotá), UPRA/EVA aporta contexto de producción y rendimiento, las fichas UPRA aportan contexto de costos, y FAO-56/CROPWAT aporta la metodología hídrica. Las cifras no son cotizaciones en tiempo real ni garantías de utilidad.
 
-## Trabajo Futuro: Datos Reales y Contrastive Learning
+## Benchmark Real vs. Sintético y Contrastive Learning (Fase 8)
 
-La limitación actual no radica en el algoritmo de clustering sino en la ausencia de señal agronómica del dataset sintético uniforme ($I(X;Y) \approx 0$). Por ello, la hoja de ruta técnica se ordena en dos hitos secuenciales:
-1. **Fase previa obligatoria — Ingesta de datos agroclimáticos reales georreferenciados:** integrar series reales (SoilGrids, IDEAM/WorldClim, EVA/AGROSAVIA) con covarianzas naturales entre clima, suelo y rendimiento.
-2. **Contrastive Learning tabular (condicionado a datos reales):** una vez disponibles datos reales, evaluar un *Encoder* MLP con pérdida InfoNCE y augmentations tabulares (p. ej. corrupción aleatoria tipo SCARF) frente a K-Means 7D y GMM.
+Se implementó un encoder de **Contrastive Learning tabular (SCARF: MLP + Projection Head + InfoNCE)** en NumPy puro ([`src/contrastive.py`](src/contrastive.py)) y se evaluó junto a K-Means 7D y GMM sobre el dataset real colombiano ([`scripts/benchmark_real_vs_synthetic.py`](scripts/benchmark_real_vs_synthetic.py), resultados en [`docs/real_data_benchmark.json`](docs/real_data_benchmark.json)):
+
+| Pipeline ($K=5$) | `max \|r\|` | $I(X;\text{Crop})$ | Silueta | Davies-Bouldin | Pureza | ARI | NMI |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Sintético + `StandardScaler` *(baseline)* | `0.0136` | `0.0039` | `0.0986` | `2.1490` | `17.50 %` | `0.0000` | `0.0003` |
+| **Real Colombia + `StandardScaler` (7D)** *(en producción)* | **`0.5534`** | **`3.2178`** | **`0.2402`** | **`1.3536`** | `55.71 %` | **`0.2698`** | `0.2453` |
+| Real Colombia + `PowerTransformer` (7D) | `0.5534` | `3.2178` | `0.1893` | `1.5642` | **`59.71 %`** | `0.2064` | **`0.2546`** |
+| Real Colombia + `StandardScaler` + **SCARF** (`c=0.5, τ=0.2`) | `0.5534` | `3.2178` | `0.2006` | `1.7781` | `50.15 %` | `0.0859` | `0.1330` |
+
+Por evidencia empírica, se promovió **`Real Colombia + StandardScaler (7D) + K-Means (K=5) + GMM (K=5, full)`** con umbral OOD calibrado dinámicamente (`||z||_2 > 7.5694` en [`data/models/model_metadata.json`](data/models/model_metadata.json)). En baja dimensión ($d=7$), la discriminación de instancias de InfoNCE favorece uniformidad en la hiperesfera por encima de la compacidad de macro-clústeres.
 
 ## Entregables esperados
 

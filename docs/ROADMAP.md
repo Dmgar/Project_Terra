@@ -21,7 +21,9 @@ Este archivo detalla las características planificadas, ideas de mejora y los pr
 - [x] **Desminificación `App.jsx` + `index.css`**: CSS consolidado y token de alerta dedicado (`--terra-alert`).
 - [x] **`create_notebooks.py` protegido**: Aborta si notebooks existen, `--dry-run`/`--force` disponibles.
 - [x] **Partición canónica 7D + Proyección UMAP 2D**: Inferencia estable en 7D (`kmeans_k5.joblib`) y coordenadas `umap_1`/`umap_2` precalculadas para visualización 2D.
-- [x] **Filtro matemático OOD (Out-of-Distribution)**: Cálculo de norma euclidiana basada en Z-scores (`||z||_2 > 3.6744`) con etiqueta clara `"Fuera de rango típico"`.
+- [x] **Filtro matemático OOD (Out-of-Distribution)**: Cálculo de norma euclidiana basada en Z-scores calibrada dinámicamente desde [`data/models/model_metadata.json`](../data/models/model_metadata.json) (`||z||_2 > 7.5694` en datos reales) con etiqueta clara `"Fuera de rango típico"`.
+- [x] **Ingesta de Datos Agroclimáticos Reales Georreferenciados**: Pipeline reproducible en [`scripts/ingest_real_colombia.py`](../scripts/ingest_real_colombia.py) integrando AGROSAVIA (`ch4u-f3i5`), UPRA EVA (`uejq-wxrr`), DANE DIVIPOLA (`gdxc-w37w`) y NASA POWER (`community=AG`) en 12,784 registros reales de 678 municipios ([`colombia_agroclimatic_real.csv`](../data/processed/colombia_agroclimatic_real.csv)), promovidos a producción con [`scripts/promote_real_model.py`](../scripts/promote_real_model.py).
+- [x] **Contrastive Learning Tabular (SCARF)**: Encoder MLP + Projection Head con pérdida InfoNCE en NumPy puro ([`src/contrastive.py`](../src/contrastive.py), [`tests/test_contrastive.py`](../tests/test_contrastive.py)) evaluado frente a K-Means 7D y GMM en [`docs/real_data_benchmark.json`](./real_data_benchmark.json); se promovió `StandardScaler (7D) + K-Means (K=5)` por evidencia empírica (Silueta `0.2402`, ARI `0.2698`).
 
 ### Frontend
 - [x] **`Mi huerta` (`/producto/plan/huerta`)**: Asistente doméstico con cobertura por personas en casa y PDF de 2 páginas.
@@ -32,8 +34,6 @@ Este archivo detalla las características planificadas, ideas de mejora y los pr
 ## Próximos Pasos (To-Do)
 
 ### Backend & Modelos
-- [ ] **Ingesta de Datos Agroclimáticos Reales Georreferenciados (Prerrequisito):** Integrar datos reales (SoilGrids, IDEAM/WorldClim, EVA/AGROSAVIA) antes de reevaluar algoritmos avanzados. *(Nota: no incluir `Variety` en clustering por fuga determinista 3:1 hacia `Crop`).*
-- [ ] **Contrastive Learning Tabular (condicionado a datos reales):** Evaluar un Encoder MLP + Projection Head con InfoNCE y augmentations tabulares (p. ej. SCARF) frente a K-Means 7D y GMM una vez existan datos reales.
 - [ ] **Despliegue a Producción:** Desplegar contenedor Docker / FastAPI en entorno cloud (ej. Render, Railway, AWS ECS).
 - [ ] **ETL Batch de Mercado y Clima:** Conectar ingesta periódica (batch) de series SIPSA/IDEAM antes de pasar a tiempo real.
 

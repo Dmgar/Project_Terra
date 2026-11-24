@@ -269,6 +269,7 @@ function Scatter({ points = [] }) {
 export default function Analysis() {
   const [data, setData] = useState(null);
   const [overview, setOverview] = useState(null);
+  const [benchmark, setBenchmark] = useState(null);
   const [error, setError] = useState("");
   const [tab, setTab] = useState("umap");
   const tabsRef = useRef(null);
@@ -277,16 +278,22 @@ export default function Analysis() {
   useSlidingIndicator(tabsRef, `${tab}-${Boolean(data)}`);
 
   useEffect(() => {
-    Promise.all([api("/api/umap"), api("/api/overview")])
-      .then(([a, b]) => {
+    Promise.all([
+      api("/api/umap"),
+      api("/api/overview"),
+      api("/api/benchmark").catch(() => null),
+    ])
+      .then(([a, b, c]) => {
         setData(a);
         setOverview(b);
+        setBenchmark(c);
       })
       .catch((e) => setError(e.message));
   }, []);
 
   const tabs = [
     ["umap", "Proyección UMAP"],
+    ["benchmark", "Comparativa de modelos"],
     ["features", "Variables ambientales"],
     ["clusters", "Comparación de grupos"],
   ];
@@ -350,14 +357,87 @@ export default function Analysis() {
               {/* La leyenda ya la dibuja <Scatter>; estaba repetida aquí. */}
               <Scatter points={data?.points} />
               <div className="note">
-                UMAP proyecta las 7 variables ambientales en dos dimensiones para inspección visual, mientras que el modelo
-                K-Means (K=5) opera sobre el espacio escalado 7D.
+                <strong>¿Por qué UMAP 2D + K-Means 7D?</strong> UMAP proyecta las 7 variables agroclimáticas en dos
+                dimensiones preservando vecindades no lineales mejor que PCA lineal, mientras que la asignación de
+                ecorregiones (<code>K-Means K=5</code> + <code>GMM</code>) ocurre en el espacio escalado 7D sin
+                distorsión dimensional.
               </div>
               <div className="note">
-                <strong>Límites del conjunto de datos:</strong> Los 20.000 registros provienen de un dataset sintético
-                uniforme sin correlación agronómica fuerte (Silhouette ≈ 0,10; pureza de cultivo ≈ 17,5 %). Úsalo como
-                referencia exploratoria, no como diagnóstico agronómico definitivo.
+                <strong>Origen real de los datos:</strong> {overview?.metrics?.samples?.toLocaleString("es-CO") || "12.784"}{" "}
+                registros agroclimáticos reales de Colombia (AGROSAVIA + UPRA EVA + DANE DIVIPOLA + NASA POWER). Revisa
+                la pestaña <em>Comparativa de modelos</em> para ver por qué este pipeline superó a SCARF Contrastive
+                Learning y al dataset sintético inicial.
               </div>
+            </div>
+          </div>
+        )}
+
+        {tab === "benchmark" && (
+          <div className="panel">
+            <h3>Comparativa de modelos (K = 5) y elección de UMAP 2D</h3>
+            <p className="panel-caption">
+              Evaluación reproducible sobre los mismos 6 cultivos: por qué elegimos <b>StandardScaler 7D + K-Means</b>{" "}
+              para inferencia y <b>UMAP 2D</b> para visualización frente a <b>SCARF Contrastive Learning</b>,{" "}
+              <b>PowerTransformer</b> y el baseline sintético.
+            </p>
+            <div style={{ overflowX: "auto", marginTop: 14 }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.9rem" }}>
+                <thead>
+                  <tr style={{ borderBottom: "1px solid #d7dfd5", textAlign: "left" }}>
+                    <th style={{ padding: "8px 10px" }}>Pipeline (K=5)</th>
+                    <th style={{ padding: "8px 10px" }}>Silueta ↑</th>
+                    <th style={{ padding: "8px 10px" }}>Davies-Bouldin ↓</th>
+                    <th style={{ padding: "8px 10px" }}>Pureza ↑</th>
+                    <th style={{ padding: "8px 10px" }}>ARI ↑</th>
+                    <th style={{ padding: "8px 10px" }}>NMI ↑</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(benchmark?.models || []).map((row) => {
+                    const isWinner = row.pipeline === "Real + StandardScaler (7D)";
+                    return (
+                      <tr
+                        key={row.pipeline}
+                        style={{
+                          borderBottom: "1px solid #ecefe9",
+                          fontWeight: isWinner ? 700 : 400,
+                          background: isWinner ? "rgba(63, 138, 60, 0.08)" : "transparent",
+                        }}
+                      >
+                        <td style={{ padding: "8px 10px" }}>
+                          {row.pipeline} {isWinner ? "· En producción" : ""}
+                        </td>
+                        <td style={{ padding: "8px 10px" }}>{Number(row.km_sil).toFixed(4)}</td>
+                        <td style={{ padding: "8px 10px" }}>{Number(row.km_db).toFixed(4)}</td>
+                        <td style={{ padding: "8px 10px" }}>{(Number(row.km_purity) * 100).toFixed(1)} %</td>
+                        <td style={{ padding: "8px 10px" }}>{Number(row.km_ari).toFixed(4)}</td>
+                        <td style={{ padding: "8px 10px" }}>{Number(row.km_nmi).toFixed(4)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <div className="note" style={{ marginTop: 18 }}>
+              <strong>Por qué descartamos Contrastive Learning (SCARF) en producción y mantenemos 7D + UMAP 2D:</strong>
+              <ul style={{ marginTop: 8, paddingLeft: 18 }}>
+                <li>
+                  <strong>Señal real vs. sintética:</strong> Al migrar a datos reales de Colombia, la información mutua
+                  total <em>I(X; Crop)</em> pasó de <code>0.0039</code> a <code>3.2178</code> y la pureza subió de{" "}
+                  <code>17.5 %</code> a <code>55.7 %</code>.
+                </li>
+                <li>
+                  <strong>7D clásico supera a SCARF en baja dimensión:</strong> Con 7 variables directamente informativas,
+                  la pérdida InfoNCE de SCARF dispersa las instancias sobre la hiperesfera (ARI <code>0.0859</code>,
+                  Silueta <code>0.2006</code>), mientras que <code>StandardScaler 7D + K-Means</code> logra la mejor
+                  separación geométrica (Silueta <code>0.2402</code>, Davies-Bouldin <code>1.3536</code>, ARI{" "}
+                  <code>0.2698</code>) y mantiene Z-scores exactos para el filtro OOD.
+                </li>
+                <li>
+                  <strong>Rol de UMAP 2D:</strong> UMAP comprime ese espacio 7D a 2D para explorar vecindades locales y
+                  transiciones entre pisos térmicos sin contaminar la predicción canónica de <code>/api/recommend</code>.
+                </li>
+              </ul>
             </div>
           </div>
         )}

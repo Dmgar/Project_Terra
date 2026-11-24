@@ -2,6 +2,7 @@
 
 from functools import lru_cache
 import json
+import os
 from pathlib import Path
 from threading import Lock
 from typing import Annotated
@@ -15,6 +16,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from .auth_routes import router as auth_router
 from .economics_routes import router as economics_router
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
@@ -23,6 +25,7 @@ RAW_DATA_PATH = ROOT_DIR / "data" / "raw" / "sensor_Crop_Dataset.csv"
 MODEL_PATH = ROOT_DIR / "data" / "models" / "kmeans_k5.joblib"
 SCALER_PATH = ROOT_DIR / "data" / "models" / "scaler.joblib"
 MODEL_METADATA_PATH = ROOT_DIR / "data" / "models" / "model_metadata.json"
+BENCHMARK_PATH = ROOT_DIR / "docs" / "real_data_benchmark.json"
 DEFAULT_OOD_THRESHOLD = 3.6744
 FRONTEND_DIST = ROOT_DIR / "frontend" / "dist"
 _CACHE_LOCK = Lock()
@@ -117,21 +120,38 @@ class UMAPResponse(BaseModel):
   explainedVariance: list[float]
 
 
-app = FastAPI(title="Project Terra API", version="1.0.0")
+DEFAULT_ALLOWED_ORIGINS = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://localhost:5000",
+  "http://127.0.0.1:5000",
+  "http://localhost:8000",
+  "http://127.0.0.1:8000",
+]
+
+
+def parse_allowed_origins(raw: str | None = None) -> list[str]:
+  """Parse explicit CORS allow-list from ALLOWED_ORIGINS, rejecting wildcards."""
+  source = os.getenv("ALLOWED_ORIGINS", "") if raw is None else raw
+  if not source.strip():
+    return list(DEFAULT_ALLOWED_ORIGINS)
+  origins = [
+    item.strip().rstrip("/")
+    for item in source.split(",")
+    if item.strip() and "*" not in item
+  ]
+  return origins or list(DEFAULT_ALLOWED_ORIGINS)
+
+
+ALLOWED_ORIGINS = parse_allowed_origins()
+
+app = FastAPI(title="Project Terra API", version="1.1.0")
 app.add_middleware(
   CORSMiddleware,
-  allow_origins=[
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:5000",
-    "http://127.0.0.1:5000",
-    "http://localhost:8000",
-    "http://127.0.0.1:8000",
-  ],
-  allow_origin_regex=r"https://.*\.vercel\.app",
-  allow_credentials=False,
-  allow_methods=["*"],
-  allow_headers=["*"],
+  allow_origins=ALLOWED_ORIGINS,
+  allow_credentials=True,
+  allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+  allow_headers=["Content-Type", "Authorization"],
 )
 
 
@@ -143,6 +163,7 @@ async def add_security_headers(request, call_next):
   response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
   return response
 app.include_router(economics_router)
+app.include_router(auth_router)
 
 
 def distribution(series: pd.Series) -> list[dict]:
@@ -274,6 +295,31 @@ def region_payload(frame: pd.DataFrame, cluster_id: int) -> dict:
 @app.get("/health")
 def health():
   return {"status": "ok"}
+
+
+@app.get("/api/benchmark")
+@app.get("/app/benchmark")
+@app.get("/benchmark")
+def benchmark_report():
+  """Return reproducible K=5 model comparison (Synthetic vs Real 7D vs SCARF) and active model metadata."""
+  bench = {}
+  if BENCHMARK_PATH.exists():
+    try:
+      bench = json.loads(BENCHMARK_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+      bench = {}
+  meta = {}
+  if MODEL_METADATA_PATH.exists():
+    try:
+      meta = json.loads(MODEL_METADATA_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+      meta = {}
+  return {
+    "k": bench.get("k", 5),
+    "diagnostics": bench.get("diagnostics", {}),
+    "models": bench.get("models", []),
+    "activeModel": meta,
+  }
 
 
 @app.get("/api/overview", response_model=OverviewResponse)

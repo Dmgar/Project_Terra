@@ -16,6 +16,9 @@ data/processed/*
 !data/processed/.gitkeep
 !data/processed/sensor_Crop_Dataset_clustered.csv
 data/crop_data.csv
+data/terra_app.db
+data/*.db-journal
+data/*.db-wal
 
 # Frontend
 frontend/node_modules/

@@ -29,15 +29,15 @@ Este archivo detalla las características planificadas, ideas de mejora y los pr
 - [x] **`Mi huerta` (`/producto/plan/huerta`)**: Asistente doméstico con cobertura por personas en casa y PDF de 2 páginas.
 - [x] **Exportación de Reportes (Plan Comercial):** PDF + CSV con trazabilidad, 3 escenarios y comparación manual.
 - [x] **UMAP 2D Interactivo:** Gráfico de dispersión interactivo con zoom, paneo por arrastre, botones `+`/`−`, tooltips sin solape y filtros por cultivo y tipo de suelo.
-- [x] **Router SPA:** `react-router-dom` con rutas dedicadas (`/`, `/producto/recomendar`, `/producto/plan`, `/producto/plan/huerta`, `/producto/plan/comercial`, `/analisis/*`), lazy loading con `Suspense`, `ErrorBoundary` y página 404 personalizada.
+- [x] **Router SPA:** `react-router-dom` con rutas dedicadas (`/`, `/producto/recomendar`, `/producto/plan`, `/producto/plan/huerta`, `/producto/plan/comercial`, `/cuenta`, `/analisis/*`), lazy loading con `Suspense`, `ErrorBoundary` y página 404 personalizada.
+- [x] **Autenticación y Sesiones (Parcelas Guardadas):** CORS endurecido con lista explícita `ALLOWED_ORIGINS` (`api/server.py`), sesiones `HttpOnly` + SQLite (`api/storage.py`, `api/auth_routes.py`, `tests/test_auth_and_parcels.py`) y vista `/cuenta` (`frontend/src/product/Account.jsx`) integrada con `Recommend.jsx`.
+- [x] **Soporte Multilingüe (i18n ES/EN):** `LanguageProvider` (`frontend/src/i18n.jsx`) con conmutador `ES / EN` persistido en `localStorage`.
 
 ## Próximos Pasos (To-Do)
 
 ### Backend & Modelos
-- [ ] **Despliegue a Producción:** Desplegar contenedor Docker / FastAPI en entorno cloud (ej. Render, Railway, AWS ECS).
+- [ ] **Despliegue a Producción:** Desplegar contenedor Docker / FastAPI en entorno cloud (ej. Render, Railway, AWS ECS) con `ALLOWED_ORIGINS`, `TERRA_SECRET_KEY`, `TERRA_COOKIE_SECURE=true` y volumen persistente para `TERRA_DB_PATH`.
 - [ ] **ETL Batch de Mercado y Clima:** Conectar ingesta periódica (batch) de series SIPSA/IDEAM antes de pasar a tiempo real.
 
 ### Frontend
-- [ ] **Despliegue del Cliente:** Publicar el frontend web o distribuirlo a través de CDN/Vercel/Netlify.
-- [ ] **Autenticación y Sesiones:** Permitir guardar parcelas e historial *(prerrequisito: restringir `ALLOWED_ORIGINS` en CORS sin regex wildcard con credenciales)*.
-- [ ] **Soporte Multilingüe (i18n):** Traducir y habilitar el cambio de idioma (Español / Inglés).
+- [ ] **Despliegue del Cliente:** Publicar el frontend web o distribuirlo a través de CDN/Vercel/Netlify apuntando al backend productivo.

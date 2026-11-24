@@ -147,7 +147,10 @@ export async function api(endpoint, options) {
       ? endpoint
       : `${API_BASE_URL}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`;
 
-  const response = await fetch(normalizedUrl, options);
+  const response = await fetch(normalizedUrl, {
+    credentials: "include",
+    ...options,
+  });
   if (!response.ok) {
     throw new Error(`La solicitud no pudo completarse (${response.status}).`);
   }

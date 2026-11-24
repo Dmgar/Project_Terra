@@ -18,6 +18,15 @@ def test_health_endpoint():
     assert response.json() == {"status": "ok"}
 
 
+def test_benchmark_endpoint_exposes_model_comparison():
+    response = client.get("/api/benchmark")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["k"] == 5
+    assert len(body["models"]) >= 5
+    assert body["activeModel"].get("selected_pipeline")
+
+
 def test_static_route_cannot_escape_frontend_directory():
     response = client.get("/%2e%2e/%2e%2e/README.md")
     assert response.status_code == 404

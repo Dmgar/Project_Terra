@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { FEATURES, labels, units, defaults, presets, ranges, displayDatasetLabel, describeRegion, api, Header, Icon } from "../ui";
+import { FEATURES, units, defaults, presets, ranges, displayDatasetLabel, describeRegion, api, Header, Icon } from "../ui";
+import { useI18n } from "../i18n";
+import { useAuth } from "../auth";
 import { RadarChart } from "../RadarChart.jsx";
 import { REGION_COLORS } from "../scene/fieldLayout";
 import { focusRegion } from "../scene/sceneStore";
@@ -8,17 +10,45 @@ import { scrollToTop } from "../motion";
 import { Meter } from "../analysis/charts";
 
 export default function Recommend() {
-  // Desde "Regiones" se puede llegar con el perfil de una región ya cargado.
+  const { t, featureLabel } = useI18n();
+  const { user, saveParcel } = useAuth();
+  // Desde "Regiones" o "Mis parcelas" se puede llegar con un perfil ya cargado.
   const incoming = useLocation().state?.values;
   const [values, setValues] = useState(() =>
     incoming
       ? Object.fromEntries(FEATURES.map((k) => [k, Number(incoming[k] ?? defaults[k])]))
       : defaults
   );
-  const [preset, setPreset] = useState(incoming ? "" : "Equilibrado");
+  const [preset, setPreset] = useState(incoming ? "" : "Balanced");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [parcelName, setParcelName] = useState("");
+  const [parcelDept, setParcelDept] = useState("");
+  const [saveMsg, setSaveMsg] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const onSaveParcel = async (e) => {
+    e.preventDefault();
+    if (!parcelName.trim()) return;
+    setSaving(true);
+    setSaveMsg("");
+    try {
+      await saveParcel({
+        name: parcelName.trim(),
+        department: parcelDept.trim(),
+        ...values,
+        recommended_cluster: result ? result.cluster : null,
+      });
+      setParcelName("");
+      setParcelDept("");
+      setSaveMsg(t("saveParcelSaved"));
+    } catch (err) {
+      setSaveMsg(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const set = (k, v) => setValues((x) => ({ ...x, [k]: Number(v) }));
 
@@ -44,25 +74,25 @@ export default function Recommend() {
       <Header
         title={
           <>
-            Una segunda lectura<br />
-            <em>para la parcela.</em>
+            {t("recTitle1")}<br />
+            <em>{t("recTitle2")}</em>
           </>
         }
-        description="Introduce las condiciones del terreno. Terra las compara con la ecorregión funcional observada más cercana y devuelve un perfil de cultivos basado en evidencia."
+        description={t("recDesc")}
       />
       <div className="presets" aria-label="Escenarios de ejemplo">
         {Object.keys(presets).map((k, i) => {
-          const spanish = ["Equilibrado", "Trópico húmedo", "Secano", "Tierra alta"][i];
+          const presetLabel = t("presets")[i] || k;
           return (
             <button
               key={k}
-              className={`preset ${preset === spanish ? "active" : ""}`}
+              className={`preset ${preset === k ? "active" : ""}`}
               onClick={() => {
-                setPreset(spanish);
+                setPreset(k);
                 setValues(presets[k]);
               }}
             >
-              {spanish}
+              {presetLabel}
             </button>
           );
         })}
@@ -70,16 +100,16 @@ export default function Recommend() {
       <div className="form-layout">
         <div className="form-panel">
           <h2 className="form-title">
-            Describe las condiciones
+            {t("recFormTitle")}
           </h2>
           <p className="panel-caption form-caption">
-            ¿No tienes análisis de laboratorio para N, P, K? Selecciona arriba un escenario de ejemplo como punto de partida.
+            {t("recFormCaption")}
           </p>
           <div className="field-grid">
             {FEATURES.map((k) => (
               <div className="field" key={k}>
                 <label htmlFor={k}>
-                  {labels[k]} <span>{values[k]} {units[k]}</span>
+                  {featureLabel(k)} <span>{values[k]} {units[k]}</span>
                 </label>
                 <input
                   id={k}
@@ -90,19 +120,19 @@ export default function Recommend() {
                   step={k === "pH_Value" || k === "Temperature" ? ".1" : "1"}
                   value={values[k]}
                   onChange={(e) => {
-                    setPreset("Personalizado");
+                    setPreset("custom");
                     set(k, e.target.value);
                   }}
                 />
                 <input
-                  aria-label={`${labels[k]} valor exacto`}
+                  aria-label={`${featureLabel(k)} valor exacto`}
                   type="number"
                   min={ranges[k][0]}
                   max={ranges[k][1]}
                   step={k === "pH_Value" || k === "Temperature" ? ".1" : "1"}
                   value={values[k]}
                   onChange={(e) => {
-                    setPreset("Personalizado");
+                    setPreset("custom");
                     set(k, e.target.value);
                   }}
                 />
@@ -110,17 +140,47 @@ export default function Recommend() {
             ))}
           </div>
           <div className="submit-row">
-            <span className="submit-hint">Siete señales listas para comparar</span>
+            <span className="submit-hint">{t("recReadyHint")}</span>
             <button className="button" onClick={run} disabled={loading}>
               {loading ? (
-                "Buscando…"
+                t("recSearching")
               ) : (
                 <>
-                  Ver mi recomendación <Icon />
+                  {t("recSubmit")} <Icon />
                 </>
               )}
             </button>
           </div>
+          {user ? (
+            <form onSubmit={onSaveParcel} style={{ marginTop: 18, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+              <input
+                type="text"
+                required
+                minLength={2}
+                placeholder={t("saveParcelNamePlaceholder")}
+                value={parcelName}
+                onChange={(e) => setParcelName(e.target.value)}
+                style={{ flex: "1 1 180px" }}
+              />
+              <input
+                type="text"
+                placeholder={t("saveParcelDeptPlaceholder")}
+                value={parcelDept}
+                onChange={(e) => setParcelDept(e.target.value)}
+                style={{ flex: "0 1 160px" }}
+              />
+              <button type="submit" className="button secondary" disabled={saving}>
+                {t("saveParcelBtn")}
+              </button>
+              {saveMsg && <span style={{ width: "100%", fontSize: "0.85rem" }}>{saveMsg}</span>}
+            </form>
+          ) : (
+            <p className="panel-caption" style={{ marginTop: 14 }}>
+              <Link className="hero-link-dark" to="/cuenta">
+                {t("saveParcelSignIn")} <Icon />
+              </Link>
+            </p>
+          )}
           {error && <div className="error" role="alert" style={{ marginTop: 18 }}>{error}</div>}
         </div>
         <div>
@@ -152,7 +212,7 @@ export default function Recommend() {
                   />
                 ))}
                 <p className="result-note">
-                  En los datos exploratorios actuales los cultivos suelen distribuirse de forma parecida (~16–19 %). Usa este
+                  Distribución observada sobre muestras reales de Colombia (AGROSAVIA + NASA POWER). Usa este
                   perfil como guía inicial y combínalo con el planificador económico.
                 </p>
               </div>

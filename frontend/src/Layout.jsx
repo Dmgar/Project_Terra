@@ -2,6 +2,8 @@ import React, { Suspense, useEffect, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 
 import { api, ErrorBoundary, useSlidingIndicator } from "./ui";
+import { useI18n } from "./i18n";
+import { useAuth } from "./auth";
 import { useSmoothScroll } from "./motion";
 import { setScene } from "./scene/sceneStore";
 import logoOscuro from "./assets/logo-terra.png";
@@ -9,16 +11,17 @@ import logoOscuro from "./assets/logo-terra.png";
 // Enlaces del menú principal: el producto va primero y el análisis queda
 // detrás de "Cómo funciona", para que el agricultor llegue a lo útil sin rodeos.
 const MAIN_LINKS = [
-  { to: "/", label: "Inicio", end: true },
-  { to: "/producto/recomendar", label: "Recomendar" },
-  { to: "/producto/plan", label: "Planear" },
-  { to: "/analisis", label: "Análisis" },
+  { to: "/", key: "navHome", end: true },
+  { to: "/producto/recomendar", key: "navRecommend" },
+  { to: "/producto/plan", key: "navPlan" },
+  { to: "/analisis", key: "navAnalysis" },
+  { to: "/cuenta", key: "navAccount" },
 ];
 
 const ANALYSIS_LINKS = [
-  { to: "/analisis/resumen", label: "Resumen" },
-  { to: "/analisis/modelo", label: "Modelo" },
-  { to: "/analisis/regiones", label: "Regiones" },
+  { to: "/analisis/resumen", key: "navOverview" },
+  { to: "/analisis/modelo", key: "navModel" },
+  { to: "/analisis/regiones", key: "navRegions" },
 ];
 
 // Posición de la página en el menú: sirve para saber hacia qué lado "viaja" el contenido.
@@ -31,6 +34,8 @@ function tabPosition(pathname) {
 
 export default function Layout() {
   const { pathname } = useLocation();
+  const { lang, toggleLang, t } = useI18n();
+  const { user } = useAuth();
   const inAnalysis = pathname.startsWith("/analisis");
   const [menuOpen, setMenuOpen] = useState(false);
   const [healthy, setHealthy] = useState(null);
@@ -91,7 +96,7 @@ export default function Layout() {
             aria-controls="main-nav"
             onClick={() => setMenuOpen((open) => !open)}
           >
-            {menuOpen ? "Cerrar" : "Menú"}
+            {menuOpen ? t("menuClose") : t("menuOpen")}
           </button>
 
           <nav
@@ -100,20 +105,29 @@ export default function Layout() {
             className={`topnav ${menuOpen ? "open" : ""}`}
             aria-label="Navegación principal"
           >
-            {MAIN_LINKS.map(({ to, label, end }) => (
+            {MAIN_LINKS.map(({ to, key, end }) => (
               <NavLink key={to} to={to} end={end}>
-                {label}
+                {key === "navAccount" && user ? user.name.split(" ")[0] : t(key)}
               </NavLink>
             ))}
+            <button
+              type="button"
+              className="preset"
+              onClick={toggleLang}
+              aria-label={lang === "es" ? "Switch language to English" : "Cambiar idioma a Español"}
+              style={{ marginLeft: 8, padding: "4px 10px", fontSize: "0.78rem" }}
+            >
+              {lang === "es" ? "EN" : "ES"}
+            </button>
           </nav>
         </div>
 
         {inAnalysis && (
-          <nav ref={subnavRef} className="subnav" aria-label="Panel de análisis">
-            <span className="subnav-title">Panel de análisis</span>
-            {ANALYSIS_LINKS.map(({ to, label }) => (
+          <nav ref={subnavRef} className="subnav" aria-label={t("analysisPanel")}>
+            <span className="subnav-title">{t("analysisPanel")}</span>
+            {ANALYSIS_LINKS.map(({ to, key }) => (
               <NavLink key={to} to={to}>
-                {label}
+                {t(key)}
               </NavLink>
             ))}
           </nav>
@@ -139,15 +153,12 @@ export default function Layout() {
         <span className="health">
           <i className={`dot ${healthy === false ? "offline" : ""}`} />
           {healthy === null
-            ? "Conectando…"
+            ? t("connecting")
             : healthy
-            ? "Terra disponible"
-            : "No se pudo conectar"}
+            ? t("available")
+            : t("offline")}
         </span>
-        <span>
-          Estimaciones basadas en datos de referencia. No son una garantía de
-          cosecha ni de ganancia.
-        </span>
+        <span>{t("disclaimer")}</span>
         <span className="credit">
           Finca renderizada en Blender. Tractor «Tractor» de{" "}
           <a href="https://sketchfab.com/3d-models/tractor-278fc1e0516c401eba358d3aa2e55635" target="_blank" rel="noreferrer">

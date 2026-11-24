@@ -5,6 +5,7 @@ import { displayDatasetLabel, shortRegionTag } from "../ui";
 import { ScrollTrigger, prefersReducedMotion } from "../motion";
 import { PARCEL_STATIONS, REGION_COLORS } from "./fieldLayout";
 import { useSceneValue } from "./sceneStore";
+import { numberLocale, useI18n } from "../i18n";
 
 // Entrada de la portada al estilo de las páginas de producto: una sección que se queda fija
 // mientras el scroll recorre los fotogramas reales del render (public/field/intro), sin
@@ -59,12 +60,9 @@ class FrameStore {
       // Un servidor de SPA devuelve index.html con 200 si el archivo no existe: solo vale imagen.
       if (response.ok && response.headers.get("content-type")?.startsWith("image/")) {
         this.blobs[quality][index] = await response.blob();
-        // Si ya había una versión ligera decodificada, se descarta para pintar la nítida.
-        const cached = this.bitmaps.get(index);
-        if (quality === "hq" && cached?.quality === "lq") {
-          cached.bitmap.close();
-          this.bitmaps.delete(index);
-        }
+        // La versión ligera ya decodificada se sigue pintando hasta que la nítida esté lista
+        // (bitmap() la sustituye); descartarla antes dejaba el fotograma en blanco y el recorrido
+        // se congelaba mientras se decodificaba.
         this.onChange();
       }
     } catch {
@@ -106,12 +104,14 @@ class FrameStore {
     await Promise.all(Array.from({ length: 3 }, hqWorker));
   }
 
-  nearestLoaded(index) {
-    for (let d = 0; d < this.count; d++) {
-      if (this.best(index - d)) return index - d;
-      if (this.best(index + d)) return index + d;
+  // Fotograma ya decodificado más cercano: es lo que se pinta mientras el exacto se decodifica,
+  // para que la imagen siga al scroll en vez de quedarse quieta.
+  nearestDecoded(index) {
+    for (let d = 1; d < this.count; d++) {
+      if (this.bitmaps.has(index - d)) return this.bitmaps.get(index - d).bitmap;
+      if (this.bitmaps.has(index + d)) return this.bitmaps.get(index + d).bitmap;
     }
-    return -1;
+    return null;
   }
 
   bitmap(index) {
@@ -119,8 +119,15 @@ class FrameStore {
     if (cached) {
       this.bitmaps.delete(index);
       this.bitmaps.set(index, cached); // LRU: el más reciente al final
+      // Llegó la versión nítida: se decodifica en segundo plano y la ligera sigue en pantalla.
+      if (cached.quality === "lq" && this.blobs.hq[index]) this.decode(index);
       return cached.bitmap;
     }
+    this.decode(index);
+    return null;
+  }
+
+  decode(index) {
     const source = this.best(index);
     if (source && !this.pending.has(index)) {
       this.pending.add(index);
@@ -170,13 +177,14 @@ const CAPTIONS = [
   { id: "cierre", from: 0.86, to: 1.01 },
 ];
 
-const percent = (value) => `${Number(value).toLocaleString("es-CO", { maximumFractionDigits: 1 })} %`;
+const percent = (value) => `${Number(value).toLocaleString(numberLocale(), { maximumFractionDigits: 1 })} %`;
 
 export default function IntroSequence({ onPickParcel }) {
   const sectionRef = useRef(null);
   const canvasRef = useRef(null);
   const overlayRef = useRef(null);
   const regions = useSceneValue((state) => state.regions);
+  const { tx } = useI18n();
   const regionsRef = useRef(regions);
   regionsRef.current = regions;
   const passingRef = useRef(null);
@@ -199,7 +207,9 @@ export default function IntroSequence({ onPickParcel }) {
     const frameIndex = () => (track ? Math.round(progress * (track.frames - 1)) : 0);
 
     const resize = () => {
-      const ratio = Math.min(window.devicePixelRatio || 1, 2);
+      // El render mide 1152 px de ancho: pasar de 1,5× solo añade píxeles que rellenar en cada
+      // fotograma (en una pantalla retina de 1440 px eran ~15 millones por dibujo) sin ganar detalle.
+      const ratio = Math.min(window.devicePixelRatio || 1, 1.5);
       view.width = canvas.clientWidth;
       view.height = canvas.clientHeight;
       canvas.width = Math.round(view.width * ratio);
@@ -251,17 +261,37 @@ export default function IntroSequence({ onPickParcel }) {
       animation = 0;
       if (!track) return;
       const index = frameIndex();
+      // Posición exacta entre dos fotogramas del render: con solo 84 fotogramas en todo el
+      // recorrido, cada uno ocupa ~40 px de scroll y el tractor avanzaba a saltos. Se funde el
+      // siguiente fotograma según la fracción, así la imagen se mueve con cada píxel de scroll.
+      const exact = progress * (track.frames - 1);
+      const base = Math.floor(exact);
+      const next = Math.min(base + 1, track.frames - 1);
+      const blend = Math.round((exact - base) * 24) / 24;
       const passingNow = parcelPassing(index);
       const active = hovered ?? passingNow;
-      const key = `${index}|${active}|${hovered}|${view.width}x${view.height}`;
+      const key = `${base}+${blend}|${active}|${hovered}|${view.width}x${view.height}`;
       if (key === drawnKey) return;
-      const bitmap = store.bitmap(index) || store.bitmap(store.nearestLoaded(index));
+      // Si el fotograma exacto aún se decodifica, se pinta el decodificado más cercano en lugar
+      // de no pintar nada (antes la imagen se congelaba hasta que terminaba la decodificación).
+      const exactBase = store.bitmap(base);
+      const bitmap = exactBase || store.nearestDecoded(base);
       if (!bitmap) return;
+      const blendWith = exactBase && blend > 0 && next !== base ? store.bitmap(next) : null;
       layout(index);
       context.drawImage(bitmap, view.offsetX, view.offsetY, view.drawnWidth, view.drawnHeight);
-      store.warm(index, direction);
+      if (blendWith) {
+        context.globalAlpha = blend;
+        context.drawImage(blendWith, view.offsetX, view.offsetY, view.drawnWidth, view.drawnHeight);
+        context.globalAlpha = 1;
+      }
+      store.warm(base, direction);
       drawOverlay(index, active);
-      drawnKey = store.bitmaps.get(index)?.quality === "hq" ? key : `${key}|lq`;
+      // Solo cuenta como definitivo si se pintó el fotograma exacto, nítido y con su fundido;
+      // si no, se repinta en cuanto termine la decodificación pendiente.
+      const isHq = (i) => store.bitmaps.get(i)?.quality === "hq";
+      const complete = exactBase && isHq(base) && (blend === 0 || (blendWith && isHq(next)));
+      drawnKey = complete ? key : `${key}|partial`;
       if (passingNow !== passingRef.current) {
         passingRef.current = passingNow;
         setPassing(passingNow);
@@ -371,52 +401,52 @@ export default function IntroSequence({ onPickParcel }) {
   return (
     <section className="home-intro" ref={sectionRef} aria-labelledby="home-title">
       <div className="intro-stage">
-        <canvas ref={canvasRef} className="intro-canvas" role="img" aria-label="Recorrido de un tractor por la finca de Terra: cinco parcelas, una por ecorregión" />
+        <canvas ref={canvasRef} className="intro-canvas" role="img" aria-label={tx("Recorrido de un tractor por la finca de Terra: cinco parcelas, una por ecorregión", "A tractor rides through the Terra farm: five plots, one per ecoregion")} />
         <svg ref={overlayRef} className="intro-overlay" aria-hidden="true" />
         <div className="intro-shade" aria-hidden="true" />
 
         <div className="intro-copy intro-hero" data-caption="hero">
           <h1 id="home-title">
-            Cada suelo tiene una <span>posibilidad.</span>
+            {tx("Cada suelo tiene una", "Every soil has a")} <span>{tx("posibilidad.", "possibility.")}</span>
           </h1>
-          <p>Terra lee siete señales de tu suelo y tu clima, ubica tu parcela en una de cinco ecorregiones y te dice qué sembrar.</p>
+          <p>{tx("Terra lee siete señales de tu suelo y tu clima, ubica tu parcela en una de cinco ecorregiones y te dice qué sembrar.", "Terra reads seven signals from your soil and climate, places your plot in one of five ecoregions and tells you what to plant.")}</p>
           <div className="home-actions">
             <Link className="button cta" to="/producto/recomendar">
-              Ver qué sembrar
+              {tx("Ver qué sembrar", "See what to plant")}
             </Link>
             <Link className="button ghost" to="/producto/plan">
-              Planear mi siembra
+              {tx("Planear mi siembra", "Plan my planting")}
             </Link>
           </div>
           <p className="intro-cue" aria-hidden="true">
-            Desliza para recorrer la finca
+            {tx("Desliza para recorrer la finca", "Scroll to ride through the farm")}
           </p>
         </div>
 
         <div className="intro-copy intro-side" data-caption="senales">
-          <h2>Siete señales bajo tus pies.</h2>
-          <p>Nitrógeno, fósforo, potasio, temperatura, humedad, pH y lluvia. Con ellas, 12.784 muestras reales de Colombia se ordenan en cinco ecorregiones.</p>
+          <h2>{tx("Siete señales bajo tus pies.", "Seven signals beneath your feet.")}</h2>
+          <p>{tx("Nitrógeno, fósforo, potasio, temperatura, humedad, pH y lluvia. Con ellas, 12.784 muestras reales de Colombia se ordenan en cinco ecorregiones.", "Nitrogen, phosphorus, potassium, temperature, humidity, pH and rainfall. With them, 12,784 real samples from Colombia sort into five ecoregions.")}</p>
         </div>
 
         <div className="intro-copy intro-side intro-parcels" data-caption="parcelas" aria-live="polite">
-          <h2>Cinco parcelas, una por ecorregión.</h2>
+          <h2>{tx("Cinco parcelas, una por ecorregión.", "Five plots, one per ecoregion.")}</h2>
           {region ? (
             <p className="intro-parcel" style={{ "--region": REGION_COLORS[region.id] }}>
               <i aria-hidden="true" />
               <span>
-                <b>Ecorregión {region.id}</b>
-                {shortRegionTag(region.profile)} · {percent(region.share)} · líder: {displayDatasetLabel(region.topCrop).toLowerCase()}
+                <b>{tx("Ecorregión", "Ecoregion")} {region.id}</b>
+                {shortRegionTag(region.profile)} · {percent(region.share)} · {tx("líder", "leading")}: {displayDatasetLabel(region.topCrop).toLowerCase()}
               </span>
             </p>
           ) : (
-            <p className="intro-parcel">Cada parcela representa una ecorregión del modelo. Toca una para ver sus datos.</p>
+            <p className="intro-parcel">{tx("Cada parcela representa una ecorregión del modelo. Toca una para ver sus datos.", "Each plot stands for one ecoregion in the model. Tap one to see its data.")}</p>
           )}
         </div>
 
         <div className="intro-copy intro-close" data-caption="cierre">
-          <h2>El siguiente viaje empieza en tu parcela.</h2>
+          <h2>{tx("El siguiente viaje empieza en tu parcela.", "The next journey starts on your plot.")}</h2>
           <Link className="button cta" to="/producto/recomendar">
-            Describir mi parcela
+            {tx("Describir mi parcela", "Describe my plot")}
           </Link>
         </div>
       </div>

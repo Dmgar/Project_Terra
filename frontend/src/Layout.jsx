@@ -34,7 +34,7 @@ function tabPosition(pathname) {
 
 export default function Layout() {
   const { pathname } = useLocation();
-  const { lang, toggleLang, t } = useI18n();
+  const { lang, toggleLang, t, tx } = useI18n();
   const { user } = useAuth();
   const inAnalysis = pathname.startsWith("/analisis");
   const [menuOpen, setMenuOpen] = useState(false);
@@ -103,7 +103,7 @@ export default function Layout() {
             ref={topnavRef}
             id="main-nav"
             className={`topnav ${menuOpen ? "open" : ""}`}
-            aria-label="Navegación principal"
+            aria-label={tx("Navegación principal", "Main navigation")}
           >
             {MAIN_LINKS.map(({ to, key, end }) => (
               <NavLink key={to} to={to} end={end}>
@@ -160,7 +160,7 @@ export default function Layout() {
         </span>
         <span>{t("disclaimer")}</span>
         <span className="credit">
-          Finca renderizada en Blender. Tractor «Tractor» de{" "}
+          {tx("Finca renderizada en Blender. Tractor «Tractor» de", "Farm rendered in Blender. “Tractor” model by")}{" "}
           <a href="https://sketchfab.com/3d-models/tractor-278fc1e0516c401eba358d3aa2e55635" target="_blank" rel="noreferrer">
             le0tard
           </a>{" "}
@@ -168,7 +168,7 @@ export default function Layout() {
           <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">
             CC BY 4.0
           </a>
-          ); cielo, texturas y árboles de{" "}
+          ){tx("; cielo, texturas y árboles de", "; sky, textures and trees from")}{" "}
           <a href="https://polyhaven.com" target="_blank" rel="noreferrer">
             Poly Haven
           </a>{" "}

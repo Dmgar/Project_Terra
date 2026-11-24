@@ -3,9 +3,11 @@ import { displayDatasetLabel, labels, units, api, Header, State, useSlidingIndic
 import { REGION_COLORS } from "../scene/fieldLayout";
 import { focusRegion, useSceneValue } from "../scene/sceneStore";
 import { Meter, RangeBar, RegionStrip } from "./charts";
+import { numberLocale, useI18n } from "../i18n";
 
 function Scatter({ points = [] }) {
   const colors = REGION_COLORS;
+  const { tx } = useI18n();
 
   const [hoveredPoint, setHoveredPoint] = useState(null);
   // Ecorregión enfocada (por la leyenda o por el punto bajo el cursor): las demás se atenúan
@@ -155,9 +157,9 @@ function Scatter({ points = [] }) {
         <select
           value={filterCrop}
           onChange={(e) => setFilterCrop(e.target.value)}
-          aria-label="Filtrar por cultivo"
+          aria-label={tx("Filtrar por cultivo", "Filter by crop")}
         >
-          <option value="">Todos los cultivos</option>
+          <option value="">{tx("Todos los cultivos", "All crops")}</option>
           {crops.map((c) => (
             <option key={c} value={c}>
               {displayDatasetLabel(c)}
@@ -167,9 +169,9 @@ function Scatter({ points = [] }) {
         <select
           value={filterSoil}
           onChange={(e) => setFilterSoil(e.target.value)}
-          aria-label="Filtrar por suelo"
+          aria-label={tx("Filtrar por suelo", "Filter by soil")}
         >
-          <option value="">Todos los suelos</option>
+          <option value="">{tx("Todos los suelos", "All soils")}</option>
           {soils.map((s) => (
             <option key={s} value={s}>
               {displayDatasetLabel(s)}
@@ -180,7 +182,7 @@ function Scatter({ points = [] }) {
           type="button"
           className="button secondary"
           onClick={() => setZoom((z) => Math.min(5, +(z * 1.2).toFixed(2)))}
-          aria-label="Acercar"
+          aria-label={tx("Acercar", "Zoom in")}
         >
           +
         </button>
@@ -188,7 +190,7 @@ function Scatter({ points = [] }) {
           type="button"
           className="button secondary"
           onClick={() => setZoom((z) => Math.max(0.5, +(z / 1.2).toFixed(2)))}
-          aria-label="Alejar"
+          aria-label={tx("Alejar", "Zoom out")}
         >
           −
         </button>
@@ -196,12 +198,12 @@ function Scatter({ points = [] }) {
           type="button"
           className="button secondary"
           onClick={resetView}
-          aria-label="Restablecer vista"
+          aria-label={tx("Restablecer vista", "Reset view")}
         >
-          Restablecer vista
+          {tx("Restablecer vista", "Reset view")}
         </button>
         <span className="point-count">
-          {filteredPoints.length} de {points.length} puntos
+          {filteredPoints.length} {tx("de", "of")} {points.length} {tx("puntos", "points")}
         </span>
       </div>
 
@@ -209,7 +211,7 @@ function Scatter({ points = [] }) {
         <svg
           viewBox="0 0 700 380"
           role="img"
-          aria-label="Proyección UMAP interactiva: cada punto es una observación, coloreada por ecorregión"
+          aria-label={tx("Proyección UMAP interactiva: cada punto es una observación, coloreada por ecorregión", "Interactive UMAP projection: each point is one observation, colored by ecoregion")}
           onWheel={handleWheel}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
@@ -232,13 +234,13 @@ function Scatter({ points = [] }) {
             }}
           >
             <b>{displayDatasetLabel(hoveredPoint.crop)}</b>
-            <span>Suelo {displayDatasetLabel(hoveredPoint.soil).toLowerCase()}</span>
-            <span className="umap-tooltip-region">Ecorregión {hoveredPoint.cluster}</span>
+            <span>{tx(`Suelo ${displayDatasetLabel(hoveredPoint.soil).toLowerCase()}`, `${displayDatasetLabel(hoveredPoint.soil)} soil`)}</span>
+            <span className="umap-tooltip-region">{tx("Ecorregión", "Ecoregion")} {hoveredPoint.cluster}</span>
           </div>
         )}
       </div>
 
-      <div className="legend" role="group" aria-label="Enfocar una ecorregión">
+      <div className="legend" role="group" aria-label={tx("Enfocar una ecorregión", "Focus an ecoregion")}>
         {REGION_COLORS.map((color, id) => (
           <button
             key={id}
@@ -258,7 +260,7 @@ function Scatter({ points = [] }) {
             onClick={() => setFocus((current) => (current === id ? null : id))}
           >
             <i style={{ background: color }} />
-            Ecorregión {id}
+            {tx("Ecorregión", "Ecoregion")} {id}
           </button>
         ))}
       </div>
@@ -274,6 +276,7 @@ export default function Analysis() {
   const [tab, setTab] = useState("umap");
   const tabsRef = useRef(null);
   const regions = useSceneValue((state) => state.regions);
+  const { tx } = useI18n();
   // Las pestañas aparecen cuando llegan los datos: el indicador se vuelve a medir entonces.
   useSlidingIndicator(tabsRef, `${tab}-${Boolean(data)}`);
 
@@ -292,10 +295,10 @@ export default function Analysis() {
   }, []);
 
   const tabs = [
-    ["umap", "Proyección UMAP"],
-    ["benchmark", "Comparativa de modelos"],
-    ["features", "Variables ambientales"],
-    ["clusters", "Comparación de grupos"],
+    ["umap", tx("Proyección UMAP", "UMAP projection")],
+    ["benchmark", tx("Comparativa de modelos", "Model comparison")],
+    ["features", tx("Variables ambientales", "Environmental variables")],
+    ["clusters", tx("Comparación de grupos", "Group comparison")],
   ];
 
   return (
@@ -303,15 +306,18 @@ export default function Analysis() {
       <Header
         title={
           <>
-            Mide las<br />
-            <em>diferencias.</em>
+            {tx("Mide las", "Measure the")}<br />
+            <em>{tx("diferencias.", "differences.")}</em>
           </>
         }
-        description="La proyección UMAP y las variables que sostienen las cinco ecorregiones. Lo que enfoques aquí, la finca lo muestra."
+        description={tx(
+          "La proyección UMAP y las variables que sostienen las cinco ecorregiones. Lo que enfoques aquí, la finca lo muestra.",
+          "The UMAP projection and the variables behind the five ecoregions. Whatever you focus on here, the farm shows."
+        )}
         action={<RegionStrip regions={regions} />}
       />
       <State loading={!data && !error} error={error}>
-        <div ref={tabsRef} className="tabs" role="tablist" aria-label="Vistas de análisis">
+        <div ref={tabsRef} className="tabs" role="tablist" aria-label={tx("Vistas de análisis", "Analysis views")}>
           {tabs.map(([key, label]) => (
             <button
               key={key}
@@ -349,24 +355,36 @@ export default function Analysis() {
         {tab === "umap" && (
           <div className="grid-2">
             <div className="panel" style={{ gridColumn: "span 2" }}>
-              <h3>Proyección UMAP</h3>
+              <h3>{tx("Proyección UMAP", "UMAP projection")}</h3>
               <p className="panel-caption">
-                Una vista bidimensional de la similitud ambiental en siete
-                dimensiones. Cada punto es una observación.
+                {tx(
+                  "Una vista bidimensional de la similitud ambiental en siete dimensiones. Cada punto es una observación.",
+                  "A two-dimensional view of environmental similarity across seven dimensions. Each point is one observation."
+                )}
               </p>
               {/* La leyenda ya la dibuja <Scatter>; estaba repetida aquí. */}
               <Scatter points={data?.points} />
               <div className="note">
-                <strong>¿Por qué UMAP 2D + K-Means 7D?</strong> UMAP proyecta las 7 variables agroclimáticas en dos
-                dimensiones preservando vecindades no lineales mejor que PCA lineal, mientras que la asignación de
-                ecorregiones (<code>K-Means K=5</code> + <code>GMM</code>) ocurre en el espacio escalado 7D sin
-                distorsión dimensional.
+                <strong>{tx("¿Por qué UMAP 2D + K-Means 7D?", "Why UMAP 2D + K-Means 7D?")}</strong>{" "}
+                {tx(
+                  "UMAP proyecta las 7 variables agroclimáticas en dos dimensiones preservando vecindades no lineales mejor que PCA lineal, mientras que la asignación de ecorregiones",
+                  "UMAP projects the 7 agroclimatic variables into two dimensions, preserving non-linear neighborhoods better than linear PCA, while the ecoregion assignment"
+                )}{" "}
+                (<code>K-Means K=5</code> + <code>GMM</code>){" "}
+                {tx("ocurre en el espacio escalado 7D sin distorsión dimensional.", "happens in the scaled 7D space with no dimensional distortion.")}
               </div>
               <div className="note">
-                <strong>Origen real de los datos:</strong> {overview?.metrics?.samples?.toLocaleString("es-CO") || "12.784"}{" "}
-                registros agroclimáticos reales de Colombia (AGROSAVIA + UPRA EVA + DANE DIVIPOLA + NASA POWER). Revisa
-                la pestaña <em>Comparativa de modelos</em> para ver por qué este pipeline superó a SCARF Contrastive
-                Learning y al dataset sintético inicial.
+                <strong>{tx("Origen real de los datos:", "Real data source:")}</strong>{" "}
+                {(overview?.metrics?.samples ?? 12784).toLocaleString(numberLocale())}{" "}
+                {tx(
+                  "registros agroclimáticos reales de Colombia (AGROSAVIA + UPRA EVA + DANE DIVIPOLA + NASA POWER). Revisa la pestaña",
+                  "real agroclimatic records from Colombia (AGROSAVIA + UPRA EVA + DANE DIVIPOLA + NASA POWER). Check the"
+                )}{" "}
+                <em>{tx("Comparativa de modelos", "Model comparison")}</em>{" "}
+                {tx(
+                  "para ver por qué este pipeline superó a SCARF Contrastive Learning y al dataset sintético inicial.",
+                  "tab to see why this pipeline beat SCARF contrastive learning and the original synthetic dataset."
+                )}
               </div>
             </div>
           </div>
@@ -374,20 +392,22 @@ export default function Analysis() {
 
         {tab === "benchmark" && (
           <div className="panel">
-            <h3>Comparativa de modelos (K = 5) y elección de UMAP 2D</h3>
+            <h3>{tx("Comparativa de modelos (K = 5) y elección de UMAP 2D", "Model comparison (K = 5) and the choice of UMAP 2D")}</h3>
             <p className="panel-caption">
-              Evaluación reproducible sobre los mismos 6 cultivos: por qué elegimos <b>StandardScaler 7D + K-Means</b>{" "}
-              para inferencia y <b>UMAP 2D</b> para visualización frente a <b>SCARF Contrastive Learning</b>,{" "}
-              <b>PowerTransformer</b> y el baseline sintético.
+              {tx("Evaluación reproducible sobre los mismos 6 cultivos: por qué elegimos", "Reproducible evaluation on the same 6 crops: why we chose")}{" "}
+              <b>StandardScaler 7D + K-Means</b>{" "}
+              {tx("para inferencia y", "for inference and")} <b>UMAP 2D</b>{" "}
+              {tx("para visualización frente a", "for visualization over")} <b>SCARF Contrastive Learning</b>,{" "}
+              <b>PowerTransformer</b> {tx("y el baseline sintético.", "and the synthetic baseline.")}
             </p>
             <div style={{ overflowX: "auto", marginTop: 14 }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.9rem" }}>
                 <thead>
                   <tr style={{ borderBottom: "1px solid #d7dfd5", textAlign: "left" }}>
                     <th style={{ padding: "8px 10px" }}>Pipeline (K=5)</th>
-                    <th style={{ padding: "8px 10px" }}>Silueta ↑</th>
+                    <th style={{ padding: "8px 10px" }}>{tx("Silueta", "Silhouette")} ↑</th>
                     <th style={{ padding: "8px 10px" }}>Davies-Bouldin ↓</th>
-                    <th style={{ padding: "8px 10px" }}>Pureza ↑</th>
+                    <th style={{ padding: "8px 10px" }}>{tx("Pureza", "Purity")} ↑</th>
                     <th style={{ padding: "8px 10px" }}>ARI ↑</th>
                     <th style={{ padding: "8px 10px" }}>NMI ↑</th>
                   </tr>
@@ -405,7 +425,7 @@ export default function Analysis() {
                         }}
                       >
                         <td style={{ padding: "8px 10px" }}>
-                          {row.pipeline} {isWinner ? "· En producción" : ""}
+                          {row.pipeline} {isWinner ? tx("· En producción", "· In production") : ""}
                         </td>
                         <td style={{ padding: "8px 10px" }}>{Number(row.km_sil).toFixed(4)}</td>
                         <td style={{ padding: "8px 10px" }}>{Number(row.km_db).toFixed(4)}</td>
@@ -419,23 +439,38 @@ export default function Analysis() {
               </table>
             </div>
             <div className="note" style={{ marginTop: 18 }}>
-              <strong>Por qué descartamos Contrastive Learning (SCARF) en producción y mantenemos 7D + UMAP 2D:</strong>
+              <strong>
+                {tx(
+                  "Por qué descartamos Contrastive Learning (SCARF) en producción y mantenemos 7D + UMAP 2D:",
+                  "Why we left contrastive learning (SCARF) out of production and kept 7D + UMAP 2D:"
+                )}
+              </strong>
               <ul style={{ marginTop: 8, paddingLeft: 18 }}>
                 <li>
-                  <strong>Señal real vs. sintética:</strong> Al migrar a datos reales de Colombia, la información mutua
-                  total <em>I(X; Crop)</em> pasó de <code>0.0039</code> a <code>3.2178</code> y la pureza subió de{" "}
-                  <code>17.5 %</code> a <code>55.7 %</code>.
+                  <strong>{tx("Señal real vs. sintética:", "Real vs. synthetic signal:")}</strong>{" "}
+                  {tx("Al migrar a datos reales de Colombia, la información mutua total", "Moving to real data from Colombia, the total mutual information")}{" "}
+                  <em>I(X; Crop)</em> {tx("pasó de", "went from")} <code>0.0039</code> {tx("a", "to")} <code>3.2178</code>{" "}
+                  {tx("y la pureza subió de", "and purity rose from")} <code>17.5 %</code> {tx("a", "to")} <code>55.7 %</code>.
                 </li>
                 <li>
-                  <strong>7D clásico supera a SCARF en baja dimensión:</strong> Con 7 variables directamente informativas,
-                  la pérdida InfoNCE de SCARF dispersa las instancias sobre la hiperesfera (ARI <code>0.0859</code>,
-                  Silueta <code>0.2006</code>), mientras que <code>StandardScaler 7D + K-Means</code> logra la mejor
-                  separación geométrica (Silueta <code>0.2402</code>, Davies-Bouldin <code>1.3536</code>, ARI{" "}
-                  <code>0.2698</code>) y mantiene Z-scores exactos para el filtro OOD.
+                  <strong>{tx("7D clásico supera a SCARF en baja dimensión:", "Classic 7D beats SCARF in low dimensions:")}</strong>{" "}
+                  {tx(
+                    "Con 7 variables directamente informativas, la pérdida InfoNCE de SCARF dispersa las instancias sobre la hiperesfera",
+                    "With 7 directly informative variables, SCARF's InfoNCE loss spreads the instances across the hypersphere"
+                  )}{" "}
+                  (ARI <code>0.0859</code>, {tx("Silueta", "Silhouette")} <code>0.2006</code>),{" "}
+                  {tx("mientras que", "while")} <code>StandardScaler 7D + K-Means</code>{" "}
+                  {tx("logra la mejor separación geométrica", "achieves the best geometric separation")} ({tx("Silueta", "Silhouette")}{" "}
+                  <code>0.2402</code>, Davies-Bouldin <code>1.3536</code>, ARI <code>0.2698</code>){" "}
+                  {tx("y mantiene Z-scores exactos para el filtro OOD.", "and keeps exact z-scores for the OOD filter.")}
                 </li>
                 <li>
-                  <strong>Rol de UMAP 2D:</strong> UMAP comprime ese espacio 7D a 2D para explorar vecindades locales y
-                  transiciones entre pisos térmicos sin contaminar la predicción canónica de <code>/api/recommend</code>.
+                  <strong>{tx("Rol de UMAP 2D:", "Role of UMAP 2D:")}</strong>{" "}
+                  {tx(
+                    "UMAP comprime ese espacio 7D a 2D para explorar vecindades locales y transiciones entre pisos térmicos sin contaminar la predicción canónica de",
+                    "UMAP compresses that 7D space to 2D to explore local neighborhoods and transitions between altitude bands without affecting the canonical prediction of"
+                  )}{" "}
+                  <code>/api/recommend</code>.
                 </li>
               </ul>
             </div>
@@ -445,24 +480,24 @@ export default function Analysis() {
         {tab === "features" && (
           <div className="grid-2">
             <div className="panel">
-              <h3>Distribuciones ambientales</h3>
+              <h3>{tx("Distribuciones ambientales", "Environmental distributions")}</h3>
               <p className="panel-caption">
-                Media y extensión observada en unidades originales.
+                {tx("Media y extensión observada en unidades originales.", "Mean and observed range in original units.")}
               </p>
               {(overview?.featureStats || []).map((f, i) => (
                 <RangeBar key={f.feature} stat={f} label={labels[f.feature] || f.feature} unit={units[f.feature] || ""} delay={i * 60} />
               ))}
             </div>
             <div className="panel">
-              <h3>Distribución de cultivos</h3>
+              <h3>{tx("Distribución de cultivos", "Crop distribution")}</h3>
               <p className="panel-caption">
-                Las etiquetas de referencia junto a las señales del modelo.
+                {tx("Las etiquetas de referencia junto a las señales del modelo.", "The reference labels next to the model's signals.")}
               </p>
               {(overview?.cropDistribution || []).map((x, i) => (
                 <Meter
                   key={x.name}
                   label={displayDatasetLabel(x.name)}
-                  detail={`${Number(x.share).toLocaleString("es-CO", { maximumFractionDigits: 1 })} %`}
+                  detail={`${Number(x.share).toLocaleString(numberLocale(), { maximumFractionDigits: 1 })} %`}
                   value={x.share / Math.max(...overview.cropDistribution.map((c) => c.share))}
                   color="var(--field-forest)"
                   delay={i * 60}
@@ -474,17 +509,17 @@ export default function Analysis() {
 
         {tab === "clusters" && (
           <div className="panel">
-            <h3>Distribución de ecorregiones</h3>
+            <h3>{tx("Distribución de ecorregiones", "Ecoregion distribution")}</h3>
             <p className="panel-caption">
-              Proporción de la muestra en cada ecorregión. Pasa por una para verla en la finca.
+              {tx("Proporción de la muestra en cada ecorregión. Pasa por una para verla en la finca.", "Share of the sample in each ecoregion. Hover over one to see it on the farm.")}
             </p>
             {[...(overview?.clusterDistribution || [])]
               .sort((x, y) => Number(x.name) - Number(y.name))
               .map((x, i, all) => (
                 <div key={x.name} className="meter-link" onMouseEnter={() => focusRegion(Number(x.name))}>
                   <Meter
-                    label={`Ecorregión ${x.name}`}
-                    detail={`${Number(x.share).toLocaleString("es-CO", { maximumFractionDigits: 1 })} % · ${Number(x.value).toLocaleString("es-CO")} muestras`}
+                    label={`${tx("Ecorregión", "Ecoregion")} ${x.name}`}
+                    detail={`${Number(x.share).toLocaleString(numberLocale(), { maximumFractionDigits: 1 })} % · ${Number(x.value).toLocaleString(numberLocale())} ${tx("muestras", "samples")}`}
                     value={x.share / Math.max(...all.map((c) => c.share))}
                     color={REGION_COLORS[Number(x.name)]}
                     delay={i * 60}

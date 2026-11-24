@@ -4,6 +4,7 @@ import { displayDatasetLabel, shortRegionTag } from "../ui";
 import { prefersReducedMotion } from "../motion";
 import { REGION_COLORS } from "../scene/fieldLayout";
 import { focusRegion, useSceneValue } from "../scene/sceneStore";
+import { numberLocale, tr, useI18n } from "../i18n";
 
 // Piezas de gráfico del panel de análisis. Todas leen datos reales de la API y se animan una sola
 // vez al entrar en pantalla (transform/opacidad, nada que fuerce layout), sin animar con
@@ -29,7 +30,7 @@ export function useInView(options = { threshold: 0.25 }) {
 }
 
 // Número que cuenta hasta su valor al aparecer.
-export function CountUp({ value, format = (n) => Math.round(n).toLocaleString("es-CO") }) {
+export function CountUp({ value, format = (n) => Math.round(n).toLocaleString(numberLocale()) }) {
   const [ref, inView] = useInView();
   const [shown, setShown] = useState(0);
   useEffect(() => {
@@ -73,11 +74,14 @@ export function RangeBar({ stat, unit, label, marker, markerColor, delay = 0 }) 
   const [ref, inView] = useInView();
   const span = stat.max - stat.min || 1;
   const at = (value) => Math.min(100, Math.max(0, ((value - stat.min) / span) * 100));
-  const fmt = (value) => Number(value).toLocaleString("es-CO", { maximumFractionDigits: 1 });
+  const fmt = (value) => Number(value).toLocaleString(numberLocale(), { maximumFractionDigits: 1 });
   return (
     <div className={`range-bar ${inView ? "is-in" : ""}`} ref={ref} style={{ "--d": `${delay}ms` }}>
       <b className="range-label">{label}</b>
-      <div className="range-track" role="img" aria-label={`${label}: de ${fmt(stat.min)} a ${fmt(stat.max)} ${unit}, media ${fmt(stat.mean)}${marker != null ? `, esta ecorregión ${fmt(marker)}` : ""}`}>
+      <div className="range-track" role="img" aria-label={tr(
+          `${label}: de ${fmt(stat.min)} a ${fmt(stat.max)} ${unit}, media ${fmt(stat.mean)}${marker != null ? `, esta ecorregión ${fmt(marker)}` : ""}`,
+          `${label}: from ${fmt(stat.min)} to ${fmt(stat.max)} ${unit}, mean ${fmt(stat.mean)}${marker != null ? `, this ecoregion ${fmt(marker)}` : ""}`
+        )}>
         <span className="range-band" style={{ left: `${at(stat.mean - stat.std)}%`, right: `${100 - at(stat.mean + stat.std)}%` }} />
         <span className="range-mean" style={{ left: `${at(stat.mean)}%` }} />
         {marker != null && <span className="range-marker" style={{ left: `${at(marker)}%`, background: markerColor }} />}
@@ -93,10 +97,11 @@ export function RangeBar({ stat, unit, label, marker, markerColor, delay = 0 }) 
 // la cabecera: pasar por encima o elegir una muestra su parcela en la imagen del render.
 export function RegionStrip({ regions, selected, onSelect, caption }) {
   const highlight = useSceneValue((state) => state.highlight);
+  const { tx } = useI18n();
   if (!regions?.length) return null;
   const ordered = [...regions].sort((a, b) => a.id - b.id);
   return (
-    <div className="region-strip" role="group" aria-label="Ecorregiones: elige una para ver su parcela en la finca">
+    <div className="region-strip" role="group" aria-label={tx("Ecorregiones: elige una para ver su parcela en la finca", "Ecoregions: pick one to see its plot on the farm")}>
       <div className="region-strip-bar">
         {ordered.map((region) => {
           const active = (selected ?? highlight) === region.id;
@@ -114,12 +119,12 @@ export function RegionStrip({ regions, selected, onSelect, caption }) {
                 onSelect?.(region.id);
               }}
             >
-              <span className="seg-name">Ecorregión {region.id}</span>
+              <span className="seg-name">{tx("Ecorregión", "Ecoregion")} {region.id}</span>
               <span className="seg-short" aria-hidden="true">
                 {region.id}
               </span>
               <span className="seg-detail">
-                {shortRegionTag(region.profile) || `${Number(region.share).toLocaleString("es-CO", { maximumFractionDigits: 1 })} %`} · {displayDatasetLabel(region.topCrop).toLowerCase()}
+                {shortRegionTag(region.profile) || `${Number(region.share).toLocaleString(numberLocale(), { maximumFractionDigits: 1 })} %`} · {displayDatasetLabel(region.topCrop).toLowerCase()}
               </span>
             </button>
           );

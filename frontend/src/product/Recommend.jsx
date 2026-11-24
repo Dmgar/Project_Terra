@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { FEATURES, units, defaults, presets, ranges, displayDatasetLabel, describeRegion, api, Header, Icon } from "../ui";
-import { useI18n } from "../i18n";
+import { numberLocale, tr, useI18n } from "../i18n";
 import { useAuth } from "../auth";
 import { RadarChart } from "../RadarChart.jsx";
 import { REGION_COLORS } from "../scene/fieldLayout";
@@ -9,8 +9,15 @@ import { focusRegion } from "../scene/sceneStore";
 import { scrollToTop } from "../motion";
 import { Meter } from "../analysis/charts";
 
+// Etiquetas fijas que devuelve /api/recommend (el backend responde en español).
+const confidenceText = (label) =>
+  ({
+    "Perfil ambiental más cercano": tr("Perfil ambiental más cercano", "Closest environmental profile"),
+    "Fuera de rango típico": tr("Fuera de rango típico", "Outside the typical range"),
+  })[label] ?? label;
+
 export default function Recommend() {
-  const { t, featureLabel } = useI18n();
+  const { t, tx, featureLabel } = useI18n();
   const { user, saveParcel } = useAuth();
   // Desde "Regiones" o "Mis parcelas" se puede llegar con un perfil ya cargado.
   const incoming = useLocation().state?.values;
@@ -63,7 +70,7 @@ export default function Recommend() {
       .then((data) => {
         setResult(data);
         // La cabecera pasa a la parcela de la ecorregión que resultó.
-        focusRegion(data.cluster, `Parcela de la Ecorregión ${data.cluster}: la más parecida a la tuya`);
+        focusRegion(data.cluster, () => tr(`Parcela de la Ecorregión ${data.cluster}: la más parecida a la tuya`, `Ecoregion ${data.cluster} plot: the closest match to yours`));
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
@@ -80,7 +87,7 @@ export default function Recommend() {
         }
         description={t("recDesc")}
       />
-      <div className="presets" aria-label="Escenarios de ejemplo">
+      <div className="presets" aria-label={tx("Escenarios de ejemplo", "Sample scenarios")}>
         {Object.keys(presets).map((k, i) => {
           const presetLabel = t("presets")[i] || k;
           return (
@@ -125,7 +132,7 @@ export default function Recommend() {
                   }}
                 />
                 <input
-                  aria-label={`${featureLabel(k)} valor exacto`}
+                  aria-label={tx(`${featureLabel(k)} valor exacto`, `${featureLabel(k)} exact value`)}
                   type="number"
                   min={ranges[k][0]}
                   max={ranges[k][1]}
@@ -188,66 +195,68 @@ export default function Recommend() {
             <div className="result" style={{ "--region": REGION_COLORS[result.cluster] }}>
               <h2 className="result-region" style={{ "--region": REGION_COLORS[result.cluster] }}>
                 <i aria-hidden="true" />
-                Ecorregión {result.cluster}
+                {tx("Ecorregión", "Ecoregion")} {result.cluster}
               </h2>
               {/* Rasgos de la ecorregión según su perfil medio (describeRegion: húmedo/seco, pH, lluvia). */}
               <p className="result-traits">{describeRegion(result.cluster, result.centroidProfile).split(" · ")[1]}</p>
               <div className="confidence">
-                <b>{result.confidenceLabel}</b>
+                <b>{confidenceText(result.confidenceLabel)}</b>
                 <span>
-                  {result.sampleCount?.toLocaleString()} observaciones comparables ·{" "}
-                  {Number(result.share || 0).toFixed(1)}% de la muestra
+                  {result.sampleCount?.toLocaleString(numberLocale())} {tx("observaciones comparables", "comparable observations")} ·{" "}
+                  {Number(result.share || 0).toFixed(1)}% {tx("de la muestra", "of the sample")}
                 </span>
               </div>
               <div className="crop-result">
-                <h3>Cultivos en esta ecorregión</h3>
+                <h3>{tx("Cultivos en esta ecorregión", "Crops in this ecoregion")}</h3>
                 {(result.crops || []).map((c, i, all) => (
                   <Meter
                     key={c.name || c.crop || i}
                     label={displayDatasetLabel(c.name || c.crop)}
-                    detail={`${Number(c.share || 0).toLocaleString("es-CO", { maximumFractionDigits: 1 })} %`}
+                    detail={`${Number(c.share || 0).toLocaleString(numberLocale(), { maximumFractionDigits: 1 })} %`}
                     value={(c.share || 0) / Math.max(...all.map((x) => x.share || 0), 1)}
                     color={REGION_COLORS[result.cluster]}
                     delay={i * 60}
                   />
                 ))}
                 <p className="result-note">
-                  Distribución observada sobre muestras reales de Colombia (AGROSAVIA + NASA POWER). Usa este
-                  perfil como guía inicial y combínalo con el planificador económico.
+                  {tx(
+                    "Distribución observada sobre muestras reales de Colombia (AGROSAVIA + NASA POWER). Usa este perfil como guía inicial y combínalo con el planificador económico.",
+                    "Distribution observed in real samples from Colombia (AGROSAVIA + NASA POWER). Use this profile as a starting point and combine it with the economic planner."
+                  )}
                 </p>
               </div>
               <RadarChart
                 centroidProfile={result.normalizedCentroid}
                 userProfile={result.normalizedUser}
-                centroidLabel={`Región ${result.cluster}`}
-                userLabel="Tu parcela"
+                centroidLabel={tx(`Región ${result.cluster}`, `Region ${result.cluster}`)}
+                userLabel={tx("Tu parcela", "Your plot")}
               />
               {Array.isArray(result.gmmProbabilities) && result.gmmProbabilities.length > 0 && (
                 <div className="note">
-                  <strong>Afinidad probabilística (GMM)</strong>
+                  <strong>{tx("Afinidad probabilística (GMM)", "Probabilistic affinity (GMM)")}</strong>
                   <div className="gmm-list">
                     {result.gmmProbabilities.map((g) => (
                       <span key={g.cluster}>
-                        Región {g.cluster}: {(Number(g.probability) * 100).toFixed(1)}%
+                        {tx("Región", "Region")} {g.cluster}: {(Number(g.probability) * 100).toFixed(1)}%
                       </span>
                     ))}
                   </div>
                 </div>
               )}
               <p className="result-scene">
-                Arriba ves la parcela de la Ecorregión {result.cluster} en la finca.{" "}
+                {tx(`Arriba ves la parcela de la Ecorregión ${result.cluster} en la finca.`, `Above you can see the Ecoregion ${result.cluster} plot on the farm.`)}{" "}
                 <button type="button" className="button ghost" onClick={scrollToTop}>
-                  Ver la parcela
+                  {tx("Ver la parcela", "See the plot")}
                 </button>
               </p>
               <p style={{ marginTop: 18 }}>
                 <Link className="hero-link-dark" to="/analisis/regiones">
-                  ¿Por qué esta región? Ver cómo se formó <Icon />
+                  {tx("¿Por qué esta región? Ver cómo se formó", "Why this region? See how it was formed")} <Icon />
                 </Link>
               </p>
               {Array.isArray(result.advice) && result.advice.length > 0 && (
                 <div className="note" style={{ marginTop: 22 }}>
-                  <strong>Lectura de manejo</strong>
+                  <strong>{tx("Lectura de manejo", "Management notes")}</strong>
                   <ul>
                     {result.advice.map((item, i) => (
                       <li key={i}>{item}</li>
@@ -259,9 +268,11 @@ export default function Recommend() {
           ) : (
             <div className="panel result-empty">
               <div>
-                <strong>Tu recomendación aparecerá aquí</strong>
-                Ajusta los controles o elige un escenario. Después podrás ver la
-                ecorregión más cercana.
+                <strong>{tx("Tu recomendación aparecerá aquí", "Your recommendation will appear here")}</strong>
+                {tx(
+                  "Ajusta los controles o elige un escenario. Después podrás ver la ecorregión más cercana.",
+                  "Adjust the controls or pick a scenario. Then you'll see the closest ecoregion."
+                )}
               </div>
             </div>
           )}

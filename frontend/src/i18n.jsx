@@ -146,11 +146,23 @@ export const FEATURE_LABELS_I18N = {
   },
 };
 
+// Idioma activo para el código que no es un componente (formateadores, descripciones de región,
+// pies de imagen). El proveedor lo actualiza en cada render, antes de pintar a sus hijos.
+let currentLang = "es";
+
+// Texto en el idioma activo, escrito junto a su traducción: tr("Hola", "Hello").
+// Los componentes usan `tx` de useI18n() para volver a pintarse al cambiar de idioma.
+export const tr = (es, en) => (currentLang === "en" ? en : es);
+
+// Formato de números y fechas acorde al idioma (12.784 en español, 12,784 en inglés).
+export const numberLocale = () => (currentLang === "en" ? "en-US" : "es-CO");
+
 const LanguageContext = createContext({
   lang: "es",
   setLang: () => {},
   toggleLang: () => {},
   t: (key) => TRANSLATIONS.es[key] || key,
+  tx: (es) => es,
   featureLabel: (f) => FEATURE_LABELS_I18N.es[f] || f,
 });
 
@@ -163,6 +175,7 @@ export function LanguageProvider({ children }) {
       return "es";
     }
   });
+  currentLang = lang;
 
   useEffect(() => {
     try {
@@ -177,11 +190,12 @@ export function LanguageProvider({ children }) {
 
   const toggleLang = () => setLang((prev) => (prev === "es" ? "en" : "es"));
   const t = (key) => TRANSLATIONS[lang]?.[key] ?? TRANSLATIONS.es[key] ?? key;
+  const tx = (es, en) => (lang === "en" ? en : es);
   const featureLabel = (f) =>
     FEATURE_LABELS_I18N[lang]?.[f] ?? FEATURE_LABELS_I18N.es[f] ?? f;
 
   return (
-    <LanguageContext.Provider value={{ lang, setLang, toggleLang, t, featureLabel }}>
+    <LanguageContext.Provider value={{ lang, setLang, toggleLang, t, tx, featureLabel }}>
       {children}
     </LanguageContext.Provider>
   );

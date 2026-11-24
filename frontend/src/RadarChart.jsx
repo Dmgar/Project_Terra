@@ -1,5 +1,6 @@
 import React from "react";
 import { FEATURES, labels } from "./ui.jsx";
+import { useI18n } from "./i18n";
 
 /**
  * Gráfico de radar SVG ligero para comparar perfiles ambientales normalizados [0, 1].
@@ -7,9 +8,10 @@ import { FEATURES, labels } from "./ui.jsx";
 export function RadarChart({
   centroidProfile,
   userProfile = null,
-  centroidLabel = "Centroide de región",
-  userLabel = "Tu parcela",
+  centroidLabel,
+  userLabel,
 }) {
+  const { tx } = useI18n();
   if (!centroidProfile) return null;
 
   const size = 280;
@@ -39,7 +41,7 @@ export function RadarChart({
         viewBox={`0 0 ${size} ${size}`}
         className="radar-svg"
         role="img"
-        aria-label="Comparación radial del perfil ambiental normalizado"
+        aria-label={tx("Comparación radial del perfil ambiental normalizado", "Radar comparison of the normalized environmental profile")}
       >
         {rings.map((ring) => (
           <polygon
@@ -73,7 +75,7 @@ export function RadarChart({
                 fontSize="10"
                 fill="var(--ink-soft, #4b5d4e)"
               >
-                {(labels[k] || k).replace(" del suelo", "")}
+                {(labels[k] || k).replace(" del suelo", "").replace("Soil ", "")}
               </text>
             </g>
           );
@@ -96,11 +98,11 @@ export function RadarChart({
       </svg>
       <div className="radar-legend">
         <span>
-          <i style={{ background: "#4f8a3a" }} /> {centroidLabel}
+          <i style={{ background: "#4f8a3a" }} /> {centroidLabel ?? tx("Centroide de región", "Region centroid")}
         </span>
         {userProfile && (
           <span>
-            <i style={{ background: "#b96b4b" }} /> {userLabel}
+            <i style={{ background: "#b96b4b" }} /> {userLabel ?? tx("Tu parcela", "Your plot")}
           </span>
         )}
       </div>

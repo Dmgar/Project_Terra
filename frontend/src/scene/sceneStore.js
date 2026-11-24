@@ -1,5 +1,7 @@
 import { useSyncExternalStore } from "react";
 
+import { tr } from "../i18n";
+
 // Estado compartido de la finca entre pantallas: las ecorregiones de la API y cuál está enfocada
 // (por la leyenda, un gráfico o un resultado). Un objeto mutable + suscriptores basta aquí: no
 // hace falta una librería de estado para tres campos.
@@ -33,7 +35,8 @@ export function subscribeScene(listener) {
 // Enfoca una ecorregión: la cabecera cambia a la imagen de su parcela en el render.
 export function focusRegion(id, caption) {
   if (id == null) return;
-  setScene({ highlight: id, caption: caption ?? `Parcela de la Ecorregión ${id}` });
+  // Pie por defecto como función: así sigue el idioma activo si se cambia después.
+  setScene({ highlight: id, caption: caption ?? (() => tr(`Parcela de la Ecorregión ${id}`, `Ecoregion ${id} plot`)) });
 }
 
 export function useSceneValue(select) {

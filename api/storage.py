@@ -13,7 +13,7 @@ import json
 import os
 import secrets
 import sqlite3
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -107,7 +107,7 @@ def create_session_token(user_id: int, email: str) -> str:
     payload = {
         "uid": int(user_id),
         "email": email,
-        "exp": int(datetime.now(timezone.utc).timestamp()) + SESSION_TTL_SECONDS,
+        "exp": int(datetime.now(UTC).timestamp()) + SESSION_TTL_SECONDS,
     }
     raw = json.dumps(payload, separators=(",", ":")).encode("utf-8")
     body = base64.urlsafe_b64encode(raw).decode("ascii").rstrip("=")
@@ -127,7 +127,7 @@ def verify_session_token(token: str) -> dict[str, Any] | None:
             return None
         padded = body + "=" * (-len(body) % 4)
         payload = json.loads(base64.urlsafe_b64decode(padded).decode("utf-8"))
-        if int(payload.get("exp", 0)) < int(datetime.now(timezone.utc).timestamp()):
+        if int(payload.get("exp", 0)) < int(datetime.now(UTC).timestamp()):
             return None
         return payload
     except (ValueError, TypeError, AttributeError):
@@ -137,7 +137,7 @@ def verify_session_token(token: str) -> dict[str, Any] | None:
 
 def create_user(email: str, name: str, password: str) -> dict[str, Any]:
     init_db()
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
     norm_email = email.strip().lower()
     pw_hash = hash_password(password)
     with _connect() as conn:
@@ -188,7 +188,7 @@ def list_parcels(user_id: int) -> list[dict[str, Any]]:
 
 def create_parcel(user_id: int, data: dict[str, Any]) -> dict[str, Any]:
     init_db()
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
     with _connect() as conn:
         cur = conn.execute(
             """

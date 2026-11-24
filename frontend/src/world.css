@@ -100,7 +100,7 @@ html {
 .terra-home { --bleed: calc(50% - 50vw); }
 .section-product .main:has(.terra-home) { padding-top: 0; }
 
-.home-intro { position: relative; height: 460vh; margin-inline: var(--bleed); background: #2d3a24 url("/scene-poster.jpg") top center / 100vw auto no-repeat; }
+.home-intro { position: relative; height: 340vh; margin-inline: var(--bleed); background: #2d3a24 url("/scene-poster.jpg") top center / 100vw auto no-repeat; }
 .intro-stage { position: sticky; top: 0; height: 100svh; overflow: hidden; }
 .intro-canvas, .intro-overlay { position: absolute; inset: 0; width: 100%; height: 100%; }
 .intro-canvas { opacity: 0; transition: opacity 0.8s var(--field-ease); }
@@ -251,7 +251,7 @@ html {
   .explorer-body { grid-template-columns: 1fr; }
   .action-grid { grid-template-columns: 1fr; }
   .terra-home .steps { grid-template-columns: 1fr; }
-  .home-intro { height: 380vh; }
+  .home-intro { height: 300vh; }
   .intro-shade { background: linear-gradient(0deg, rgba(14, 26, 16, 0.72) 0%, rgba(14, 26, 16, 0.2) 55%, rgba(14, 26, 16, 0.35) 100%); }
   .intro-hero { bottom: 10vh; }
   .intro-copy { right: var(--gutter); }

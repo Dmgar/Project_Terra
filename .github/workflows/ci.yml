@@ -87,7 +87,9 @@ jobs:
           python-version: "3.12"
 
       - name: Install Python deps
-        run: pip install ruff
+        # Versión fija: cada release de ruff activa reglas nuevas y rompía el CI sin cambios de código.
+        # Mantener sincronizada con requirements-dev.txt.
+        run: pip install ruff==0.17.6
 
       - name: Ruff lint
         run: ruff check api/ src/ tests/ --output-format=github

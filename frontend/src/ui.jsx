@@ -2,6 +2,7 @@ import React, { useLayoutEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { parcelStill, routeStill } from "./scene/fieldLayout";
 import { useSceneValue } from "./scene/sceneStore";
+import { tr, useI18n } from "./i18n";
 
 export const FEATURES = [
   "Nitrogen",
@@ -13,14 +14,15 @@ export const FEATURES = [
   "Rainfall",
 ];
 
+// Getters: cada lectura devuelve el nombre en el idioma activo.
 export const labels = {
-  Nitrogen: "Nitrógeno",
-  Phosphorus: "Fósforo",
-  Potassium: "Potasio",
-  Temperature: "Temperatura",
-  Humidity: "Humedad",
-  pH_Value: "pH del suelo",
-  Rainfall: "Precipitación",
+  get Nitrogen() { return tr("Nitrógeno", "Nitrogen"); },
+  get Phosphorus() { return tr("Fósforo", "Phosphorus"); },
+  get Potassium() { return tr("Potasio", "Potassium"); },
+  get Temperature() { return tr("Temperatura", "Temperature"); },
+  get Humidity() { return tr("Humedad", "Humidity"); },
+  get pH_Value() { return tr("pH del suelo", "Soil pH"); },
+  get Rainfall() { return tr("Precipitación", "Rainfall"); },
 };
 
 export const units = {
@@ -53,19 +55,20 @@ export function shortRegionTag(profile) {
   const k = Number(profile.Potassium);
 
   if (temp < 18) {
-    if (ph < 5.6) return n >= 150 ? "Frío ácido · alto N" : "Frío ácido";
-    return p >= 80 || k >= 250 ? "Frío neutro · alto P/K" : "Frío neutro";
+    if (ph < 5.6) return n >= 150 ? tr("Frío ácido · alto N", "Cool acidic · high N") : tr("Frío ácido", "Cool acidic");
+    return p >= 80 || k >= 250 ? tr("Frío neutro · alto P/K", "Cool neutral · high P/K") : tr("Frío neutro", "Cool neutral");
   }
   if (temp >= 22) {
-    if (rain >= 160) return ph < 5.6 ? "Trópico húmedo ácido" : "Trópico húmedo";
-    if (rain < 100) return ph < 5.6 ? "Cálido seco ácido" : "Cálido seco · pH neutro";
-    return ph < 5.6 ? "Cálido ácido" : "Cálido neutro";
+    if (rain >= 160) return ph < 5.6 ? tr("Trópico húmedo ácido", "Humid tropics, acidic") : tr("Trópico húmedo", "Humid tropics");
+    if (rain < 100) return ph < 5.6 ? tr("Cálido seco ácido", "Warm dry acidic") : tr("Cálido seco · pH neutro", "Warm dry · neutral pH");
+    return ph < 5.6 ? tr("Cálido ácido", "Warm acidic") : tr("Cálido neutro", "Warm neutral");
   }
-  return ph < 5.6 ? "Templado ácido" : "Templado · pH neutro";
+  return ph < 5.6 ? tr("Templado ácido", "Temperate acidic") : tr("Templado · pH neutro", "Temperate · neutral pH");
 }
 
 export function describeRegion(id, profile) {
-  if (!profile) return `Región ${id}`;
+  const region = tr("Región", "Region");
+  if (!profile) return `${region} ${id}`;
   const traits = [];
   const temp = Number(profile.Temperature);
   const ph = Number(profile.pH_Value);
@@ -74,24 +77,24 @@ export function describeRegion(id, profile) {
   const p = Number(profile.Phosphorus);
   const k = Number(profile.Potassium);
 
-  if (temp < 18) traits.push("Clima frío");
-  else if (temp >= 22) traits.push("Clima cálido");
-  else traits.push("Clima templado");
+  if (temp < 18) traits.push(tr("Clima frío", "Cool climate"));
+  else if (temp >= 22) traits.push(tr("Clima cálido", "Warm climate"));
+  else traits.push(tr("Clima templado", "Temperate climate"));
 
-  if (ph < 5.6) traits.push("pH ácido");
-  else if (ph > 6.8) traits.push("pH alcalino");
-  else traits.push("pH neutro");
+  if (ph < 5.6) traits.push(tr("pH ácido", "acidic pH"));
+  else if (ph > 6.8) traits.push(tr("pH alcalino", "alkaline pH"));
+  else traits.push(tr("pH neutro", "neutral pH"));
 
-  if (rain >= 160) traits.push("lluvia alta");
-  else if (rain < 100) traits.push("lluvia baja");
-  else if (p >= 80 || k >= 250) traits.push("alto P y K");
-  else if (n >= 150) traits.push("alto N/MO");
-  else traits.push("lluvia media");
+  if (rain >= 160) traits.push(tr("lluvia alta", "high rainfall"));
+  else if (rain < 100) traits.push(tr("lluvia baja", "low rainfall"));
+  else if (p >= 80 || k >= 250) traits.push(tr("alto P y K", "high P and K"));
+  else if (n >= 150) traits.push(tr("alto N/MO", "high N/OM"));
+  else traits.push(tr("lluvia media", "moderate rainfall"));
 
-  return `Región ${id} · ${traits.join(", ")}`;
+  return `${region} ${id} · ${traits.join(", ")}`;
 }
 
-export function formatApiDetail(detail, fallback = "No se pudo procesar la solicitud.") {
+export function formatApiDetail(detail, fallback = tr("No se pudo procesar la solicitud.", "The request could not be processed.")) {
   if (!detail) return fallback;
   if (typeof detail === "string") return detail;
   if (Array.isArray(detail)) {
@@ -100,7 +103,7 @@ export function formatApiDetail(detail, fallback = "No se pudo procesar la solic
         if (typeof item === "string") return item;
         if (item && typeof item === "object") {
           const field = Array.isArray(item.loc) ? item.loc.slice(1).join(".") : "";
-          return field ? `${field}: ${item.msg || "valor inválido"}` : item.msg || JSON.stringify(item);
+          return field ? `${field}: ${item.msg || tr("valor inválido", "invalid value")}` : item.msg || JSON.stringify(item);
         }
         return String(item);
       })
@@ -152,7 +155,8 @@ export const ranges = {
   Rainfall: [20, 350],
 };
 
-export const datasetLabels = {
+// Cultivos y suelos del dataset (sus nombres originales están en inglés).
+const datasetLabelsEs = {
   Wheat: "Trigo",
   Potato: "Papa",
   Maize: "Maíz",
@@ -166,6 +170,10 @@ export const datasetLabels = {
   Peaty: "Turboso",
   Loamy: "Franco",
 };
+const datasetLabelsEn = { Silt: "Silty", Clay: "Clay", Saline: "Saline", Sandy: "Sandy", Peaty: "Peaty", Loamy: "Loamy" };
+export const datasetLabels = new Proxy(datasetLabelsEs, {
+  get: (target, key) => (target[key] ? tr(target[key], datasetLabelsEn[key] ?? key) : undefined),
+});
 
 export const displayDatasetLabel = (value) => datasetLabels[value] || value;
 
@@ -184,7 +192,7 @@ export async function api(endpoint, options) {
     ...options,
   });
   if (!response.ok) {
-    throw new Error(`La solicitud no pudo completarse (${response.status}).`);
+    throw new Error(tr(`La solicitud no pudo completarse (${response.status}).`, `The request could not be completed (${response.status}).`));
   }
   return response.json();
 }
@@ -207,14 +215,14 @@ export class ErrorBoundary extends React.Component {
     if (this.state.hasError) {
       return (
         <div className="error-boundary">
-          <h2>Algo salió mal</h2>
-          <p>No pudimos cargar esta sección. Por favor, recarga la página.</p>
+          <h2>{tr("Algo salió mal", "Something went wrong")}</h2>
+          <p>{tr("No pudimos cargar esta sección. Por favor, recarga la página.", "We couldn't load this section. Please reload the page.")}</p>
           <button className="button secondary" onClick={() => window.location.reload()}>
-            Recargar página
+            {tr("Recargar página", "Reload page")}
           </button>
           {import.meta.env.DEV && (
             <details style={{ marginTop: 20, textAlign: "left" }}>
-              <summary>Detalles del error</summary>
+              <summary>{tr("Detalles del error", "Error details")}</summary>
               <pre style={{ overflow: "auto", maxHeight: 300 }}>
                 {this.state.error?.toString()}
               </pre>
@@ -232,11 +240,14 @@ export class ErrorBoundary extends React.Component {
 // ecorregión (un gráfico, un resultado), la imagen pasa a su parcela con un fundido.
 export function Header({ title, description, action }) {
   const { pathname } = useLocation();
+  useI18n(); // vuelve a pintar el pie de imagen al cambiar de idioma
   const highlight = useSceneValue((state) => state.highlight);
   const sceneCaption = useSceneValue((state) => state.caption);
   const route = routeStill(pathname);
   const src = highlight != null ? parcelStill(highlight) : route.src;
-  const caption = (highlight != null && sceneCaption) || route.caption;
+  // El pie puede llegar como función para que siga el idioma activo.
+  const focusedCaption = typeof sceneCaption === "function" ? sceneCaption() : sceneCaption;
+  const caption = (highlight != null && focusedCaption) || route.caption;
 
   return (
     <header className="page-banner">
@@ -295,22 +306,23 @@ export function Section({ title, sub, children, action }) {
 }
 
 export function State({ loading, error, empty, children }) {
+  const { tx } = useI18n();
   if (loading)
-    return <div className="panel loading">Leyendo registros de campo…</div>;
+    return <div className="panel loading">{tx("Leyendo registros de campo…", "Reading field records…")}</div>;
   if (error)
     return (
       <div className="error">
-        <b>No se pudo leer el registro de campo.</b>
+        <b>{tx("No se pudo leer el registro de campo.", "The field records could not be read.")}</b>
         <br />
         {error}
         <br />
         <button className="button secondary" onClick={() => window.location.reload()} style={{ marginTop: 12 }}>
-          Intentar de nuevo
+          {tx("Intentar de nuevo", "Try again")}
         </button>
       </div>
     );
   if (empty)
-    return <div className="panel result-empty">Aún no hay observaciones disponibles.</div>;
+    return <div className="panel result-empty">{tx("Aún no hay observaciones disponibles.", "No observations available yet.")}</div>;
   return children;
 }
 

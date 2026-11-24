@@ -43,19 +43,50 @@ export const defaults = {
   Rainfall: 130,
 };
 
+export function shortRegionTag(profile) {
+  if (!profile) return "";
+  const temp = Number(profile.Temperature);
+  const ph = Number(profile.pH_Value);
+  const rain = Number(profile.Rainfall);
+  const n = Number(profile.Nitrogen);
+  const p = Number(profile.Phosphorus);
+  const k = Number(profile.Potassium);
+
+  if (temp < 18) {
+    if (ph < 5.6) return n >= 150 ? "Frío ácido · alto N" : "Frío ácido";
+    return p >= 80 || k >= 250 ? "Frío neutro · alto P/K" : "Frío neutro";
+  }
+  if (temp >= 22) {
+    if (rain >= 160) return ph < 5.6 ? "Trópico húmedo ácido" : "Trópico húmedo";
+    if (rain < 100) return ph < 5.6 ? "Cálido seco ácido" : "Cálido seco · pH neutro";
+    return ph < 5.6 ? "Cálido ácido" : "Cálido neutro";
+  }
+  return ph < 5.6 ? "Templado ácido" : "Templado · pH neutro";
+}
+
 export function describeRegion(id, profile) {
   if (!profile) return `Región ${id}`;
   const traits = [];
-  if (profile.Humidity >= 65) traits.push("Húmedo");
-  else if (profile.Humidity <= 48) traits.push("Seco");
-  else traits.push("Humedad media");
+  const temp = Number(profile.Temperature);
+  const ph = Number(profile.pH_Value);
+  const rain = Number(profile.Rainfall);
+  const n = Number(profile.Nitrogen);
+  const p = Number(profile.Phosphorus);
+  const k = Number(profile.Potassium);
 
-  if (profile.pH_Value < 6.1) traits.push("pH ácido");
-  else if (profile.pH_Value > 6.9) traits.push("pH alcalino");
+  if (temp < 18) traits.push("Clima frío");
+  else if (temp >= 22) traits.push("Clima cálido");
+  else traits.push("Clima templado");
+
+  if (ph < 5.6) traits.push("pH ácido");
+  else if (ph > 6.8) traits.push("pH alcalino");
   else traits.push("pH neutro");
 
-  if (profile.Rainfall >= 230) traits.push("lluvia alta");
-  else if (profile.Rainfall <= 170) traits.push("lluvia baja");
+  if (rain >= 160) traits.push("lluvia alta");
+  else if (rain < 100) traits.push("lluvia baja");
+  else if (p >= 80 || k >= 250) traits.push("alto P y K");
+  else if (n >= 150) traits.push("alto N/MO");
+  else traits.push("lluvia media");
 
   return `Región ${id} · ${traits.join(", ")}`;
 }

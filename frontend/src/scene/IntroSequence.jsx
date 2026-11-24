@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 
-import { displayDatasetLabel } from "../ui";
+import { displayDatasetLabel, shortRegionTag } from "../ui";
 import { ScrollTrigger, prefersReducedMotion } from "../motion";
 import { PARCEL_STATIONS, REGION_COLORS } from "./fieldLayout";
 import { useSceneValue } from "./sceneStore";
@@ -395,7 +395,7 @@ export default function IntroSequence({ onPickParcel }) {
 
         <div className="intro-copy intro-side" data-caption="senales">
           <h2>Siete señales bajo tus pies.</h2>
-          <p>Nitrógeno, fósforo, potasio, temperatura, humedad, pH y lluvia. Con ellas, 20.000 registros de referencia se ordenan en cinco ecorregiones.</p>
+          <p>Nitrógeno, fósforo, potasio, temperatura, humedad, pH y lluvia. Con ellas, 12.784 muestras reales de Colombia se ordenan en cinco ecorregiones.</p>
         </div>
 
         <div className="intro-copy intro-side intro-parcels" data-caption="parcelas" aria-live="polite">
@@ -405,7 +405,7 @@ export default function IntroSequence({ onPickParcel }) {
               <i aria-hidden="true" />
               <span>
                 <b>Ecorregión {region.id}</b>
-                {percent(region.share)} de los registros · cultivo más frecuente: {displayDatasetLabel(region.topCrop).toLowerCase()}
+                {shortRegionTag(region.profile)} · {percent(region.share)} · líder: {displayDatasetLabel(region.topCrop).toLowerCase()}
               </span>
             </p>
           ) : (

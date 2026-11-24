@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 
-import { displayDatasetLabel } from "../ui";
+import { displayDatasetLabel, shortRegionTag } from "../ui";
 import { prefersReducedMotion } from "../motion";
 import { REGION_COLORS } from "../scene/fieldLayout";
 import { focusRegion, useSceneValue } from "../scene/sceneStore";
@@ -119,7 +119,7 @@ export function RegionStrip({ regions, selected, onSelect, caption }) {
                 {region.id}
               </span>
               <span className="seg-detail">
-                {Number(region.share).toLocaleString("es-CO", { maximumFractionDigits: 1 })} % · {displayDatasetLabel(region.topCrop).toLowerCase()}
+                {shortRegionTag(region.profile) || `${Number(region.share).toLocaleString("es-CO", { maximumFractionDigits: 1 })} %`} · {displayDatasetLabel(region.topCrop).toLowerCase()}
               </span>
             </button>
           );

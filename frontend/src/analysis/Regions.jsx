@@ -57,8 +57,9 @@ export default function Regions() {
               </h2>
               <p className="result-traits">{describeRegion(region.id, region.profile).split(" · ")[1]}</p>
               <p className="intro">
-                Reúne {region.count?.toLocaleString("es-CO")} observaciones, el {pct(region.share)} de la muestra. Sus
-                cultivos están casi empatados: la define su ambiente, no un cultivo.
+                Reúne {region.count?.toLocaleString("es-CO")} muestras reales ({pct(region.share)}). La define su
+                combinación de suelo y clima —por eso un mismo cultivo puede aparecer en dos ecorregiones con distinto
+                piso térmico o acidez.
               </p>
               <h3>Cultivos registrados</h3>
               {(region.crops || []).map((crop, i) => (

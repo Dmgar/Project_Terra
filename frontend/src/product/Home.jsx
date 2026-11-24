@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { displayDatasetLabel, Icon } from "../ui";
+import { displayDatasetLabel, shortRegionTag, Icon } from "../ui";
 import { scrollToElement, useReveal } from "../motion";
 import IntroSequence from "../scene/IntroSequence";
 import { REGION_COLORS, parcelStill } from "../scene/fieldLayout";
@@ -45,10 +45,10 @@ function RegionExplorer({ selected, onSelect }) {
           </figcaption>
         </figure>
         <div key={region.id} className="explorer-data">
-          <h3>Ecorregión {region.id}</h3>
+          <h3>Ecorregión {region.id} · {shortRegionTag(region.profile)}</h3>
           <p>
-            {percent(region.share)} de los registros ({Number(region.count).toLocaleString("es-CO")} muestras). Sus cultivos
-            están casi empatados: la define su suelo y su clima, no un cultivo.
+            {percent(region.share)} de las muestras reales ({Number(region.count).toLocaleString("es-CO")} registros). La
+            define su suelo y su clima —por eso el mismo cultivo puede dominar en dos ecorregiones con distinto ambiente.
           </p>
           {(region.crops || []).slice(0, 4).map((crop, i) => (
             <Meter key={crop.name} label={displayDatasetLabel(crop.name)} detail={percent(crop.share)} value={crop.share / maxShare} color={color} delay={i * 70} />

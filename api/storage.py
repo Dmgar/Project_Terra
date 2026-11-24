@@ -7,14 +7,14 @@ the production container and serverless footprint minimal.
 from __future__ import annotations
 
 import base64
-from datetime import datetime, timezone
 import hashlib
 import hmac
 import json
 import os
-from pathlib import Path
 import secrets
 import sqlite3
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
@@ -98,7 +98,8 @@ def verify_password(password: str, stored_hash: str) -> bool:
             password.encode("utf-8"), salt=salt, n=2**14, r=8, p=1, dklen=32
         )
         return hmac.compare_digest(actual, expected)
-    except Exception:
+    except (ValueError, TypeError):
+        # Hash mal formado o base64 inválido: se rechaza sin revelar el motivo.
         return False
 
 
@@ -129,7 +130,8 @@ def verify_session_token(token: str) -> dict[str, Any] | None:
         if int(payload.get("exp", 0)) < int(datetime.now(timezone.utc).timestamp()):
             return None
         return payload
-    except Exception:
+    except (ValueError, TypeError, AttributeError):
+        # Token mal formado, base64/JSON inválido o payload que no es un objeto: sesión inválida.
         return None
 
 

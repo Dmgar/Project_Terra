@@ -1,8 +1,8 @@
 """FastAPI service for Project Terra's data product."""
 
-from functools import lru_cache
 import json
 import os
+from functools import lru_cache
 from pathlib import Path
 from threading import Lock
 from typing import Annotated

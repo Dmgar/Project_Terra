@@ -147,28 +147,32 @@ def logout(response: Response):
     return {"status": "ok"}
 
 
+# Usuario autenticado inyectado por FastAPI (evita llamadas en valores por defecto, ruff B008).
+CurrentUser = Annotated[dict, Depends(get_current_user)]
+
+
 @router.get("/api/auth/me")
 @router.get("/auth/me")
-def me(user: dict = Depends(get_current_user)):
+def me(user: CurrentUser):
     return {"user": user}
 
 
 @router.get("/api/parcels")
 @router.get("/parcels")
-def get_parcels(user: dict = Depends(get_current_user)):
+def get_parcels(user: CurrentUser):
     return {"parcels": storage.list_parcels(user["id"])}
 
 
 @router.post("/api/parcels", status_code=status.HTTP_201_CREATED)
 @router.post("/parcels", status_code=status.HTTP_201_CREATED)
-def save_parcel(payload: ParcelCreateRequest, user: dict = Depends(get_current_user)):
+def save_parcel(payload: ParcelCreateRequest, user: CurrentUser):
     parcel = storage.create_parcel(user["id"], payload.model_dump())
     return {"parcel": parcel}
 
 
 @router.delete("/api/parcels/{parcel_id}")
 @router.delete("/parcels/{parcel_id}")
-def remove_parcel(parcel_id: int, user: dict = Depends(get_current_user)):
+def remove_parcel(parcel_id: int, user: CurrentUser):
     deleted = storage.delete_parcel(user["id"], parcel_id)
     if not deleted:
         raise HTTPException(

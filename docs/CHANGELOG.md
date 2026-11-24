@@ -2,6 +2,11 @@
 
 Todas las actualizaciones, cambios notables y fases completadas del proyecto se documentan en este archivo. Nos permite tener un registro claro de la evolución técnica y analítica del proyecto.
 
+## [Fase 10] - Preparación y Despliegue Productivo (2026-11-24)
+- **Endurecido (Docker & Runtime):** [`Dockerfile`](../Dockerfile) actualizado para copiar `docs/real_data_benchmark.json`, escuchar en puerto dinámico `${PORT:-5000}`, incluir `HEALTHCHECK` nativo sobre `/api/health` y preparar `/var/data` para `appuser`; [`.dockerignore`](../.dockerignore) excluye bases SQLite locales y datasets intermedios.
+- **Agregado (Manifiestos de Despliegue):** [`.env.example`](../.env.example), [`docker-compose.yml`](../docker-compose.yml), [`render.yaml`](../render.yaml) y [`docs/DEPLOY.md`](./DEPLOY.md) (Cloud Run `terra-515715`, Render Blueprint y Docker Compose).
+- **Actualizado (Multi-Host & CI):** [`api/auth_routes.py`](../api/auth_routes.py) soporta `TERRA_COOKIE_SAMESITE`, [`frontend/src/ui.jsx`](../frontend/src/ui.jsx) y [`frontend/src/auth.jsx`](../frontend/src/auth.jsx) soportan `VITE_API_BASE_URL`, y [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) valida `GET /api/benchmark` en el smoke test productivo.
+
 ## [Fase 9] - Producto: CORS Endurecido, Autenticación/Parcelas y Soporte Multilingüe ES/EN (2026-11-24)
 - **Endurecido (CORS):** [`api/server.py`](../api/server.py) ahora lee una lista explícita desde la variable de entorno `ALLOWED_ORIGINS` (rechazando cualquier wildcard `*` y eliminando `allow_origin_regex` de `*.vercel.app`) para habilitar `allow_credentials=True` de forma segura.
 - **Agregado (Autenticación, Sesiones y Parcelas Guardadas):** [`api/storage.py`](../api/storage.py) y [`api/auth_routes.py`](../api/auth_routes.py) implementan persistencia SQLite (`TERRA_DB_PATH`, sin dependencias nuevas), hashing `scrypt`, tokens HMAC-SHA256 en cookies `HttpOnly` (`SameSite=Lax`, `Secure` vía `TERRA_COOKIE_SECURE`) y `Bearer`, con endpoints `/api/auth/register`, `/api/auth/login`, `/api/auth/logout`, `/api/auth/me` y CRUD `/api/parcels` con aislamiento por usuario. Validado en [`tests/test_auth_and_parcels.py`](../tests/test_auth_and_parcels.py).

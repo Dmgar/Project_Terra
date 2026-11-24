@@ -187,7 +187,11 @@ jobs:
               rec_body = json.loads(r.read())
               assert r.status == 200 and rec_body["cluster"] in range(5)
 
-          # 4. GET /api/economics/catalog + POST /api/optimize
+          # 4. GET /api/benchmark
+          bench_body = json.loads(urllib.request.urlopen(f"{BASE}/api/benchmark", timeout=5).read())
+          assert bench_body["k"] == 5 and len(bench_body["models"]) >= 5
+
+          # 5. GET /api/economics/catalog + POST /api/optimize
           cat = json.loads(urllib.request.urlopen(f"{BASE}/api/economics/catalog", timeout=5).read())
           crops = [{"crop_id": c["id"], **c["assumptions"]} for c in cat["crops"][:2]]
           opt_req = urllib.request.Request(

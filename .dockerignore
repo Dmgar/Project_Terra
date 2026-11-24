@@ -16,7 +16,7 @@ frontend/node_modules/
 frontend/dist/
 frontend/.vite/
 
-# Git & IDE
+# Git, IDE & tests
 .git/
 .gitignore
 .github/
@@ -24,12 +24,20 @@ frontend/.vite/
 .claude/
 .idea/
 .vscode/
+notebooks/
+tests/
+scripts/
 
-# Logs & temp
+# Logs, temp & local DB
 *.log
 scratch/
+data/terra_app.db
+data/*.db-journal
+data/*.db-wal
 
-# Raw datasets not needed at runtime
+# Raw & intermediate datasets not needed at runtime
 data/raw/
 data/crop_data.csv
 data/processed/kmeans_k5_labels.csv
+data/processed/colombia_agroclimatic_real.csv
+data/processed/nasa_power_municipios_cache.json

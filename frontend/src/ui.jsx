@@ -138,13 +138,14 @@ export const datasetLabels = {
 
 export const displayDatasetLabel = (value) => datasetLabels[value] || value;
 
-export const API_BASE_URL = "/api";
+export const API_ORIGIN = (import.meta.env?.VITE_API_BASE_URL || "").replace(/\/$/, "");
+export const API_BASE_URL = `${API_ORIGIN}/api`;
 
 export async function api(endpoint, options) {
   const normalizedUrl = endpoint.startsWith("http://") || endpoint.startsWith("https://")
     ? endpoint
     : endpoint.startsWith("/api")
-      ? endpoint
+      ? `${API_ORIGIN}${endpoint}`
       : `${API_BASE_URL}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`;
 
   const response = await fetch(normalizedUrl, {

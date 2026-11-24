@@ -49,13 +49,22 @@ def _cookie_secure() -> bool:
     return os.getenv("TERRA_COOKIE_SECURE", "").strip().lower() in {"1", "true", "yes"}
 
 
+def _cookie_samesite() -> str:
+    raw = os.getenv("TERRA_COOKIE_SAMESITE", "lax").strip().lower()
+    if raw == "none" and _cookie_secure():
+        return "none"
+    if raw in {"lax", "strict"}:
+        return raw
+    return "lax"
+
+
 def _set_session_cookie(response: Response, token: str) -> None:
     response.set_cookie(
         key=COOKIE_NAME,
         value=token,
         max_age=storage.SESSION_TTL_SECONDS,
         httponly=True,
-        samesite="lax",
+        samesite=_cookie_samesite(),
         secure=_cookie_secure(),
         path="/",
     )

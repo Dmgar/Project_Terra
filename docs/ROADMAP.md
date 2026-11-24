@@ -36,8 +36,8 @@ Este archivo detalla las características planificadas, ideas de mejora y los pr
 ## Próximos Pasos (To-Do)
 
 ### Backend & Modelos
-- [ ] **Despliegue a Producción:** Desplegar contenedor Docker / FastAPI en entorno cloud (ej. Render, Railway, AWS ECS) con `ALLOWED_ORIGINS`, `TERRA_SECRET_KEY`, `TERRA_COOKIE_SECURE=true` y volumen persistente para `TERRA_DB_PATH`.
+- [x] **Despliegue a Producción:** Desplegado en Google Cloud Run (`terra-515715`, `us-central1`, contenedor Docker unificado con FastAPI + SPA React compilado) con `ALLOWED_ORIGINS` explícito, `TERRA_COOKIE_SECURE=true`, healthcheck y manifiestos reproducibles en [`docs/DEPLOY.md`](./DEPLOY.md) + [`render.yaml`](../render.yaml) + [`docker-compose.yml`](../docker-compose.yml).
 - [ ] **ETL Batch de Mercado y Clima:** Conectar ingesta periódica (batch) de series SIPSA/IDEAM antes de pasar a tiempo real.
 
 ### Frontend
-- [ ] **Despliegue del Cliente:** Publicar el frontend web o distribuirlo a través de CDN/Vercel/Netlify apuntando al backend productivo.
+- [x] **Despliegue del Cliente:** Publicado junto al backend en Google Cloud Run (`https://project-terra-760045187242.us-central1.run.app`) y preparado para CDN/Vercel vía `VITE_API_BASE_URL`.

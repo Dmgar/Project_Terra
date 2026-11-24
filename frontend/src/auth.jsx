@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { api, formatApiDetail } from "./ui";
+import { API_ORIGIN, api, formatApiDetail } from "./ui";
 
 const AuthContext = createContext({
   user: null,
@@ -14,7 +14,8 @@ const AuthContext = createContext({
 });
 
 async function authFetch(path, options = {}) {
-  const res = await fetch(path, {
+  const url = path.startsWith("http") ? path : `${API_ORIGIN}${path}`;
+  const res = await fetch(url, {
     credentials: "include",
     headers: { "Content-Type": "application/json", ...(options.headers || {}) },
     ...options,
@@ -42,7 +43,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     let active = true;
-    fetch("/api/auth/me", { credentials: "include" })
+    fetch(`${API_ORIGIN}/api/auth/me`, { credentials: "include" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!active) return;
